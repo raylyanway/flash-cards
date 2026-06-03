@@ -32,51 +32,43 @@
 
     <div class="card">
 
-    <div class="progress-header">
-
-        <h2>Your Progress</h2>
-
-        <button
-            id="analyticsBtn"
-            class="analytics-btn">
-
-            📊 Analytics
-
-        </button>
-
+        <div class="progress-header">
+    
+            <h2>Your Progress</h2>
+    
+            <button
+                id="analyticsBtn"
+                class="analytics-btn">
+    
+                📊 Analytics
+    
+            </button>
+    
+        </div>
+    
+        <div class="progress-bar">
+            <div id="progressFill"></div>
+        </div>
+    
+        <div id="progressText">
+            0%
+        </div>
+    
+        <div id="nextReviewBox">
+            Next review:
+            <span id="nextReviewTime">
+                Ready now
+            </span>
+        </div>
+    
     </div>
-
-    <div class="progress-bar">
-        <div id="progressFill"></div>
-    </div>
-
-    <div id="progressText">
-        0%
-    </div>
-
-    <div id="nextReviewBox">
-        Next review:
-        <span id="nextReviewTime">
-            Ready now
-        </span>
-    </div>
-
-</div>
 
     <div class="actions">
-
+    
         <button id="continueBtn">
             ▶ Continue Learning
         </button>
-
-        <button id="analyticsBtn">
-            📊 Analytics
-        </button>
-
-        <button id="resetBtn" class="danger">
-            🔄 Reset Progress
-        </button>
-
+    
     </div>
 
 </section>
@@ -200,6 +192,18 @@
 
         </table>
 
+    </div>
+
+    <div class="actions">
+
+        <button
+            id="resetBtn"
+            class="danger">
+    
+            🔄 Reset Progress
+    
+        </button>
+    
     </div>
 
 </section>
