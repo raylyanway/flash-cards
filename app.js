@@ -8,6 +8,35 @@ const resultEl = document.getElementById("result");
 
 const listenBtn = document.getElementById("listenBtn");
 const nextBtn = document.getElementById("nextBtn");
+const speakBtn = document.getElementById("speakBtn");
+
+speechSynthesis.getVoices();
+
+speechSynthesis.onvoiceschanged = () => {
+    speechSynthesis.getVoices();
+};
+
+function speakWord(text) {
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    const voices = speechSynthesis.getVoices();
+
+    const englishVoice = voices.find(
+        voice => voice.lang.startsWith("en")
+    );
+
+    if (englishVoice) {
+        utterance.voice = englishVoice;
+    }
+
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    speechSynthesis.speak(utterance);
+}
 
 async function loadCards() {
     const response = await fetch("cards.json");
@@ -17,14 +46,17 @@ async function loadCards() {
 }
 
 function showCard() {
-
     if (currentIndex >= cards.length) {
-
         wordEl.textContent = "🎉 Finished!";
-        progressEl.textContent = `${cards.length}/${cards.length}`;
+        progressEl.textContent =
+            `${cards.length}/${cards.length}`;
 
         listenBtn.disabled = true;
         nextBtn.disabled = true;
+
+        if (speakBtn) {
+            speakBtn.disabled = true;
+        }
 
         return;
     }
@@ -53,14 +85,12 @@ function normalize(text) {
 }
 
 function checkAnswer(text) {
-
     const spoken = normalize(text);
 
     const answers =
         cards[currentIndex].answers.map(normalize);
 
     if (answers.includes(spoken)) {
-
         resultEl.textContent = "✅ Correct";
         resultEl.className = "correct";
 
@@ -70,23 +100,9 @@ function checkAnswer(text) {
         }, 1000);
 
     } else {
-
         resultEl.textContent = "❌ Try again";
         resultEl.className = "wrong";
     }
-}
-
-function speakWord(text) {
-
-    speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-
-    utterance.lang = "en-US";
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-
-    speechSynthesis.speak(utterance);
 }
 
 const SpeechRecognition =
@@ -94,7 +110,6 @@ const SpeechRecognition =
     window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
-
     listenBtn.disabled = true;
 
     recognizedEl.textContent =
@@ -106,11 +121,9 @@ if (!SpeechRecognition) {
         new SpeechRecognition();
 
     recognition.lang = "ru-RU";
-
     recognition.interimResults = false;
 
     recognition.onresult = event => {
-
         const transcript =
             event.results[0][0].transcript;
 
@@ -121,7 +134,6 @@ if (!SpeechRecognition) {
     };
 
     recognition.onerror = event => {
-
         recognizedEl.textContent =
             `Error: ${event.error}`;
     };
@@ -135,6 +147,12 @@ if (!SpeechRecognition) {
 nextBtn.addEventListener("click", () => {
     currentIndex++;
     showCard();
+});
+
+speakBtn.addEventListener("click", () => {
+    if (currentIndex < cards.length) {
+        speakWord(cards[currentIndex].word);
+    }
 });
 
 loadCards();
