@@ -1,5 +1,6 @@
 let cards = [];
 let currentIndex = 0;
+let listening = false;
 
 const wordEl = document.getElementById("word");
 const progressEl = document.getElementById("progress");
@@ -47,6 +48,9 @@ async function loadCards() {
 
 function showCard() {
     if (currentIndex >= cards.length) {
+
+        listening = false;
+
         wordEl.textContent = "🎉 Finished!";
         progressEl.textContent =
             `${cards.length}/${cards.length}`;
@@ -69,7 +73,9 @@ function showCard() {
         `${currentIndex + 1} / ${cards.length}`;
 
     recognizedEl.textContent =
-        "Press Start and say translation";
+        listening
+            ? "🎤 Listening..."
+            : "Press Start and say translation";
 
     resultEl.textContent = "";
     resultEl.className = "";
@@ -91,15 +97,20 @@ function checkAnswer(text) {
         cards[currentIndex].answers.map(normalize);
 
     if (answers.includes(spoken)) {
+
         resultEl.textContent = "✅ Correct";
         resultEl.className = "correct";
 
         setTimeout(() => {
+
             currentIndex++;
+
             showCard();
-        }, 1000);
+
+        }, 1500);
 
     } else {
+
         resultEl.textContent = "❌ Try again";
         resultEl.className = "wrong";
     }
@@ -110,6 +121,7 @@ const SpeechRecognition =
     window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
+
     listenBtn.disabled = true;
 
     recognizedEl.textContent =
@@ -122,8 +134,10 @@ if (!SpeechRecognition) {
 
     recognition.lang = "ru-RU";
     recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
     recognition.onresult = event => {
+
         const transcript =
             event.results[0][0].transcript;
 
@@ -134,25 +148,70 @@ if (!SpeechRecognition) {
     };
 
     recognition.onerror = event => {
-        recognizedEl.textContent =
-            `Error: ${event.error}`;
+
+        if (event.error !== "no-speech") {
+
+            recognizedEl.textContent =
+                `Error: ${event.error}`;
+        }
     };
 
-    listenBtn.addEventListener(
-        "click",
-        () => recognition.start()
-    );
+    recognition.onend = () => {
+
+        if (listening &&
+            currentIndex < cards.length) {
+
+            recognition.start();
+        }
+    };
+
+    listenBtn.addEventListener("click", () => {
+
+        if (!listening) {
+
+            listening = true;
+
+            listenBtn.textContent =
+                "⏹ Stop Listening";
+
+            recognizedEl.textContent =
+                "🎤 Listening...";
+
+            recognition.start();
+
+        } else {
+
+            listening = false;
+
+            listenBtn.textContent =
+                "🎤 Start Listening";
+
+            recognizedEl.textContent =
+                "Listening stopped";
+
+            recognition.stop();
+        }
+    });
 }
 
 nextBtn.addEventListener("click", () => {
+
     currentIndex++;
+
     showCard();
 });
 
-speakBtn.addEventListener("click", () => {
-    if (currentIndex < cards.length) {
-        speakWord(cards[currentIndex].word);
-    }
-});
+if (speakBtn) {
+
+    speakBtn.addEventListener("click", () => {
+
+        if (currentIndex < cards.length) {
+
+            speakWord(
+                cards[currentIndex].word
+            );
+        }
+    });
+}
 
 loadCards();
