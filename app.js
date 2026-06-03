@@ -41,6 +41,8 @@ function showCard() {
 
     resultEl.textContent = "";
     resultEl.className = "";
+
+    speakWord(card.word);
 }
 
 function normalize(text) {
@@ -72,6 +74,19 @@ function checkAnswer(text) {
         resultEl.textContent = "❌ Try again";
         resultEl.className = "wrong";
     }
+}
+
+function speakWord(text) {
+
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    speechSynthesis.speak(utterance);
 }
 
 const SpeechRecognition =
