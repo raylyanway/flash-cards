@@ -2,6 +2,8 @@ let cards = [];
 let currentIndex = 0;
 let listening = false;
 
+const STORAGE_KEY = "flashcards-current-index";
+
 const wordEl = document.getElementById("word");
 const progressEl = document.getElementById("progress");
 const recognizedEl = document.getElementById("recognizedText");
@@ -16,6 +18,13 @@ speechSynthesis.getVoices();
 speechSynthesis.onvoiceschanged = () => {
     speechSynthesis.getVoices();
 };
+
+function saveProgress() {
+    localStorage.setItem(
+        STORAGE_KEY,
+        currentIndex
+    );
+}
 
 function speakWord(text) {
     speechSynthesis.cancel();
@@ -43,6 +52,18 @@ async function loadCards() {
     const response = await fetch("cards.json");
     cards = await response.json();
 
+    const savedIndex = parseInt(
+        localStorage.getItem(STORAGE_KEY)
+    );
+
+    if (
+        !isNaN(savedIndex) &&
+        savedIndex >= 0 &&
+        savedIndex < cards.length
+    ) {
+        currentIndex = savedIndex;
+    }
+
     showCard();
 }
 
@@ -51,16 +72,15 @@ function showCard() {
 
         listening = false;
 
+        localStorage.removeItem(STORAGE_KEY);
+
         wordEl.textContent = "🎉 Finished!";
         progressEl.textContent =
             `${cards.length}/${cards.length}`;
 
         listenBtn.disabled = true;
         nextBtn.disabled = true;
-
-        if (speakBtn) {
-            speakBtn.disabled = true;
-        }
+        speakBtn.disabled = true;
 
         return;
     }
@@ -104,6 +124,8 @@ function checkAnswer(text) {
         setTimeout(() => {
 
             currentIndex++;
+
+            saveProgress();
 
             showCard();
 
@@ -158,9 +180,10 @@ if (!SpeechRecognition) {
 
     recognition.onend = () => {
 
-        if (listening &&
-            currentIndex < cards.length) {
-
+        if (
+            listening &&
+            currentIndex < cards.length
+        ) {
             recognition.start();
         }
     };
@@ -197,6 +220,8 @@ if (!SpeechRecognition) {
 nextBtn.addEventListener("click", () => {
 
     currentIndex++;
+
+    saveProgress();
 
     showCard();
 });
