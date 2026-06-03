@@ -2,78 +2,272 @@
     box-sizing: border-box;
 }
 
+:root {
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --primary: #2563eb;
+    --success: #16a34a;
+    --warning: #f59e0b;
+    --danger: #dc2626;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+}
+
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f5f7fb;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, Arial, sans-serif;
     min-height: 100vh;
 }
 
-.container {
-    width: min(90%, 600px);
+header {
     text-align: center;
+    padding: 20px;
 }
 
-h1 {
-    margin-bottom: 20px;
+header h1 {
+    margin: 0;
+    font-size: 2rem;
 }
 
-#progress {
-    margin-bottom: 20px;
-    font-size: 18px;
-    color: #666;
+.screen {
+    display: none;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.screen.active {
+    display: block;
 }
 
 .card {
-    background: white;
+    background: var(--card);
     border-radius: 20px;
-    padding: 60px 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 24px;
     margin-bottom: 20px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+}
+
+.learn-card {
+    text-align: center;
+    padding: 60px 20px;
 }
 
 #word {
-    font-size: 48px;
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+#cardStatus {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: var(--primary);
     font-weight: bold;
 }
 
 #recognizedText {
-    font-size: 20px;
+    text-align: center;
+    font-size: 1.1rem;
     min-height: 40px;
     margin: 20px 0;
 }
 
 #result {
-    min-height: 30px;
-    font-size: 24px;
+    text-align: center;
+    font-size: 1.5rem;
+    min-height: 40px;
     font-weight: bold;
 }
 
 .correct {
-    color: green;
+    color: var(--success);
 }
 
 .wrong {
-    color: crimson;
+    color: var(--danger);
 }
 
-.buttons {
+.actions {
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 12px;
     justify-content: center;
 }
 
 button {
     border: none;
     border-radius: 12px;
-    padding: 14px 24px;
+    padding: 14px 22px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 1rem;
+    background: var(--primary);
+    color: white;
+    transition: 0.2s;
 }
 
 button:hover {
-    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+button.danger {
+    background: var(--danger);
+}
+
+button.listening {
+    background: var(--success);
+}
+
+select {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    font-size: 1rem;
+}
+
+.progress-bar {
+    height: 18px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+#progressFill {
+    height: 100%;
+    width: 0%;
+    background: var(--success);
+    transition: width 0.4s;
+}
+
+#progressText {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(120px,1fr));
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.stat {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.stat div {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.stat span {
+    color: var(--muted);
+}
+
+#nextReviewBox {
+    margin-top: 20px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#learnProgress {
+    font-weight: bold;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: #f8fafc;
+}
+
+th,
+td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+
+.status-new {
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.status-review1 {
+    color: var(--warning);
+    font-weight: bold;
+}
+
+.status-review2 {
+    color: #ea580c;
+    font-weight: bold;
+}
+
+.status-learned {
+    color: var(--success);
+    font-weight: bold;
+}
+
+.waiting-box {
+    text-align: center;
+    padding: 40px;
+}
+
+.waiting-box h2 {
+    margin-top: 0;
+}
+
+.countdown {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+@media (max-width: 700px) {
+
+    #word {
+        font-size: 2.2rem;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
+
+    .top-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    table {
+        font-size: 0.9rem;
+    }
 }
