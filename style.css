@@ -1,0 +1,79 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f7fb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    width: min(90%, 600px);
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+#progress {
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #666;
+}
+
+.card {
+    background: white;
+    border-radius: 20px;
+    padding: 60px 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+#word {
+    font-size: 48px;
+    font-weight: bold;
+}
+
+#recognizedText {
+    font-size: 20px;
+    min-height: 40px;
+    margin: 20px 0;
+}
+
+#result {
+    min-height: 30px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.correct {
+    color: green;
+}
+
+.wrong {
+    color: crimson;
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+button {
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    opacity: 0.9;
+}
