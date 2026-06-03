@@ -4,3 +4,4 @@
 - [x] search how to keep progress
 - [ ] optimize storage to use ids instead of word to take less space
 - [ ] check if it possible to send some data in google services
+- [ ] allow user to set up progress
