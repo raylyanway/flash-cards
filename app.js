@@ -201,17 +201,14 @@ nextBtn.addEventListener("click", () => {
     showCard();
 });
 
-if (speakBtn) {
+speakBtn.addEventListener("click", () => {
 
-    speakBtn.addEventListener("click", () => {
+    if (currentIndex < cards.length) {
 
-        if (currentIndex < cards.length) {
-
-            speakWord(
-                cards[currentIndex].word
-            );
-        }
-    });
-}
+        speakWord(
+            cards[currentIndex].word
+        );
+    }
+});
 
 loadCards();
