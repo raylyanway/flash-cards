@@ -136,6 +136,18 @@ select {
     font-size: 1rem;
 }
 
+.analytics-btn {
+    width: auto;
+    padding: 10px 14px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
 .progress-bar {
     height: 18px;
     background: #e5e7eb;
@@ -269,5 +281,15 @@ td {
 
     table {
         font-size: 0.9rem;
+    }
+
+    .progress-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .analytics-btn {
+        width: 100%;
     }
 }

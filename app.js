@@ -59,18 +59,6 @@ const progressFill =
 const progressText =
     document.getElementById("progressText");
 
-const learnedCount =
-    document.getElementById("learnedCount");
-
-const review1Count =
-    document.getElementById("review1Count");
-
-const review2Count =
-    document.getElementById("review2Count");
-
-const newCount =
-    document.getElementById("newCount");
-
 const nextReviewTime =
     document.getElementById("nextReviewTime");
 
@@ -290,18 +278,6 @@ function updateHomeStats() {
 
     progressText.textContent =
         `${percent}% Complete`;
-
-    learnedCount.textContent =
-        learned;
-
-    review1Count.textContent =
-        getReview1Count();
-
-    review2Count.textContent =
-        getReview2Count();
-
-    newCount.textContent =
-        getNewCount();
 
     updateNextReviewLabel();
 }
