@@ -1,0 +1,82 @@
+[
+  {
+    "word": "doctor",
+    "answers": ["врач", "доктор"]
+  },
+  {
+    "word": "nurse",
+    "answers": ["медсестра", "медбрат"]
+  },
+  {
+    "word": "hospital",
+    "answers": ["больница"]
+  },
+  {
+    "word": "clinic",
+    "answers": ["клиника"]
+  },
+  {
+    "word": "patient",
+    "answers": ["пациент"]
+  },
+  {
+    "word": "medicine",
+    "answers": ["лекарство", "медицина"]
+  },
+  {
+    "word": "tablet",
+    "answers": ["таблетка"]
+  },
+  {
+    "word": "injection",
+    "answers": ["инъекция", "укол"]
+  },
+  {
+    "word": "pain",
+    "answers": ["боль"]
+  },
+  {
+    "word": "fever",
+    "answers": ["жар", "лихорадка", "температура"]
+  },
+  {
+    "word": "cough",
+    "answers": ["кашель"]
+  },
+  {
+    "word": "headache",
+    "answers": ["головная боль"]
+  },
+  {
+    "word": "heart",
+    "answers": ["сердце"]
+  },
+  {
+    "word": "brain",
+    "answers": ["мозг"]
+  },
+  {
+    "word": "blood",
+    "answers": ["кровь"]
+  },
+  {
+    "word": "lung",
+    "answers": ["легкое", "лёгкое"]
+  },
+  {
+    "word": "stomach",
+    "answers": ["желудок"]
+  },
+  {
+    "word": "fracture",
+    "answers": ["перелом"]
+  },
+  {
+    "word": "surgery",
+    "answers": ["операция"]
+  },
+  {
+    "word": "emergency",
+    "answers": ["неотложная помощь", "экстренная помощь"]
+  }
+]
