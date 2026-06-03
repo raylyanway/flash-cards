@@ -1,0 +1,82 @@
+[
+  {
+    "word": "dog",
+    "answers": ["собака"]
+  },
+  {
+    "word": "cat",
+    "answers": ["кошка", "кот"]
+  },
+  {
+    "word": "horse",
+    "answers": ["лошадь"]
+  },
+  {
+    "word": "cow",
+    "answers": ["корова"]
+  },
+  {
+    "word": "pig",
+    "answers": ["свинья"]
+  },
+  {
+    "word": "sheep",
+    "answers": ["овца"]
+  },
+  {
+    "word": "goat",
+    "answers": ["коза"]
+  },
+  {
+    "word": "rabbit",
+    "answers": ["кролик"]
+  },
+  {
+    "word": "mouse",
+    "answers": ["мышь"]
+  },
+  {
+    "word": "rat",
+    "answers": ["крыса"]
+  },
+  {
+    "word": "bear",
+    "answers": ["медведь"]
+  },
+  {
+    "word": "wolf",
+    "answers": ["волк"]
+  },
+  {
+    "word": "fox",
+    "answers": ["лиса"]
+  },
+  {
+    "word": "deer",
+    "answers": ["олень"]
+  },
+  {
+    "word": "lion",
+    "answers": ["лев"]
+  },
+  {
+    "word": "tiger",
+    "answers": ["тигр"]
+  },
+  {
+    "word": "elephant",
+    "answers": ["слон"]
+  },
+  {
+    "word": "monkey",
+    "answers": ["обезьяна"]
+  },
+  {
+    "word": "zebra",
+    "answers": ["зебра"]
+  },
+  {
+    "word": "giraffe",
+    "answers": ["жираф"]
+  }
+]

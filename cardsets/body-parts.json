@@ -1,0 +1,42 @@
+[
+  {
+    "word": "head",
+    "answers": ["голова"]
+  },
+  {
+    "word": "shoulder",
+    "answers": ["плечо"]
+  },
+  {
+    "word": "chest",
+    "answers": ["грудь"]
+  },
+  {
+    "word": "arm",
+    "answers": ["рука"]
+  },
+  {
+    "word": "hand",
+    "answers": ["кисть", "рука"]
+  },
+  {
+    "word": "abdomen",
+    "answers": ["живот"]
+  },
+  {
+    "word": "thigh",
+    "answers": ["бедро"]
+  },
+  {
+    "word": "leg",
+    "answers": ["нога"]
+  },
+  {
+    "word": "foot",
+    "answers": ["ступня", "стопа"]
+  },
+  {
+    "word": "heel",
+    "answers": ["пятка"]
+  }
+]
