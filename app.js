@@ -720,6 +720,8 @@ let waitingTimer = null;
 
 function showWaitingScreen() {
 
+    stopListening();
+
     wordEl.textContent =
         "🎉 Great job!";
 
