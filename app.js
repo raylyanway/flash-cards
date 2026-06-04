@@ -675,13 +675,23 @@ function skipCurrentCard() {
     }
 
     p.nextReview =
-        now;
+        now + 5000;
 
     saveProgress();
 
     updateHomeStats();
 
-    selectNextCard();
+    resultEl.textContent =
+        "⏭ Skipped";
+
+    resultEl.className =
+        "skipped";
+
+    setTimeout(() => {
+
+        selectNextCard();
+
+    }, 1500);
 }
 
 nextBtn.addEventListener(
