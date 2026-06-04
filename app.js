@@ -13,6 +13,7 @@ let progress = {};
 let currentCard = null;
 let listening = false;
 let recognition = null;
+let sessionSkippedCards = new Set();
 
 let currentSet = "body-parts";
 
@@ -426,6 +427,10 @@ function getDueCards() {
 
     return cards.filter(card => {
 
+        if (sessionSkippedCards.has(card.word)) {
+            return false;
+        }
+
         const p =
             getCardProgress(card.word);
 
@@ -512,6 +517,8 @@ function startLearningSession() {
 
     resultEl.textContent = "";
     recognizedText.textContent = "";
+
+    sessionSkippedCards.clear();
 
     selectNextCard();
 }
@@ -638,6 +645,8 @@ function markWrong(card) {
     p.nextReview =
         now;
 
+    sessionSkippedCards.add(card.word);
+
     saveProgress();
 
     updateHomeStats();
@@ -675,7 +684,11 @@ function skipCurrentCard() {
     }
 
     p.nextReview =
-        now + 5000;
+        now;
+
+    sessionSkippedCards.add(
+        currentCard.word
+    );
 
     saveProgress();
 
