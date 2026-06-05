@@ -4,6 +4,6 @@
 - [x] search how to keep progress
 - [ ] optimize storage to use ids instead of word to take less space
 - [ ] check if it possible to send some data in google services
-- [ ] allow user to set up progress
+- [x] allow user to set up progress
 - [ ] compress app if needed
 - [ ] check that can I keep data in local storage compressed
