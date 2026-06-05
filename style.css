@@ -120,6 +120,12 @@ button:disabled {
     cursor: not-allowed;
 }
 
+#learnScreen.waiting .actions,
+#learnScreen.waiting #recognizedText,
+#learnScreen.waiting #result {
+    display: none;
+}
+
 button.danger {
     background: var(--danger);
 }

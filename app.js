@@ -529,6 +529,8 @@ function showCurrentCard() {
         return;
     }
 
+    learnScreen.classList.remove("waiting");
+
     const p =
         getCardProgress(
             currentCard.word
@@ -731,6 +733,8 @@ let waitingTimer = null;
 function showWaitingScreen() {
 
     stopListening();
+
+    learnScreen.classList.add("waiting");
 
     wordEl.textContent =
         "🎉 Great job!";
