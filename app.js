@@ -81,6 +81,42 @@ const speakBtn =
 const nextBtn =
     document.getElementById("nextBtn");
 
+const setupProgressBtn =
+    document.getElementById("setupProgressBtn");
+
+const progressSetupModal =
+    document.getElementById("progressSetupModal");
+
+const closeProgressSetupBtn =
+    document.getElementById("closeProgressSetupBtn");
+
+const markAllNewBtn =
+    document.getElementById("markAllNewBtn");
+
+const markAllLearningBtn =
+    document.getElementById("markAllLearningBtn");
+
+const markAllLearnedBtn =
+    document.getElementById("markAllLearnedBtn");
+
+const progressSearchInput =
+    document.getElementById("progressSearchInput");
+
+const progressCardList =
+    document.getElementById("progressCardList");
+
+const exportProgressBtn =
+    document.getElementById("exportProgressBtn");
+
+const importProgressBtn =
+    document.getElementById("importProgressBtn");
+
+const importProgressFile =
+    document.getElementById("importProgressFile");
+
+const confirmSetupProgressBtn =
+    document.getElementById("confirmSetupProgressBtn");
+
 // =====================================================
 // SCREEN NAVIGATION
 // =====================================================
@@ -414,6 +450,101 @@ resetBtn.addEventListener(
         initializeMissingProgress();
 
         updateHomeStats();
+    }
+);
+
+setupProgressBtn.addEventListener(
+    "click",
+    () => {
+        openProgressSetupModal();
+    }
+);
+
+closeProgressSetupBtn.addEventListener(
+    "click",
+    () => {
+        closeProgressSetupModal();
+    }
+);
+
+confirmSetupProgressBtn.addEventListener(
+    "click",
+    () => {
+        // Save the progress changes
+        saveProgress();
+
+        // Clear the backup so closeProgressSetupModal won't restore old state
+        progressBackup = null;
+
+        closeProgressSetupModal();
+        updateHomeStats();
+
+        // Rebuild analytics if it's currently visible
+        if (
+            analyticsScreen
+                .classList.contains("active")
+        ) {
+            buildAnalytics();
+        }
+    }
+);
+
+markAllNewBtn.addEventListener(
+    "click",
+    () => {
+        markAllCardsAsNew();
+    }
+);
+
+markAllLearningBtn.addEventListener(
+    "click",
+    () => {
+        markAllCardsAsLearning();
+    }
+);
+
+markAllLearnedBtn.addEventListener(
+    "click",
+    () => {
+        markAllCardsAsLearned();
+    }
+);
+
+exportProgressBtn.addEventListener(
+    "click",
+    () => {
+        exportProgress();
+    }
+);
+
+importProgressBtn.addEventListener(
+    "click",
+    () => {
+        importProgressFile.click();
+    }
+);
+
+importProgressFile.addEventListener(
+    "change",
+    (event) => {
+        handleImportProgress(event);
+    }
+);
+
+progressSearchInput.addEventListener(
+    "input",
+    (event) => {
+        renderProgressCardList(event.target.value);
+    }
+);
+
+// Close modal when clicking outside
+progressSetupModal.addEventListener(
+    "click",
+    (event) => {
+        if (event.target === progressSetupModal) {
+            closeProgressSetupModal();
+        }
     }
 );
 
@@ -1371,6 +1502,354 @@ setInterval(
     },
     1000
 );
+
+// =====================================================
+// PROGRESS SETUP MODAL
+// =====================================================
+
+let progressBackup = null;
+
+function openProgressSetupModal() {
+
+    // Save current progress state before making changes
+    progressBackup =
+        JSON.parse(
+            JSON.stringify(progress)
+        );
+
+    renderProgressCardList("");
+    progressSearchInput.value = "";
+    progressSetupModal.classList.add("active");
+}
+
+function closeProgressSetupModal() {
+
+    progressSetupModal.classList.remove("active");
+
+    // Restore progress if no changes were confirmed
+    if (progressBackup !== null) {
+
+        progress = progressBackup;
+        progressBackup = null;
+    }
+}
+
+function markAllCardsAsNew() {
+
+    const confirmed =
+        confirm(
+            "Mark all cards as new? This will reset progress for all cards."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    for (const card of cards) {
+
+        progress[card.word] = {
+            stage: 0,
+            nextReview: 0,
+            correctCount: 0
+        };
+    }
+
+    renderProgressCardList("");
+}
+
+function markAllCardsAsLearning() {
+
+    const confirmed =
+        confirm(
+            "Mark all cards as learning (Stage 1)?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const now = Date.now();
+
+    for (const card of cards) {
+
+        progress[card.word] = {
+            stage: 1,
+            nextReview: now,
+            correctCount: 1
+        };
+    }
+
+    renderProgressCardList("");
+}
+
+function markAllCardsAsLearned() {
+
+    const confirmed =
+        confirm(
+            "Mark all cards as learned? You can always undo this."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    for (const card of cards) {
+
+        progress[card.word] = {
+            stage: 3,
+            nextReview: 0,
+            correctCount: 3
+        };
+    }
+
+    renderProgressCardList("");
+}
+
+function renderProgressCardList(searchTerm = "") {
+
+    const filteredCards =
+        cards.filter(card =>
+            card.word
+                .toLowerCase()
+                .includes(
+                    searchTerm.toLowerCase()
+                )
+        );
+
+    progressCardList.innerHTML = "";
+
+    for (const card of filteredCards) {
+
+        const p =
+            getCardProgress(card.word);
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "progress-card-item";
+
+        const info =
+            document.createElement("div");
+
+        info.className =
+            "progress-card-info";
+
+        const wordDiv =
+            document.createElement("div");
+
+        wordDiv.className =
+            "progress-card-word";
+
+        wordDiv.textContent =
+            card.word;
+
+        const statusDiv =
+            document.createElement("div");
+
+        statusDiv.className =
+            "progress-card-status";
+
+        statusDiv.textContent =
+            getStageName(p.stage) +
+            " (Correct: " +
+            p.correctCount +
+            ")";
+
+        info.appendChild(wordDiv);
+        info.appendChild(statusDiv);
+
+        const controls =
+            document.createElement("div");
+
+        controls.className =
+            "progress-card-controls";
+
+        const select =
+            document.createElement("select");
+
+        const stages = [
+            { value: 0, label: "🆕 New" },
+            { value: 1, label: "🔁 Repeat x1" },
+            { value: 2, label: "🔁 Repeat x2" },
+            { value: 3, label: "✅ Learned" }
+        ];
+
+        for (const stage of stages) {
+
+            const option =
+                document.createElement("option");
+
+            option.value = stage.value;
+            option.textContent = stage.label;
+            option.selected =
+                p.stage === stage.value;
+
+            select.appendChild(option);
+        }
+
+        select.addEventListener(
+            "change",
+            (event) => {
+
+                const newStage =
+                    parseInt(
+                        event.target.value
+                    );
+
+                p.stage = newStage;
+                p.nextReview = 0;
+
+                if (newStage > 0) {
+                    p.nextReview =
+                        Date.now();
+                }
+
+                renderProgressCardList(
+                    progressSearchInput.value
+                );
+            }
+        );
+
+        controls.appendChild(select);
+
+        item.appendChild(info);
+        item.appendChild(controls);
+
+        progressCardList.appendChild(item);
+    }
+
+    if (filteredCards.length === 0) {
+
+        const emptyMsg =
+            document.createElement("div");
+
+        emptyMsg.style.padding =
+            "20px";
+
+        emptyMsg.style.textAlign =
+            "center";
+
+        emptyMsg.style.color =
+            "var(--muted)";
+
+        emptyMsg.textContent =
+            "No cards found";
+
+        progressCardList.appendChild(
+            emptyMsg
+        );
+    }
+}
+
+function exportProgress() {
+
+    const dataToExport = {
+
+        setName: currentSet,
+        timestamp: new Date().toISOString(),
+        progress: progress,
+        cards: cards
+    };
+
+    const json =
+        JSON.stringify(
+            dataToExport,
+            null,
+            2
+        );
+
+    const blob =
+        new Blob(
+            [json],
+            { type: "application/json" }
+        );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href = url;
+    link.download =
+        `${currentSet}-progress-${
+            new Date()
+                .toISOString()
+                .split("T")[0]
+        }.json`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+}
+
+function handleImportProgress(event) {
+
+    const file =
+        event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const reader =
+        new FileReader();
+
+    reader.onload = (e) => {
+
+        try {
+
+            const data =
+                JSON.parse(
+                    e.target.result
+                );
+
+            if (!data.progress) {
+
+                alert(
+                    "Invalid progress file"
+                );
+
+                return;
+            }
+
+            const confirmed =
+                confirm(
+                    `Import progress from "${
+                        data.setName
+                    }"? This will overwrite current progress.`
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            progress = data.progress;
+            saveProgress();
+
+            renderProgressCardList("");
+
+            alert(
+                "Progress imported successfully!"
+            );
+
+        } catch (error) {
+
+            alert(
+                "Error reading file: " +
+                error.message
+            );
+        }
+    };
+
+    reader.readAsText(file);
+
+    // Reset file input
+    event.target.value = "";
+}
 
 // =====================================================
 // DEBUG HELPERS
