@@ -551,6 +551,8 @@ function showCurrentCard() {
 
     updateLearningProgress();
 
+    updateSkipButtonState(true);
+
     speakWord(
         currentCard.word
     );
@@ -563,6 +565,12 @@ function updateLearningProgress() {
 
     learnProgress.textContent =
         `${learned} / ${cards.length} learned`;
+}
+
+function updateSkipButtonState(enabled) {
+
+    nextBtn.disabled = !enabled;
+
 }
 
 // =====================================================
@@ -700,6 +708,8 @@ function skipCurrentCard() {
     resultEl.className =
         "skipped";
 
+    updateSkipButtonState(false);
+
     setTimeout(() => {
 
         selectNextCard();
@@ -731,6 +741,8 @@ function showWaitingScreen() {
     resultEl.textContent = "";
 
     updateLearningProgress();
+
+    updateSkipButtonState(false);
 
     if (
         waitingTimer
