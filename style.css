@@ -120,6 +120,12 @@ button:disabled {
     cursor: not-allowed;
 }
 
+#learnScreen.waiting .actions,
+#learnScreen.waiting #recognizedText,
+#learnScreen.waiting #result {
+    display: none;
+}
+
 button.danger {
     background: var(--danger);
 }
@@ -290,6 +296,224 @@ td {
     }
 
     .analytics-btn {
+        width: 100%;
+    }
+}
+
+/* =====================================================
+   MODAL STYLES
+   ===================================================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.2s;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background-color: var(--card);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: var(--text);
+    transform: none;
+}
+
+.modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    padding: 20px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.setup-section {
+    margin-bottom: 28px;
+}
+
+.setup-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+    color: var(--text);
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+button.secondary {
+    background: var(--primary);
+    opacity: 0.8;
+}
+
+button.secondary:hover {
+    opacity: 1;
+    transform: translateY(-1px);
+}
+
+button.primary {
+    background: var(--success);
+}
+
+button.primary:hover {
+    background: #15803d;
+    transform: translateY(-1px);
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+    font-family: inherit;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.card-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.progress-card-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.progress-card-item:last-child {
+    border-bottom: none;
+}
+
+.progress-card-info {
+    flex: 1;
+}
+
+.progress-card-word {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.progress-card-status {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.progress-card-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.progress-card-controls select {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    width: 120px;
+}
+
+@media (max-width: 600px) {
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .progress-card-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .progress-card-controls {
+        width: 100%;
+    }
+
+    .progress-card-controls select {
         width: 100%;
     }
 }
