@@ -282,49 +282,47 @@
 
 </section>
 
-<!-- PROGRESS SETUP MODAL -->
+<!-- PROGRESS SETUP SCREEN -->
 
-<div id="progressSetupModal" class="modal">
+<section id="progressSetupScreen" class="screen">
 
-    <div class="modal-content">
+    <div class="top-bar">
+        <button id="closeProgressSetupBtn">
+            ← Back
+        </button>
+        <h2>Setup Progress</h2>
+    </div>
 
-        <div class="modal-header">
-            <h2>Setup Progress</h2>
-            <button id="closeProgressSetupBtn" class="close-btn">✕</button>
+    <div class="card">
+
+        <div class="setup-section">
+            <h3>Bulk Operations</h3>
+            <div class="button-group">
+                <button id="markAllNewBtn" class="secondary">Mark All as New</button>
+                <button id="markAllLearningBtn" class="secondary">Mark All as Learning</button>
+                <button id="markAllLearnedBtn" class="secondary">Mark All as Learned</button>
+            </div>
         </div>
 
-        <div class="modal-body">
-
-            <div class="setup-section">
-                <h3>Bulk Operations</h3>
-                <div class="button-group">
-                    <button id="markAllNewBtn" class="secondary">Mark All as New</button>
-                    <button id="markAllLearningBtn" class="secondary">Mark All as Learning</button>
-                    <button id="markAllLearnedBtn" class="secondary">Mark All as Learned</button>
-                </div>
+        <div class="setup-section">
+            <h3>Individual Card Progress</h3>
+            <input 
+                type="text" 
+                id="progressSearchInput" 
+                placeholder="Search cards..."
+                class="search-input">
+            <div id="progressCardList" class="card-list">
+                <!-- Cards will be populated here -->
             </div>
+        </div>
 
-            <div class="setup-section">
-                <h3>Individual Card Progress</h3>
-                <input 
-                    type="text" 
-                    id="progressSearchInput" 
-                    placeholder="Search cards..."
-                    class="search-input">
-                <div id="progressCardList" class="card-list">
-                    <!-- Cards will be populated here -->
-                </div>
+        <div class="setup-section">
+            <h3>Import / Export</h3>
+            <div class="button-group">
+                <button id="exportProgressBtn" class="secondary">📥 Export Progress</button>
+                <button id="importProgressBtn" class="secondary">📤 Import Progress</button>
+                <input type="file" id="importProgressFile" style="display: none;" accept=".json">
             </div>
-
-            <div class="setup-section">
-                <h3>Import / Export</h3>
-                <div class="button-group">
-                    <button id="exportProgressBtn" class="secondary">📥 Export Progress</button>
-                    <button id="importProgressBtn" class="secondary">📤 Import Progress</button>
-                    <input type="file" id="importProgressFile" style="display: none;" accept=".json">
-                </div>
-            </div>
-
         </div>
 
         <div class="modal-footer">
@@ -333,7 +331,7 @@
 
     </div>
 
-</div>
+</section>
 
 <script src="app.js"></script>
 

@@ -88,8 +88,8 @@ const nextBtn =
 const setupProgressBtn =
     document.getElementById("setupProgressBtn");
 
-const progressSetupModal =
-    document.getElementById("progressSetupModal");
+const progressSetupScreen =
+    document.getElementById("progressSetupScreen");
 
 const closeProgressSetupBtn =
     document.getElementById("closeProgressSetupBtn");
@@ -158,6 +158,7 @@ function showScreen(screen) {
     learnScreen.classList.remove("active");
     analyticsScreen.classList.remove("active");
     settingsScreen.classList.remove("active");
+    progressSetupScreen.classList.remove("active");
 
     screen.classList.add("active");
 }
@@ -1310,14 +1311,14 @@ resetBtn.addEventListener(
 setupProgressBtn.addEventListener(
     "click",
     () => {
-        openProgressSetupModal();
+        openProgressSetupScreen();
     }
 );
 
 closeProgressSetupBtn.addEventListener(
     "click",
     () => {
-        closeProgressSetupModal();
+        closeProgressSetupScreen();
     }
 );
 
@@ -1327,10 +1328,10 @@ confirmSetupProgressBtn.addEventListener(
         // Save the progress changes
         await saveProgress();
 
-        // Clear the backup so closeProgressSetupModal won't restore old state
+        // Clear the backup so closeProgressSetupScreen won't restore old state
         progressBackup = null;
 
-        closeProgressSetupModal();
+        closeProgressSetupScreen();
         updateHomeStats();
 
         // Rebuild analytics if it's currently visible
@@ -1420,15 +1421,6 @@ progressSearchInput.addEventListener(
     }
 );
 
-// Close modal when clicking outside
-progressSetupModal.addEventListener(
-    "click",
-    (event) => {
-        if (event.target === progressSetupModal) {
-            closeProgressSetupModal();
-        }
-    }
-);
 
 // =====================================================
 // CARD SELECTION
@@ -2452,12 +2444,14 @@ setInterval(
 );
 
 // =====================================================
-// PROGRESS SETUP MODAL
+// PROGRESS SETUP SCREEN
 // =====================================================
 
 let progressBackup = null;
 
-function openProgressSetupModal() {
+let progressSetupPreviousScreen = analyticsScreen;
+
+function openProgressSetupScreen() {
 
     // Save current progress state before making changes
     progressBackup =
@@ -2467,19 +2461,19 @@ function openProgressSetupModal() {
 
     renderProgressCardList("");
     progressSearchInput.value = "";
-    progressSetupModal.classList.add("active");
+    progressSetupPreviousScreen = analyticsScreen;
+    showScreen(progressSetupScreen);
 }
 
-function closeProgressSetupModal() {
-
-    progressSetupModal.classList.remove("active");
+function closeProgressSetupScreen() {
 
     // Restore progress if no changes were confirmed
     if (progressBackup !== null) {
-
         progress = progressBackup;
         progressBackup = null;
     }
+
+    showScreen(progressSetupPreviousScreen);
 }
 
 function markAllCardsAsNew() {
