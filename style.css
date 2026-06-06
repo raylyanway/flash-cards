@@ -56,6 +56,10 @@ header h1 {
     padding: 60px 20px;
 }
 
+#cardSetSelect {
+    margin-bottom: 8px;
+}
+
 #word {
     font-size: 3rem;
     font-weight: bold;
