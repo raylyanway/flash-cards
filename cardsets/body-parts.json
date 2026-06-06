@@ -1,42 +1,42 @@
 [
   {
-    "word": "head",
+    "text": "head",
     "answers": ["голова"]
   },
   {
-    "word": "shoulder",
+    "text": "shoulder",
     "answers": ["плечо"]
   },
   {
-    "word": "chest",
+    "text": "chest",
     "answers": ["грудь"]
   },
   {
-    "word": "arm",
+    "text": "arm",
     "answers": ["рука"]
   },
   {
-    "word": "hand",
+    "text": "hand",
     "answers": ["кисть", "рука"]
   },
   {
-    "word": "abdomen",
+    "text": "abdomen",
     "answers": ["живот"]
   },
   {
-    "word": "thigh",
+    "text": "thigh",
     "answers": ["бедро"]
   },
   {
-    "word": "leg",
+    "text": "leg",
     "answers": ["нога"]
   },
   {
-    "word": "foot",
+    "text": "foot",
     "answers": ["ступня", "стопа"]
   },
   {
-    "word": "heel",
+    "text": "heel",
     "answers": ["пятка"]
   }
 ]

@@ -60,7 +60,7 @@ header h1 {
     margin-bottom: 8px;
 }
 
-#word {
+#text {
     font-size: 3rem;
     font-weight: bold;
     margin-bottom: 20px;
@@ -272,7 +272,7 @@ td {
 
 @media (max-width: 700px) {
 
-    #word {
+    #text {
         font-size: 2.2rem;
     }
 
@@ -475,7 +475,7 @@ button.primary:hover {
     flex: 1;
 }
 
-.progress-card-word {
+.progress-card-text {
     font-weight: 500;
     margin-bottom: 4px;
 }

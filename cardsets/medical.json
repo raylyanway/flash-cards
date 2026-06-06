@@ -1,82 +1,82 @@
 [
   {
-    "word": "doctor",
+    "text": "doctor",
     "answers": ["врач", "доктор"]
   },
   {
-    "word": "nurse",
+    "text": "nurse",
     "answers": ["медсестра", "медбрат"]
   },
   {
-    "word": "hospital",
+    "text": "hospital",
     "answers": ["больница"]
   },
   {
-    "word": "clinic",
+    "text": "clinic",
     "answers": ["клиника"]
   },
   {
-    "word": "patient",
+    "text": "patient",
     "answers": ["пациент"]
   },
   {
-    "word": "medicine",
+    "text": "medicine",
     "answers": ["лекарство", "медицина"]
   },
   {
-    "word": "tablet",
+    "text": "tablet",
     "answers": ["таблетка"]
   },
   {
-    "word": "injection",
+    "text": "injection",
     "answers": ["инъекция", "укол"]
   },
   {
-    "word": "pain",
+    "text": "pain",
     "answers": ["боль"]
   },
   {
-    "word": "fever",
+    "text": "fever",
     "answers": ["жар", "лихорадка", "температура"]
   },
   {
-    "word": "cough",
+    "text": "cough",
     "answers": ["кашель"]
   },
   {
-    "word": "headache",
+    "text": "headache",
     "answers": ["головная боль"]
   },
   {
-    "word": "heart",
+    "text": "heart",
     "answers": ["сердце"]
   },
   {
-    "word": "brain",
+    "text": "brain",
     "answers": ["мозг"]
   },
   {
-    "word": "blood",
+    "text": "blood",
     "answers": ["кровь"]
   },
   {
-    "word": "lung",
+    "text": "lung",
     "answers": ["легкое", "лёгкое"]
   },
   {
-    "word": "stomach",
+    "text": "stomach",
     "answers": ["желудок"]
   },
   {
-    "word": "fracture",
+    "text": "fracture",
     "answers": ["перелом"]
   },
   {
-    "word": "surgery",
+    "text": "surgery",
     "answers": ["операция"]
   },
   {
-    "word": "emergency",
+    "text": "emergency",
     "answers": ["неотложная помощь", "экстренная помощь"]
   }
 ]

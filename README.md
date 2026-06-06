@@ -5,7 +5,7 @@
 - [x] set up indexeDB
 - [x] removing datasets
 - [x] search how to keep progress
-- [ ] try with sentencies
+- [x] try with sentencies
 - [ ] try with svg
 - [ ] check if it possible to send some data in google services
 - [ ] compress app if needed
