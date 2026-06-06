@@ -120,6 +120,9 @@ const exportCardsetBtn =
 const importCardsetBtn =
     document.getElementById("importCardsetBtn");
 
+const deleteCardsetBtn =
+    document.getElementById("deleteCardsetBtn");
+
 const importCardsetFile =
     document.getElementById("importCardsetFile");
 
@@ -167,7 +170,7 @@ async function saveProgress() {
 
 const LATEST_DATA_VERSION = 1;
 const DB_NAME = "AppDB";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const CARDSETS_STORE_NAME = "cardsets";
 const CARDSET_METADATA_STORE_NAME = "cardsetMetadata";
 const PROGRESS_STORE_NAME = "progress";
@@ -178,7 +181,7 @@ const DEFAULT_CARDSETS = [
     { key: "body-parts", label: "Body Parts" },
     { key: "animals", label: "Animals" },
     { key: "food", label: "Food" },
-    { key: "medical", label: "Medical" }
+    // { key: "medical", label: "Medical" }
 ];
 
 function ensureStorageAvailable() {
@@ -452,6 +455,84 @@ async function setCardsetMetadata(metadata) {
     }
 }
 
+async function deleteCardsetMetadata(setName) {
+    try {
+        const db = await openDatabase();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(CARDSET_METADATA_STORE_NAME, "readwrite");
+            const store = tx.objectStore(CARDSET_METADATA_STORE_NAME);
+            const request = store.delete(setName);
+
+            request.onerror = () => reject(request.error || new Error("Failed to delete cardset metadata."));
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error || new Error("Cardset metadata delete transaction failed."));
+        });
+    } catch (error) {
+        console.error("deleteCardsetMetadata failed:", error);
+        throw error;
+    }
+}
+
+async function deleteProgressFromDB(setName) {
+    try {
+        const db = await openDatabase();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(PROGRESS_STORE_NAME, "readwrite");
+            const store = tx.objectStore(PROGRESS_STORE_NAME);
+            const request = store.delete(setName);
+
+            request.onerror = () => reject(request.error || new Error("Failed to delete progress data."));
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error || new Error("Progress delete transaction failed."));
+        });
+    } catch (error) {
+        console.error("deleteProgressFromDB failed:", error);
+        throw error;
+    }
+}
+
+async function deleteCardset(setName) {
+    const db = await openDatabase();
+    await deleteCardsetRecords(db, setName);
+    await deleteCardsetMetadata(setName);
+    await deleteProgressFromDB(setName);
+}
+
+function getCardsetDisplayName(setName) {
+    return getCardsetMetadata(setName)
+        .then(metadata => metadata?.displayName || getDisplayNameForSet(setName));
+}
+
+async function handleDeleteCardset() {
+    const isDefault = DEFAULT_CARDSETS.some(item => item.key === currentSet);
+    if (isDefault) {
+        alert("Default cardsets cannot be deleted.");
+        return;
+    }
+
+    const displayName = await getCardsetDisplayName(currentSet);
+    const confirmed = confirm(
+        `Delete cardset "${displayName}"? This will remove the cardset and its progress.`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        await deleteCardset(currentSet);
+        await refreshCardSetOptions();
+        await saveSettings();
+        await loadProgress();
+        await loadCardSet();
+        updateHomeStats();
+        alert(`Cardset "${displayName}" deleted.`);
+    } catch (error) {
+        console.error("Failed to delete cardset:", error);
+        alert("Unable to delete cardset. See console for details.");
+    }
+}
+
 async function getUniqueCardsetNames() {
     const names = new Set(DEFAULT_CARDSETS.map(item => item.key));
     try {
@@ -510,7 +591,22 @@ async function refreshCardSetOptions() {
         cardSetSelect.appendChild(option);
     }
 
-    cardSetSelect.value = currentSet;
+    if (optionSet.has(currentSet)) {
+        cardSetSelect.value = currentSet;
+    } else if (cardSetSelect.options.length > 0) {
+        cardSetSelect.selectedIndex = 0;
+        currentSet = cardSetSelect.value;
+    }
+
+    updateDeleteCardsetButtonState();
+}
+
+function updateDeleteCardsetButtonState() {
+    const isDefault = DEFAULT_CARDSETS.some(item => item.key === currentSet);
+    deleteCardsetBtn.disabled = isDefault;
+    deleteCardsetBtn.title = isDefault
+        ? "Default cardsets cannot be deleted"
+        : "Delete the selected cardset";
 }
 
 function deleteCardsetRecords(db, setName) {
@@ -1003,6 +1099,8 @@ cardSetSelect.addEventListener(
         currentSet =
             cardSetSelect.value;
 
+        updateDeleteCardsetButtonState();
+
         await saveSettings();
 
         await loadProgress();
@@ -1167,6 +1265,13 @@ importCardsetBtn.addEventListener(
     "click",
     () => {
         importCardsetFile.click();
+    }
+);
+
+deleteCardsetBtn.addEventListener(
+    "click",
+    () => {
+        handleDeleteCardset();
     }
 );
 
