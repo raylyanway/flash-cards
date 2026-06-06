@@ -195,21 +195,289 @@ function saveProgress() {
 }
 
 // =====================================================
+// INDEXEDDB CACHING
+// =====================================================
+
+const LATEST_DATA_VERSION = 1;
+const DB_NAME = "AppDB";
+const DB_VERSION = 1;
+const STORE_NAME = "cardsets";
+const CACHE_VERSION_KEY = "cached_data_version";
+
+function ensureStorageAvailable() {
+    if (!window.indexedDB) {
+        throw new Error("IndexedDB is not supported by this browser.");
+    }
+    if (!window.localStorage) {
+        throw new Error("localStorage is not available.");
+    }
+}
+
+function openDatabase() {
+    ensureStorageAvailable();
+
+    return new Promise((resolve, reject) => {
+        const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onerror = () => {
+            reject(request.error || new Error("Failed to open IndexedDB."));
+        };
+
+        request.onblocked = () => {
+            console.warn("IndexedDB open blocked. Close other tabs using this database.");
+        };
+
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                const store = db.createObjectStore(STORE_NAME, { keyPath: "word" });
+                store.createIndex("setName", "setName", { unique: false });
+                return;
+            }
+
+            const store = event.target.transaction.objectStore(STORE_NAME);
+            if (!store.indexNames.contains("setName")) {
+                store.createIndex("setName", "setName", { unique: false });
+            }
+        };
+
+        request.onsuccess = () => {
+            const db = request.result;
+            db.onerror = (event) => {
+                console.error("IndexedDB error:", event.target.error);
+            };
+            resolve(db);
+        };
+    });
+}
+
+async function getCachedDataVersion() {
+    try {
+        return Number(localStorage.getItem(CACHE_VERSION_KEY) ?? 0);
+    } catch (error) {
+        console.warn("Unable to read cached_data_version from localStorage.", error);
+        return 0;
+    }
+}
+
+async function setCachedDataVersion(version) {
+    try {
+        localStorage.setItem(CACHE_VERSION_KEY, String(version));
+    } catch (error) {
+        console.warn("Unable to write cached_data_version to localStorage.", error);
+    }
+}
+
+function clearCardstore(db) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+
+        const request = store.clear();
+
+        request.onerror = () => {
+            reject(request.error || new Error("Failed to clear cardsets store."));
+        };
+
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || new Error("Clear transaction failed."));
+    });
+}
+
+function getStoreCountForSet(db, setName) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const store = tx.objectStore(STORE_NAME);
+
+        if (store.indexNames.contains("setName")) {
+            const index = store.index("setName");
+            const request = index.count(IDBKeyRange.only(setName));
+
+            request.onerror = () => {
+                reject(request.error || new Error("Failed to count records for cardset."));
+            };
+
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+            return;
+        }
+
+        let count = 0;
+        const cursorRequest = store.openCursor();
+
+        cursorRequest.onerror = () => {
+            reject(cursorRequest.error || new Error("Failed to count records for cardset."));
+        };
+
+        cursorRequest.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (!cursor) {
+                resolve(count);
+                return;
+            }
+
+            const record = cursor.value;
+            if (record.setName === setName) {
+                count += 1;
+            }
+
+            cursor.continue();
+        };
+    });
+}
+
+function getStoreCount(db) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const store = tx.objectStore(STORE_NAME);
+
+        const request = store.count();
+        request.onerror = () => {
+            reject(request.error || new Error("Failed to count records in cardsets."));
+        };
+        request.onsuccess = () => {
+            resolve(request.result);
+        };
+    });
+}
+
+async function fetchAndSeed(currentSet, db) {
+    const url = `cardsets/${currentSet}.json`;
+
+    let data;
+    try {
+        const response = await fetch(url, { cache: "reload" });
+        if (!response.ok) {
+            throw new Error(`Network response was not OK (${response.status}).`);
+        }
+        data = await response.json();
+        if (!Array.isArray(data)) {
+            throw new Error("Expected JSON array from cardset file.");
+        }
+    } catch (error) {
+        throw new Error(`Failed to fetch ${url}: ${error.message}`);
+    }
+
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+
+        tx.onerror = () => reject(tx.error || new Error("Transaction failed during seed."));
+        tx.oncomplete = () => {
+            setCachedDataVersion(LATEST_DATA_VERSION);
+            resolve();
+        };
+
+        try {
+            for (const item of data) {
+                if (!item || typeof item.word !== "string") {
+                    throw new Error("Each card object must include a string `word` key.");
+                }
+                store.put({ ...item, setName: currentSet });
+            }
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+function getAllCardsForSet(currentSet) {
+    return openDatabase().then((db) => {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readonly");
+            const store = tx.objectStore(STORE_NAME);
+
+            const cardsForSet = [];
+            let request;
+
+            if (store.indexNames.contains("setName")) {
+                const index = store.index("setName");
+                request = index.openCursor(IDBKeyRange.only(currentSet));
+            } else {
+                request = store.openCursor();
+            }
+
+            request.onerror = () => {
+                reject(request.error || new Error("Failed to read cards from IndexedDB."));
+            };
+
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (!cursor) {
+                    resolve(cardsForSet);
+                    return;
+                }
+
+                const record = cursor.value;
+                if (!record.setName || record.setName === currentSet) {
+                    cardsForSet.push(record);
+                }
+
+                cursor.continue();
+            };
+        });
+    });
+}
+
+async function initializeCardSet(currentSet) {
+    try {
+        ensureStorageAvailable();
+        const db = await openDatabase();
+        const cachedVersion = await getCachedDataVersion();
+        const setCount = await getStoreCountForSet(db, currentSet);
+
+        if (cachedVersion !== LATEST_DATA_VERSION) {
+            await clearCardstore(db);
+            await fetchAndSeed(currentSet, db);
+            return await getAllCardsForSet(currentSet);
+        }
+
+        if (setCount > 0) {
+            return await getAllCardsForSet(currentSet);
+        }
+
+        await fetchAndSeed(currentSet, db);
+        return await getAllCardsForSet(currentSet);
+    } catch (error) {
+        console.error("initializeCardSet failed:", error);
+        throw error;
+    }
+}
+
+async function getCards(cardSet) {
+    try {
+        ensureStorageAvailable();
+        const db = await openDatabase();
+
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readonly");
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.get(cardSet);
+
+            request.onerror = () => reject(request.error || new Error("Failed to read card from IndexedDB."));
+            request.onsuccess = () => resolve(request.result ?? null);
+        });
+    } catch (error) {
+        console.error("getCards failed:", error);
+        throw error;
+    }
+}
+
+// =====================================================
 // CARD SET LOADING
 // =====================================================
 
 async function loadCardSet() {
-
-    const response =
-        await fetch(
-            `cardsets/${currentSet}.json`
-        );
-
-    cards =
-        await response.json();
+    try {
+        cards = await initializeCardSet(currentSet);
+    } catch (error) {
+        console.error("Failed to load card set:", error);
+        cards = [];
+    }
 
     initializeMissingProgress();
-
     updateHomeStats();
 }
 
