@@ -21,12 +21,13 @@
 
         <h2>Choose Card Set</h2>
 
-        <select id="cardSetSelect">
-            <option value="body-parts">Body Parts</option>
-            <option value="animals">Animals</option>
-            <option value="food">Food</option>
-            <option value="medical">Medical</option>
-        </select>
+        <select id="cardSetSelect"></select>
+
+        <div class="button-group cardset-actions">
+            <button id="exportCardsetBtn" class="secondary">📦 Export Cardset</button>
+            <button id="importCardsetBtn" class="secondary">📤 Import Cardset</button>
+            <input type="file" id="importCardsetFile" style="display: none;" accept=".json">
+        </div>
 
     </div>
 

@@ -114,6 +114,15 @@ const importProgressBtn =
 const importProgressFile =
     document.getElementById("importProgressFile");
 
+const exportCardsetBtn =
+    document.getElementById("exportCardsetBtn");
+
+const importCardsetBtn =
+    document.getElementById("importCardsetBtn");
+
+const importCardsetFile =
+    document.getElementById("importCardsetFile");
+
 const confirmSetupProgressBtn =
     document.getElementById("confirmSetupProgressBtn");
 
@@ -131,34 +140,8 @@ function showScreen(screen) {
 }
 
 // =====================================================
-// SETTINGS
+// STORAGE
 // =====================================================
-
-function loadSettings() {
-
-    const settings =
-        JSON.parse(
-            localStorage.getItem(SETTINGS_KEY)
-            || "{}"
-        );
-
-    currentSet =
-        settings.currentSet ||
-        "body-parts";
-
-    cardSetSelect.value =
-        currentSet;
-}
-
-function saveSettings() {
-
-    localStorage.setItem(
-        SETTINGS_KEY,
-        JSON.stringify({
-            currentSet
-        })
-    );
-}
 
 async function loadProgress() {
     try {
@@ -184,11 +167,19 @@ async function saveProgress() {
 
 const LATEST_DATA_VERSION = 1;
 const DB_NAME = "AppDB";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const CARDSETS_STORE_NAME = "cardsets";
+const CARDSET_METADATA_STORE_NAME = "cardsetMetadata";
 const PROGRESS_STORE_NAME = "progress";
 const SETTINGS_STORE_NAME = "settings";
 const CACHE_VERSION_KEY = "cached_data_version";
+
+const DEFAULT_CARDSETS = [
+    { key: "body-parts", label: "Body Parts" },
+    { key: "animals", label: "Animals" },
+    { key: "food", label: "Food" },
+    { key: "medical", label: "Medical" }
+];
 
 function ensureStorageAvailable() {
     if (!window.indexedDB) {
@@ -221,6 +212,10 @@ function openDatabase() {
                 if (!store.indexNames.contains("setName")) {
                     store.createIndex("setName", "setName", { unique: false });
                 }
+            }
+
+            if (!db.objectStoreNames.contains(CARDSET_METADATA_STORE_NAME)) {
+                db.createObjectStore(CARDSET_METADATA_STORE_NAME, { keyPath: "setName" });
             }
 
             if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
@@ -411,6 +406,249 @@ function getAllCardsForSet(currentSet) {
     });
 }
 
+function getDisplayNameForSet(setName) {
+    const defaultEntry = DEFAULT_CARDSETS.find(item => item.key === setName);
+    if (defaultEntry) {
+        return defaultEntry.label;
+    }
+
+    return setName
+        .replace(/[-_]/g, " ")
+        .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+async function getCardsetMetadata(setName) {
+    try {
+        const db = await openDatabase();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(CARDSET_METADATA_STORE_NAME, "readonly");
+            const store = tx.objectStore(CARDSET_METADATA_STORE_NAME);
+            const request = store.get(setName);
+
+            request.onerror = () => reject(request.error || new Error("Failed to read cardset metadata."));
+            request.onsuccess = () => resolve(request.result || null);
+        });
+    } catch (error) {
+        console.error("getCardsetMetadata failed:", error);
+        return null;
+    }
+}
+
+async function setCardsetMetadata(metadata) {
+    try {
+        const db = await openDatabase();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(CARDSET_METADATA_STORE_NAME, "readwrite");
+            const store = tx.objectStore(CARDSET_METADATA_STORE_NAME);
+            const request = store.put(metadata);
+
+            request.onerror = () => reject(request.error || new Error("Failed to write cardset metadata."));
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error || new Error("Cardset metadata transaction failed."));
+        });
+    } catch (error) {
+        console.error("setCardsetMetadata failed:", error);
+        throw error;
+    }
+}
+
+async function getUniqueCardsetNames() {
+    const names = new Set(DEFAULT_CARDSETS.map(item => item.key));
+    try {
+        const db = await openDatabase();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
+            const store = tx.objectStore(CARDSETS_STORE_NAME);
+            const request = store.openCursor();
+
+            request.onerror = () => reject(request.error || new Error("Failed to iterate cardsets."));
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (!cursor) {
+                    resolve();
+                    return;
+                }
+
+                if (cursor.value.setName) {
+                    names.add(cursor.value.setName);
+                }
+                cursor.continue();
+            };
+        });
+    } catch (error) {
+        console.warn("Unable to read stored cardset names:", error);
+    }
+
+    return Array.from(names);
+}
+
+async function refreshCardSetOptions() {
+    const storedNames = await getUniqueCardsetNames();
+    cardSetSelect.innerHTML = "";
+
+    const optionSet = new Set();
+    for (const cardset of DEFAULT_CARDSETS) {
+        optionSet.add(cardset.key);
+        const option = document.createElement("option");
+        option.value = cardset.key;
+        option.textContent = cardset.label;
+        cardSetSelect.appendChild(option);
+    }
+
+    for (const setName of storedNames) {
+        if (optionSet.has(setName)) {
+            continue;
+        }
+        optionSet.add(setName);
+
+        const metadata = await getCardsetMetadata(setName);
+        const displayName = metadata?.displayName || getDisplayNameForSet(setName);
+
+        const option = document.createElement("option");
+        option.value = setName;
+        option.textContent = displayName;
+        cardSetSelect.appendChild(option);
+    }
+
+    cardSetSelect.value = currentSet;
+}
+
+function deleteCardsetRecords(db, setName) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
+        const store = tx.objectStore(CARDSETS_STORE_NAME);
+
+        const request = store.indexNames.contains("setName")
+            ? store.index("setName").openCursor(IDBKeyRange.only(setName))
+            : store.openCursor();
+
+        request.onerror = () => reject(request.error || new Error("Failed to delete cardset records."));
+        request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (!cursor) {
+                resolve();
+                return;
+            }
+
+            if (!store.indexNames.contains("setName") || cursor.value.setName === setName) {
+                cursor.delete();
+            }
+
+            cursor.continue();
+        };
+    });
+}
+
+async function importCardset(setName, cards) {
+    const db = await openDatabase();
+    await deleteCardsetRecords(db, setName);
+
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
+        const store = tx.objectStore(CARDSETS_STORE_NAME);
+
+        tx.onerror = () => reject(tx.error || new Error("Failed to import cardset."));
+        tx.oncomplete = () => resolve();
+
+        try {
+            for (const item of cards) {
+                if (!item || typeof item.word !== "string") {
+                    throw new Error("Each card object must include a string `word` key.");
+                }
+                store.put({ ...item, setName });
+            }
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+async function exportCardset() {
+    try {
+        const cards = await getAllCardsForSet(currentSet);
+        if (!cards.length) {
+            alert("Nothing to export for this cardset.");
+            return;
+        }
+
+        const metadata = await getCardsetMetadata(currentSet);
+        const payload = {
+            setName: currentSet,
+            displayName: metadata?.displayName || getDisplayNameForSet(currentSet),
+            cards: cards.map(card => {
+                const { setName, ...rest } = card;
+                return rest;
+            })
+        };
+
+        const json = JSON.stringify(payload, null, 2);
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${currentSet}-cardset.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("exportCardset failed:", error);
+        alert("Unable to export cardset. See console for details.");
+    }
+}
+
+function handleImportCardset(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (!data || typeof data.setName !== "string" || !Array.isArray(data.cards)) {
+                throw new Error("Invalid cardset file format.");
+            }
+
+            const setName = data.setName.trim();
+            if (!setName) {
+                throw new Error("Cardset file must include a valid setName.");
+            }
+
+            const displayName = typeof data.displayName === "string"
+                ? data.displayName.trim()
+                : getDisplayNameForSet(setName);
+
+            const existing = await getUniqueCardsetNames();
+            if (existing.includes(setName)) {
+                const confirmed = confirm(`A cardset named "${setName}" already exists. Overwrite it?`);
+                if (!confirmed) {
+                    return;
+                }
+            }
+
+            await importCardset(setName, data.cards);
+            await setCardsetMetadata({ setName, displayName, importedAt: Date.now() });
+            await refreshCardSetOptions();
+
+            alert(`Cardset "${displayName}" imported successfully.`);
+        } catch (error) {
+            alert(`Failed to import cardset: ${error.message}`);
+        } finally {
+            event.target.value = "";
+        }
+    };
+
+    reader.readAsText(file);
+}
+
+async function clearDefaultCardsets(db) {
+    const defaultKeys = DEFAULT_CARDSETS.map(item => item.key);
+    const tasks = defaultKeys.map(key => deleteCardsetRecords(db, key));
+    await Promise.all(tasks);
+}
+
 async function initializeCardSet(currentSet) {
     try {
         ensureStorageAvailable();
@@ -419,8 +657,13 @@ async function initializeCardSet(currentSet) {
         const setCount = await getStoreCountForSet(db, currentSet);
 
         if (cachedVersion !== LATEST_DATA_VERSION) {
-            await clearCardstore(db);
-            await fetchAndSeed(currentSet, db);
+            await clearDefaultCardsets(db);
+
+            const isDefault = DEFAULT_CARDSETS.some(item => item.key === currentSet);
+            if (isDefault) {
+                await fetchAndSeed(currentSet, db);
+            }
+
             return await getAllCardsForSet(currentSet);
         }
 
@@ -910,6 +1153,27 @@ importProgressFile.addEventListener(
     "change",
     (event) => {
         handleImportProgress(event);
+    }
+);
+
+exportCardsetBtn.addEventListener(
+    "click",
+    () => {
+        exportCardset();
+    }
+);
+
+importCardsetBtn.addEventListener(
+    "click",
+    () => {
+        importCardsetFile.click();
+    }
+);
+
+importCardsetFile.addEventListener(
+    "change",
+    (event) => {
+        handleImportCardset(event);
     }
 );
 
@@ -2255,6 +2519,8 @@ function handleImportProgress(event) {
 async function init() {
 
     await loadSettings();
+
+    await refreshCardSetOptions();
 
     await loadProgress();
 
