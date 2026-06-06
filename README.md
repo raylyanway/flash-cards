@@ -6,8 +6,7 @@
 - [x] removing datasets
 - [x] search how to keep progress
 - [x] try with sentencies
-- [ ] try with svg
+- [x] add favicon
 - [ ] check if it possible to send some data in google services
 - [ ] compress app if needed
 - [ ] think about redisign
-- [ ] add favicon
