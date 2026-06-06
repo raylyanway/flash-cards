@@ -12,3 +12,4 @@
 - [ ] check if it possible to send some data in google services
 - [ ] compress app if needed
 - [ ] think about redisign
+- [ ] add favicon
