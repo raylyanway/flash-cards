@@ -4,6 +4,8 @@
 
 const STORAGE_KEY = "voice-trainer-progress";
 const SETTINGS_KEY = "voice-trainer-settings";
+const DEFAULT_THEME = "system";
+let themePreference = DEFAULT_THEME;
 
 const REVIEW_1_DELAY = 30 * 1000; // 30 sec
 const REVIEW_2_DELAY = 60 * 1000; // 1 min
@@ -128,6 +130,18 @@ const deleteCardsetBtn =
 const importCardsetFile =
     document.getElementById("importCardsetFile");
 
+const settingsBtn =
+    document.getElementById("settingsBtn");
+
+const settingsScreen =
+    document.getElementById("settingsScreen");
+
+const settingsBackBtn =
+    document.getElementById("settingsBackBtn");
+
+const themeOptionInputs =
+    document.querySelectorAll('input[name="themeOption"]');
+
 const confirmSetupProgressBtn =
     document.getElementById("confirmSetupProgressBtn");
 
@@ -140,6 +154,7 @@ function showScreen(screen) {
     homeScreen.classList.remove("active");
     learnScreen.classList.remove("active");
     analyticsScreen.classList.remove("active");
+    settingsScreen.classList.remove("active");
 
     screen.classList.add("active");
 }
@@ -899,14 +914,41 @@ async function setSettingsToDB(settingsData) {
 // SETTINGS LOAD/SAVE (Updated for IndexedDB)
 // =====================================================
 
+function getPreferredTheme() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+}
+
+function applyTheme(value) {
+    themePreference = value || DEFAULT_THEME;
+    document.body.classList.remove('theme-system', 'theme-light', 'theme-dark');
+    document.body.classList.add(`theme-${themePreference}`);
+
+    themeOptionInputs.forEach((input) => {
+        input.checked = input.value === themePreference;
+    });
+}
+
+function handleSystemThemeChange(event) {
+    if (themePreference === 'system') {
+        document.body.classList.remove('theme-light', 'theme-dark');
+        document.body.classList.add('theme-system');
+    }
+}
+
 async function loadSettings() {
     try {
         const settings = await getSettingsFromDB();
-        currentSet = settings.currentSet || "body-parts";
+        currentSet = settings.currentSet || 'body-parts';
+        themePreference = settings.theme || DEFAULT_THEME;
+        applyTheme(themePreference);
         cardSetSelect.value = currentSet;
     } catch (error) {
-        console.error("Failed to load settings:", error);
-        currentSet = "body-parts";
+        console.error('Failed to load settings:', error);
+        currentSet = 'body-parts';
+        themePreference = DEFAULT_THEME;
+        applyTheme(themePreference);
         cardSetSelect.value = currentSet;
     }
 }
@@ -914,10 +956,11 @@ async function loadSettings() {
 async function saveSettings() {
     try {
         await setSettingsToDB({
-            currentSet: currentSet
+            currentSet: currentSet,
+            theme: themePreference
         });
     } catch (error) {
-        console.error("Failed to save settings:", error);
+        console.error('Failed to save settings:', error);
     }
 }
 
@@ -1111,6 +1154,34 @@ cardSetSelect.addEventListener(
         await loadCardSet();
     }
 );
+
+settingsBtn.addEventListener(
+    "click",
+    () => {
+        showScreen(
+            settingsScreen
+        );
+    }
+);
+
+settingsBackBtn.addEventListener(
+    "click",
+    () => {
+        showScreen(
+            homeScreen
+        );
+    }
+);
+
+themeOptionInputs.forEach((input) => {
+    input.addEventListener(
+        "change",
+        async (event) => {
+            applyTheme(event.target.value);
+            await saveSettings();
+        }
+    );
+});
 
 continueBtn.addEventListener(
     "click",
@@ -2701,6 +2772,13 @@ async function init() {
     await loadCardSet();
 
     updateHomeStats();
+
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener(
+            'change',
+            handleSystemThemeChange
+        );
+    }
 
     showScreen(
         homeScreen
