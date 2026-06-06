@@ -183,6 +183,7 @@ const DEFAULT_CARDSETS = [
     { key: "body-parts", label: "Body Parts" },
     { key: "animals", label: "Animals" },
     { key: "food", label: "Food" },
+    { key: "sentences", label: "Sentences" }
     // { key: "medical", label: "Medical" }
 ];
 

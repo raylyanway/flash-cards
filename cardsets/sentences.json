@@ -1,0 +1,42 @@
+[
+  {
+    "word": "I am learning English.",
+    "answers": ["Я учу английский."]
+  },
+  {
+    "word": "Can you help me, please?",
+    "answers": ["Можете мне помочь, пожалуйста?", "Ты можешь мне помочь, пожалуйста?"]
+  },
+  {
+    "word": "What time does the class start?",
+    "answers": ["Когда начинается занятие?"]
+  },
+  {
+    "word": "I would like a cup of tea.",
+    "answers": ["Я хотел бы чашку чаю.", "Я бы хотел чашку чая."]
+  },
+  {
+    "word": "Where is the nearest bookstore?",
+    "answers": ["Где находится ближайший книжный магазин?"]
+  },
+  {
+    "word": "Please speak more slowly.",
+    "answers": ["Пожалуйста, говорите медленнее."]
+  },
+  {
+    "word": "I need to practice every day.",
+    "answers": ["Мне нужно практиковаться каждый день."]
+  },
+  {
+    "word": "This sentence is easy to remember.",
+    "answers": ["Эту фразу легко запомнить."]
+  },
+  {
+    "word": "I am going to the library.",
+    "answers": ["Я иду в библиотеку."]
+  },
+  {
+    "word": "She speaks English very well.",
+    "answers": ["Она говорит по-английски очень хорошо."]
+  }
+]
