@@ -1,14 +1,14 @@
 - [x] add analytics
+- [x] allow user to set up progress
+- [x] import and export card sets
+- [x] remove from localstore removed card set, keep there only card set you have
+- [x] set up indexeDB
+- [x] removing datasets
+- [x] search how to keep progress
 - [ ] try with sentencies
 - [ ] try with svg
-- [x] search how to keep progress
 - [ ] optimize storage to use ids instead of word to take less space
 - [ ] check if it possible to send some data in google services
-- [x] allow user to set up progress
 - [ ] compress app if needed
 - [ ] check that can I keep data in local storage compressed
-- [ ] import and export card sets
-- [ ] remove from localstore removed card set, keep there only card set you have
 - [ ] think about redisign
-- [x] set up indexeDB
-- [ ] removing datasets

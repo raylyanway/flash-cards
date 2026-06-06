@@ -14,6 +14,8 @@ let currentCard = null;
 let listening = false;
 let recognition = null;
 let sessionSkippedCards = new Set();
+let wrongAttempts = 0;
+const MAX_WRONG_ATTEMPTS = 3;
 
 let currentSet = "body-parts";
 
@@ -1413,6 +1415,8 @@ function showCurrentCard() {
 
     learnScreen.classList.remove("waiting");
 
+    wrongAttempts = 0;
+
     const p =
         getCardProgress(
             currentCard.word
@@ -1426,10 +1430,7 @@ function showCurrentCard() {
             p.stage
         );
 
-    recognizedText.textContent =
-        listening
-            ? "🎤 Listening..."
-            : "Press Start Listening";
+    updateAttemptDisplay();
 
     resultEl.textContent = "";
 
@@ -1440,6 +1441,25 @@ function showCurrentCard() {
     speakWord(
         currentCard.word
     );
+}
+
+function updateAttemptDisplay() {
+    if (!currentCard) {
+        return;
+    }
+
+    const attemptsLeft =
+        Math.max(0, MAX_WRONG_ATTEMPTS - wrongAttempts);
+
+    const statusText =
+        attemptsLeft > 0
+            ? `${attemptsLeft} attempt${attemptsLeft === 1 ? "" : "s"} left`
+            : "No attempts left";
+
+    recognizedText.textContent =
+        listening
+            ? `🎤 Listening... (${statusText})`
+            : `Press Start Listening — ${statusText}`;
 }
 
 function updateLearningProgress() {
@@ -1527,6 +1547,8 @@ function markWrong(card) {
     const now =
         Date.now();
 
+    wrongAttempts++;
+
     if (
         p.stage > 0
     ) {
@@ -1537,17 +1559,43 @@ function markWrong(card) {
     p.nextReview =
         now;
 
-    sessionSkippedCards.add(card.word);
-
     saveProgress();
 
     updateHomeStats();
+
+    if (wrongAttempts >= MAX_WRONG_ATTEMPTS) {
+        const answerText =
+            Array.isArray(card.answers)
+                ? card.answers.join(", ")
+                : String(card.answers || card.word);
+
+        sessionSkippedCards.add(card.word);
+
+        resultEl.textContent =
+            `❌ Wrong — correct answer: ${answerText}`;
+
+        resultEl.className =
+            "wrong";
+
+        recognizedText.textContent =
+            "Moving to another card...";
+
+        updateSkipButtonState(false);
+
+        setTimeout(() => {
+            selectNextCard();
+        }, 5000);
+
+        return;
+    }
 
     resultEl.textContent =
         "❌ Wrong";
 
     resultEl.className =
         "wrong";
+
+    updateAttemptDisplay();
 }
 
 // =====================================================
@@ -1586,19 +1634,27 @@ function skipCurrentCard() {
 
     updateHomeStats();
 
+    const answerText =
+        Array.isArray(currentCard.answers)
+            ? currentCard.answers.join(", ")
+            : String(currentCard.answers || currentCard.word);
+
     resultEl.textContent =
-        "⏭ Skipped";
+        `⏭ Skipped — correct answer: ${answerText}`;
 
     resultEl.className =
         "skipped";
 
     updateSkipButtonState(false);
 
+    recognizedText.textContent =
+        "Moving to another card...";
+
     setTimeout(() => {
 
         selectNextCard();
 
-    }, 1500);
+    }, 5000);
 }
 
 nextBtn.addEventListener(
@@ -1972,8 +2028,7 @@ function startListening() {
         "listening"
     );
 
-    recognizedText.textContent =
-        "🎤 Listening...";
+    updateAttemptDisplay();
 
     try {
 
@@ -2004,8 +2059,7 @@ function stopListening() {
         "listening"
     );
 
-    recognizedText.textContent =
-        "Listening stopped";
+    updateAttemptDisplay();
 
     try {
 
