@@ -1,82 +1,82 @@
 [
   {
-    "word": "dog",
+    "text": "dog",
     "answers": ["собака"]
   },
   {
-    "word": "cat",
+    "text": "cat",
     "answers": ["кошка", "кот"]
   },
   {
-    "word": "horse",
+    "text": "horse",
     "answers": ["лошадь"]
   },
   {
-    "word": "cow",
+    "text": "cow",
     "answers": ["корова"]
   },
   {
-    "word": "pig",
+    "text": "pig",
     "answers": ["свинья"]
   },
   {
-    "word": "sheep",
+    "text": "sheep",
     "answers": ["овца"]
   },
   {
-    "word": "goat",
+    "text": "goat",
     "answers": ["коза"]
   },
   {
-    "word": "rabbit",
+    "text": "rabbit",
     "answers": ["кролик"]
   },
   {
-    "word": "mouse",
+    "text": "mouse",
     "answers": ["мышь"]
   },
   {
-    "word": "rat",
+    "text": "rat",
     "answers": ["крыса"]
   },
   {
-    "word": "bear",
+    "text": "bear",
     "answers": ["медведь"]
   },
   {
-    "word": "wolf",
+    "text": "wolf",
     "answers": ["волк"]
   },
   {
-    "word": "fox",
+    "text": "fox",
     "answers": ["лиса"]
   },
   {
-    "word": "deer",
+    "text": "deer",
     "answers": ["олень"]
   },
   {
-    "word": "lion",
+    "text": "lion",
     "answers": ["лев"]
   },
   {
-    "word": "tiger",
+    "text": "tiger",
     "answers": ["тигр"]
   },
   {
-    "word": "elephant",
+    "text": "elephant",
     "answers": ["слон"]
   },
   {
-    "word": "monkey",
+    "text": "monkey",
     "answers": ["обезьяна"]
   },
   {
-    "word": "zebra",
+    "text": "zebra",
     "answers": ["зебра"]
   },
   {
-    "word": "giraffe",
+    "text": "giraffe",
     "answers": ["жираф"]
   }
 ]

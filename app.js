@@ -51,7 +51,7 @@ const analyticsBackBtn =
     document.getElementById("analyticsBackBtn");
 
 const wordEl =
-    document.getElementById("word");
+    document.getElementById("text");
 
 const cardStatusEl =
     document.getElementById("cardStatus");
@@ -172,7 +172,7 @@ async function saveProgress() {
 
 const LATEST_DATA_VERSION = 1;
 const DB_NAME = "AppDB";
-const DB_VERSION = 3;
+const DB_VERSION = 1;
 const CARDSETS_STORE_NAME = "cardsets";
 const CARDSET_METADATA_STORE_NAME = "cardsetMetadata";
 const PROGRESS_STORE_NAME = "progress";
@@ -183,6 +183,7 @@ const DEFAULT_CARDSETS = [
     { key: "body-parts", label: "Body Parts" },
     { key: "animals", label: "Animals" },
     { key: "food", label: "Food" },
+    { key: "sentences", label: "Sentences" }
     // { key: "medical", label: "Medical" }
 ];
 
@@ -210,7 +211,7 @@ function openDatabase() {
             const db = event.target.result;
 
             if (!db.objectStoreNames.contains(CARDSETS_STORE_NAME)) {
-                const store = db.createObjectStore(CARDSETS_STORE_NAME, { keyPath: "word" });
+                const store = db.createObjectStore(CARDSETS_STORE_NAME, { keyPath: "text" });
                 store.createIndex("setName", "setName", { unique: false });
             } else {
                 const store = event.target.transaction.objectStore(CARDSETS_STORE_NAME);
@@ -362,8 +363,8 @@ async function fetchAndSeed(currentSet, db) {
 
         try {
             for (const item of data) {
-                if (!item || typeof item.word !== "string") {
-                    throw new Error("Each card object must include a string `word` key.");
+                if (!item || typeof item.text !== "string") {
+                    throw new Error("Each card object must include a string `text` key.");
                 }
                 store.put({ ...item, setName: currentSet });
             }
@@ -650,8 +651,8 @@ async function importCardset(setName, cards) {
 
         try {
             for (const item of cards) {
-                if (!item || typeof item.word !== "string") {
-                    throw new Error("Each card object must include a string `word` key.");
+                if (!item || typeof item.text !== "string") {
+                    throw new Error("Each card object must include a string `text` key.");
                 }
                 store.put({ ...item, setName });
             }
@@ -940,9 +941,9 @@ function initializeMissingProgress() {
 
     for (const card of cards) {
 
-        if (!progress[card.word]) {
+        if (!progress[card.text]) {
 
-            progress[card.word] = {
+            progress[card.text] = {
 
                 stage: 0,
 
@@ -960,9 +961,9 @@ function initializeMissingProgress() {
 // HELPERS
 // =====================================================
 
-function getCardProgress(word) {
+function getCardProgress(text) {
 
-    return progress[word];
+    return progress[text];
 }
 
 function getStageName(stage) {
@@ -1311,12 +1312,12 @@ function getDueCards() {
 
     return cards.filter(card => {
 
-        if (sessionSkippedCards.has(card.word)) {
+        if (sessionSkippedCards.has(card.text)) {
             return false;
         }
 
         const p =
-            getCardProgress(card.word);
+            getCardProgress(card.text);
 
         if (!p) {
             return false;
@@ -1337,7 +1338,7 @@ function getNextDueTimestamp() {
     for (const card of cards) {
 
         const p =
-            getCardProgress(card.word);
+            getCardProgress(card.text);
 
         if (!p) {
             continue;
@@ -1379,10 +1380,10 @@ function selectNextCard() {
     dueCards.sort((a, b) => {
 
         const pa =
-            getCardProgress(a.word);
+            getCardProgress(a.text);
 
         const pb =
-            getCardProgress(b.word);
+            getCardProgress(b.text);
 
         return pa.stage - pb.stage;
     });
@@ -1419,11 +1420,11 @@ function showCurrentCard() {
 
     const p =
         getCardProgress(
-            currentCard.word
+            currentCard.text
         );
 
     wordEl.textContent =
-        currentCard.word;
+        currentCard.text;
 
     cardStatusEl.textContent =
         getStageName(
@@ -1439,7 +1440,7 @@ function showCurrentCard() {
     updateSkipButtonState(true);
 
     speakWord(
-        currentCard.word
+        currentCard.text
     );
 }
 
@@ -1484,7 +1485,7 @@ function updateSkipButtonState(enabled) {
 function markCorrect(card) {
 
     const p =
-        getCardProgress(card.word);
+        getCardProgress(card.text);
 
     const now =
         Date.now();
@@ -1542,7 +1543,7 @@ function markCorrect(card) {
 function markWrong(card) {
 
     const p =
-        getCardProgress(card.word);
+        getCardProgress(card.text);
 
     const now =
         Date.now();
@@ -1567,9 +1568,9 @@ function markWrong(card) {
         const answerText =
             Array.isArray(card.answers)
                 ? card.answers.join(", ")
-                : String(card.answers || card.word);
+                : String(card.answers || card.text);
 
-        sessionSkippedCards.add(card.word);
+        sessionSkippedCards.add(card.text);
 
         resultEl.textContent =
             `❌ Wrong — correct answer: ${answerText}`;
@@ -1610,7 +1611,7 @@ function skipCurrentCard() {
 
     const p =
         getCardProgress(
-            currentCard.word
+            currentCard.text
         );
 
     const now =
@@ -1627,7 +1628,7 @@ function skipCurrentCard() {
         now;
 
     sessionSkippedCards.add(
-        currentCard.word
+        currentCard.text
     );
 
     saveProgress();
@@ -1637,7 +1638,7 @@ function skipCurrentCard() {
     const answerText =
         Array.isArray(currentCard.answers)
             ? currentCard.answers.join(", ")
-            : String(currentCard.answers || currentCard.word);
+            : String(currentCard.answers || currentCard.text);
 
     resultEl.textContent =
         `⏭ Skipped — correct answer: ${answerText}`;
@@ -1881,7 +1882,7 @@ speakBtn.addEventListener(
         ) {
 
             speakWord(
-                currentCard.word
+                currentCard.text
             );
         }
     }
@@ -2143,8 +2144,8 @@ function buildAnalytics() {
     const sortedCards =
         [...cards].sort(
             (a, b) =>
-                a.word.localeCompare(
-                    b.word
+                a.text.localeCompare(
+                    b.text
                 )
         );
 
@@ -2152,7 +2153,7 @@ function buildAnalytics() {
 
         const p =
             getCardProgress(
-                card.word
+                card.text
             );
 
         const row =
@@ -2166,7 +2167,7 @@ function buildAnalytics() {
             );
 
         wordCell.textContent =
-            card.word;
+            card.text;
 
         const statusCell =
             document.createElement(
@@ -2366,7 +2367,7 @@ function markAllCardsAsNew() {
 
     for (const card of cards) {
 
-        progress[card.word] = {
+        progress[card.text] = {
             stage: 0,
             nextReview: 0,
             correctCount: 0
@@ -2391,7 +2392,7 @@ function markAllCardsAsLearning() {
 
     for (const card of cards) {
 
-        progress[card.word] = {
+        progress[card.text] = {
             stage: 1,
             nextReview: now,
             correctCount: 1
@@ -2414,7 +2415,7 @@ function markAllCardsAsLearned() {
 
     for (const card of cards) {
 
-        progress[card.word] = {
+        progress[card.text] = {
             stage: 3,
             nextReview: 0,
             correctCount: 3
@@ -2428,7 +2429,7 @@ function renderProgressCardList(searchTerm = "") {
 
     const filteredCards =
         cards.filter(card =>
-            card.word
+            card.text
                 .toLowerCase()
                 .includes(
                     searchTerm.toLowerCase()
@@ -2440,7 +2441,7 @@ function renderProgressCardList(searchTerm = "") {
     for (const card of filteredCards) {
 
         const p =
-            getCardProgress(card.word);
+            getCardProgress(card.text);
 
         const item =
             document.createElement("div");
@@ -2458,10 +2459,10 @@ function renderProgressCardList(searchTerm = "") {
             document.createElement("div");
 
         wordDiv.className =
-            "progress-card-word";
+            "progress-card-text";
 
         wordDiv.textContent =
-            card.word;
+            card.text;
 
         const statusDiv =
             document.createElement("div");

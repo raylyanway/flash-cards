@@ -1,82 +1,82 @@
 [
   {
-    "word": "bread",
+    "text": "bread",
     "answers": ["хлеб"]
   },
   {
-    "word": "milk",
+    "text": "milk",
     "answers": ["молоко"]
   },
   {
-    "word": "cheese",
+    "text": "cheese",
     "answers": ["сыр"]
   },
   {
-    "word": "butter",
+    "text": "butter",
     "answers": ["масло"]
   },
   {
-    "word": "egg",
+    "text": "egg",
     "answers": ["яйцо"]
   },
   {
-    "word": "meat",
+    "text": "meat",
     "answers": ["мясо"]
   },
   {
-    "word": "fish",
+    "text": "fish",
     "answers": ["рыба"]
   },
   {
-    "word": "chicken",
+    "text": "chicken",
     "answers": ["курица"]
   },
   {
-    "word": "apple",
+    "text": "apple",
     "answers": ["яблоко"]
   },
   {
-    "word": "banana",
+    "text": "banana",
     "answers": ["банан"]
   },
   {
-    "word": "orange",
+    "text": "orange",
     "answers": ["апельсин"]
   },
   {
-    "word": "grape",
+    "text": "grape",
     "answers": ["виноград"]
   },
   {
-    "word": "potato",
+    "text": "potato",
     "answers": ["картофель", "картошка"]
   },
   {
-    "word": "tomato",
+    "text": "tomato",
     "answers": ["помидор", "томат"]
   },
   {
-    "word": "cucumber",
+    "text": "cucumber",
     "answers": ["огурец"]
   },
   {
-    "word": "carrot",
+    "text": "carrot",
     "answers": ["морковь"]
   },
   {
-    "word": "onion",
+    "text": "onion",
     "answers": ["лук"]
   },
   {
-    "word": "salt",
+    "text": "salt",
     "answers": ["соль"]
   },
   {
-    "word": "sugar",
+    "text": "sugar",
     "answers": ["сахар"]
   },
   {
-    "word": "water",
+    "text": "water",
     "answers": ["вода"]
   }
 ]
