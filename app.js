@@ -4,6 +4,8 @@
 
 const STORAGE_KEY = "voice-trainer-progress";
 const SETTINGS_KEY = "voice-trainer-settings";
+const DEFAULT_THEME = "system";
+let themePreference = DEFAULT_THEME;
 
 const REVIEW_1_DELAY = 30 * 1000; // 30 sec
 const REVIEW_2_DELAY = 60 * 1000; // 1 min
@@ -128,6 +130,21 @@ const deleteCardsetBtn =
 const importCardsetFile =
     document.getElementById("importCardsetFile");
 
+const settingsBtn =
+    document.getElementById("settingsBtn");
+
+const settingsScreen =
+    document.getElementById("settingsScreen");
+
+const settingsBackBtn =
+    document.getElementById("settingsBackBtn");
+
+const themeOptionInputs =
+    document.querySelectorAll('input[name="themeOption"]');
+
+const deleteDatabaseBtn =
+    document.getElementById("deleteDatabaseBtn");
+
 const confirmSetupProgressBtn =
     document.getElementById("confirmSetupProgressBtn");
 
@@ -140,6 +157,7 @@ function showScreen(screen) {
     homeScreen.classList.remove("active");
     learnScreen.classList.remove("active");
     analyticsScreen.classList.remove("active");
+    settingsScreen.classList.remove("active");
 
     screen.classList.add("active");
 }
@@ -171,7 +189,7 @@ async function saveProgress() {
 // =====================================================
 
 const LATEST_DATA_VERSION = 1;
-const DB_NAME = "AppDB";
+const DB_NAME = "flashCardDB";
 const DB_VERSION = 1;
 const CARDSETS_STORE_NAME = "cardsets";
 const CARDSET_METADATA_STORE_NAME = "cardsetMetadata";
@@ -899,14 +917,55 @@ async function setSettingsToDB(settingsData) {
 // SETTINGS LOAD/SAVE (Updated for IndexedDB)
 // =====================================================
 
+function getPreferredTheme() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+}
+
+function applyTheme(value) {
+    themePreference = value || DEFAULT_THEME;
+    document.body.classList.remove('theme-system', 'theme-light', 'theme-dark');
+    document.body.classList.add(`theme-${themePreference}`);
+
+    themeOptionInputs.forEach((input) => {
+        input.checked = input.value === themePreference;
+    });
+}
+
+function handleSystemThemeChange(event) {
+    if (themePreference === 'system') {
+        document.body.classList.remove('theme-light', 'theme-dark');
+        document.body.classList.add('theme-system');
+    }
+}
+
+async function deleteAppDatabase() {
+    try {
+        return new Promise((resolve, reject) => {
+            const request = window.indexedDB.deleteDatabase(DB_NAME);
+            request.onsuccess = () => resolve();
+            request.onblocked = () => reject(new Error('Delete blocked by another open connection. Close other tabs first.'));
+            request.onerror = () => reject(request.error || new Error('Failed to delete IndexedDB.'));
+        });
+    } catch (error) {
+        console.error('deleteAppDatabase failed:', error);
+        throw error;
+    }
+}
+
 async function loadSettings() {
     try {
         const settings = await getSettingsFromDB();
-        currentSet = settings.currentSet || "body-parts";
+        currentSet = settings.currentSet || 'body-parts';
+        themePreference = settings.theme || DEFAULT_THEME;
+        applyTheme(themePreference);
         cardSetSelect.value = currentSet;
     } catch (error) {
-        console.error("Failed to load settings:", error);
-        currentSet = "body-parts";
+        console.error('Failed to load settings:', error);
+        currentSet = 'body-parts';
+        themePreference = DEFAULT_THEME;
+        applyTheme(themePreference);
         cardSetSelect.value = currentSet;
     }
 }
@@ -914,10 +973,11 @@ async function loadSettings() {
 async function saveSettings() {
     try {
         await setSettingsToDB({
-            currentSet: currentSet
+            currentSet: currentSet,
+            theme: themePreference
         });
     } catch (error) {
-        console.error("Failed to save settings:", error);
+        console.error('Failed to save settings:', error);
     }
 }
 
@@ -1111,6 +1171,56 @@ cardSetSelect.addEventListener(
         await loadCardSet();
     }
 );
+
+settingsBtn.addEventListener(
+    "click",
+    () => {
+        showScreen(
+            settingsScreen
+        );
+    }
+);
+
+settingsBackBtn.addEventListener(
+    "click",
+    () => {
+        showScreen(
+            homeScreen
+        );
+    }
+);
+
+deleteDatabaseBtn.addEventListener(
+    "click",
+    async () => {
+        const confirmed = confirm(
+            'Delete the saved app database? This will remove all stored progress and cardset data in IndexedDB.'
+        );
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            await deleteAppDatabase();
+            setCachedDataVersion(0);
+            alert('App database deleted. The app will reload to recreate fresh storage.');
+            location.reload();
+        } catch (error) {
+            console.error('Unable to delete database:', error);
+            alert('Could not delete the database. Close other tabs and try again.');
+        }
+    }
+);
+
+themeOptionInputs.forEach((input) => {
+    input.addEventListener(
+        "change",
+        async (event) => {
+            applyTheme(event.target.value);
+            await saveSettings();
+        }
+    );
+});
 
 continueBtn.addEventListener(
     "click",
@@ -2701,6 +2811,13 @@ async function init() {
     await loadCardSet();
 
     updateHomeStats();
+
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener(
+            'change',
+            handleSystemThemeChange
+        );
+    }
 
     showScreen(
         homeScreen

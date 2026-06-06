@@ -11,7 +11,12 @@
 <body>
 
 <header>
-    <h1>🎓 English Voice Trainer</h1>
+    <div>
+        <h1>🎓 English Voice Trainer</h1>
+    </div>
+    <div class="header-actions">
+        <button id="settingsBtn" class="secondary">⚙️ Settings</button>
+    </div>
 </header>
 
 <!-- HOME SCREEN -->
@@ -216,6 +221,63 @@
     
         </button>
     
+    </div>
+
+</section>
+
+<!-- SETTINGS SCREEN -->
+
+<section id="settingsScreen" class="screen">
+
+    <div class="top-bar">
+
+        <button id="settingsBackBtn">
+            ← Home
+        </button>
+
+        <h2>Settings</h2>
+
+    </div>
+
+    <div class="card">
+
+        <h3>App Theme</h3>
+        <p class="help-text">
+            Choose a high-contrast theme or let the app follow your system preference.
+        </p>
+
+        <div class="theme-options">
+            <label class="theme-option">
+                <input type="radio" name="themeOption" value="system" checked>
+                <div>
+                    <strong>System</strong>
+                    <div>Follow your device theme preference.</div>
+                </div>
+            </label>
+            <label class="theme-option">
+                <input type="radio" name="themeOption" value="light">
+                <div>
+                    <strong>Light</strong>
+                    <div>Soft pastel light mode with strong contrast.</div>
+                </div>
+            </label>
+            <label class="theme-option">
+                <input type="radio" name="themeOption" value="dark">
+                <div>
+                    <strong>Dark</strong>
+                    <div>High-contrast dark mode for low vision support.</div>
+                </div>
+            </label>
+        </div>
+
+        <div class="setup-section">
+            <h3>Database</h3>
+            <p class="help-text">Delete the saved app database and reset indexed data. This does not remove your cardset files.</p>
+            <div class="button-group">
+                <button id="deleteDatabaseBtn" class="danger">Delete Database</button>
+            </div>
+        </div>
+
     </div>
 
 </section>
