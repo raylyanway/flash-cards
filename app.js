@@ -2238,6 +2238,20 @@ function buildAnalytics() {
             statusCell
         );
 
+        const answerCell =
+            document.createElement(
+                "td"
+            );
+
+        answerCell.textContent =
+            Array.isArray(card.answers)
+                ? card.answers.join(", ")
+                : String(card.answers || "");
+
+        row.appendChild(
+            answerCell
+        );
+
         tbody.appendChild(
             row
         );

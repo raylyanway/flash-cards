@@ -5,10 +5,10 @@
 - [x] set up indexeDB
 - [x] removing datasets
 - [x] search how to keep progress
+- [o] optimize storage to use ids instead of word to take less space
+- [-] check that can I keep data in local storage compressed
 - [ ] try with sentencies
 - [ ] try with svg
-- [ ] optimize storage to use ids instead of word to take less space
 - [ ] check if it possible to send some data in google services
 - [ ] compress app if needed
-- [ ] check that can I keep data in local storage compressed
 - [ ] think about redisign
