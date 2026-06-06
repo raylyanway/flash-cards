@@ -11,3 +11,4 @@
 - [ ] remove from localstore removed card set, keep there only card set you have
 - [ ] think about redisign
 - [x] set up indexeDB
+- [ ] removing datasets
