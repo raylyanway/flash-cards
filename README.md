@@ -7,3 +7,8 @@
 - [x] allow user to set up progress
 - [ ] compress app if needed
 - [ ] check that can I keep data in local storage compressed
+- [ ] import and export card sets
+- [ ] remove from localstore removed card set, keep there only card set you have
+- [ ] think about redisign
+- [x] set up indexeDB
+- [ ] removing datasets
