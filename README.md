@@ -12,3 +12,4 @@
 - [ ] think about redisign
 - [x] set up indexeDB
 - [ ] removing datasets
+- [ ] add favicon
