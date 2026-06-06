@@ -142,6 +142,9 @@ const settingsBackBtn =
 const themeOptionInputs =
     document.querySelectorAll('input[name="themeOption"]');
 
+const deleteDatabaseBtn =
+    document.getElementById("deleteDatabaseBtn");
+
 const confirmSetupProgressBtn =
     document.getElementById("confirmSetupProgressBtn");
 
@@ -186,7 +189,7 @@ async function saveProgress() {
 // =====================================================
 
 const LATEST_DATA_VERSION = 1;
-const DB_NAME = "AppDB";
+const DB_NAME = "flashCardDB";
 const DB_VERSION = 1;
 const CARDSETS_STORE_NAME = "cardsets";
 const CARDSET_METADATA_STORE_NAME = "cardsetMetadata";
@@ -937,6 +940,20 @@ function handleSystemThemeChange(event) {
     }
 }
 
+async function deleteAppDatabase() {
+    try {
+        return new Promise((resolve, reject) => {
+            const request = window.indexedDB.deleteDatabase(DB_NAME);
+            request.onsuccess = () => resolve();
+            request.onblocked = () => reject(new Error('Delete blocked by another open connection. Close other tabs first.'));
+            request.onerror = () => reject(request.error || new Error('Failed to delete IndexedDB.'));
+        });
+    } catch (error) {
+        console.error('deleteAppDatabase failed:', error);
+        throw error;
+    }
+}
+
 async function loadSettings() {
     try {
         const settings = await getSettingsFromDB();
@@ -1170,6 +1187,28 @@ settingsBackBtn.addEventListener(
         showScreen(
             homeScreen
         );
+    }
+);
+
+deleteDatabaseBtn.addEventListener(
+    "click",
+    async () => {
+        const confirmed = confirm(
+            'Delete the saved app database? This will remove all stored progress and cardset data in IndexedDB.'
+        );
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            await deleteAppDatabase();
+            setCachedDataVersion(0);
+            alert('App database deleted. The app will reload to recreate fresh storage.');
+            location.reload();
+        } catch (error) {
+            console.error('Unable to delete database:', error);
+            alert('Could not delete the database. Close other tabs and try again.');
+        }
     }
 );
 
