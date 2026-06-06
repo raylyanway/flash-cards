@@ -160,38 +160,22 @@ function saveSettings() {
     );
 }
 
-// =====================================================
-// STORAGE
-// =====================================================
-
-function loadProgress() {
-
-    const allProgress =
-        JSON.parse(
-            localStorage.getItem(STORAGE_KEY)
-            || "{}"
-        );
-
-    progress =
-        allProgress[currentSet]
-        || {};
+async function loadProgress() {
+    try {
+        const storedProgress = await getProgressFromDB(currentSet);
+        progress = storedProgress || {};
+    } catch (error) {
+        console.error("Failed to load progress from IndexedDB:", error);
+        progress = {};
+    }
 }
 
-function saveProgress() {
-
-    const allProgress =
-        JSON.parse(
-            localStorage.getItem(STORAGE_KEY)
-            || "{}"
-        );
-
-    allProgress[currentSet] =
-        progress;
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(allProgress)
-    );
+async function saveProgress() {
+    try {
+        await setProgressToDB(currentSet, progress);
+    } catch (error) {
+        console.error("Failed to save progress to IndexedDB:", error);
+    }
 }
 
 // =====================================================
@@ -201,15 +185,14 @@ function saveProgress() {
 const LATEST_DATA_VERSION = 1;
 const DB_NAME = "AppDB";
 const DB_VERSION = 1;
-const STORE_NAME = "cardsets";
+const CARDSETS_STORE_NAME = "cardsets";
+const PROGRESS_STORE_NAME = "progress";
+const SETTINGS_STORE_NAME = "settings";
 const CACHE_VERSION_KEY = "cached_data_version";
 
 function ensureStorageAvailable() {
     if (!window.indexedDB) {
         throw new Error("IndexedDB is not supported by this browser.");
-    }
-    if (!window.localStorage) {
-        throw new Error("localStorage is not available.");
     }
 }
 
@@ -230,15 +213,22 @@ function openDatabase() {
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
 
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                const store = db.createObjectStore(STORE_NAME, { keyPath: "word" });
+            if (!db.objectStoreNames.contains(CARDSETS_STORE_NAME)) {
+                const store = db.createObjectStore(CARDSETS_STORE_NAME, { keyPath: "word" });
                 store.createIndex("setName", "setName", { unique: false });
-                return;
+            } else {
+                const store = event.target.transaction.objectStore(CARDSETS_STORE_NAME);
+                if (!store.indexNames.contains("setName")) {
+                    store.createIndex("setName", "setName", { unique: false });
+                }
             }
 
-            const store = event.target.transaction.objectStore(STORE_NAME);
-            if (!store.indexNames.contains("setName")) {
-                store.createIndex("setName", "setName", { unique: false });
+            if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+                db.createObjectStore(PROGRESS_STORE_NAME, { keyPath: "setName" });
+            }
+
+            if (!db.objectStoreNames.contains(SETTINGS_STORE_NAME)) {
+                db.createObjectStore(SETTINGS_STORE_NAME, { keyPath: "key" });
             }
         };
 
@@ -271,8 +261,8 @@ async function setCachedDataVersion(version) {
 
 function clearCardstore(db) {
     return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, "readwrite");
-        const store = tx.objectStore(STORE_NAME);
+        const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
+        const store = tx.objectStore(CARDSETS_STORE_NAME);
 
         const request = store.clear();
 
@@ -287,8 +277,8 @@ function clearCardstore(db) {
 
 function getStoreCountForSet(db, setName) {
     return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, "readonly");
-        const store = tx.objectStore(STORE_NAME);
+        const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
+        const store = tx.objectStore(CARDSETS_STORE_NAME);
 
         if (store.indexNames.contains("setName")) {
             const index = store.index("setName");
@@ -330,8 +320,8 @@ function getStoreCountForSet(db, setName) {
 
 function getStoreCount(db) {
     return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, "readonly");
-        const store = tx.objectStore(STORE_NAME);
+        const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
+        const store = tx.objectStore(CARDSETS_STORE_NAME);
 
         const request = store.count();
         request.onerror = () => {
@@ -361,8 +351,8 @@ async function fetchAndSeed(currentSet, db) {
     }
 
     return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, "readwrite");
-        const store = tx.objectStore(STORE_NAME);
+        const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
+        const store = tx.objectStore(CARDSETS_STORE_NAME);
 
         tx.onerror = () => reject(tx.error || new Error("Transaction failed during seed."));
         tx.oncomplete = () => {
@@ -386,8 +376,8 @@ async function fetchAndSeed(currentSet, db) {
 function getAllCardsForSet(currentSet) {
     return openDatabase().then((db) => {
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, "readonly");
-            const store = tx.objectStore(STORE_NAME);
+            const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
+            const store = tx.objectStore(CARDSETS_STORE_NAME);
 
             const cardsForSet = [];
             let request;
@@ -452,8 +442,8 @@ async function getCards(cardSet) {
         const db = await openDatabase();
 
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, "readonly");
-            const store = tx.objectStore(STORE_NAME);
+            const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
+            const store = tx.objectStore(CARDSETS_STORE_NAME);
             const request = store.get(cardSet);
 
             request.onerror = () => reject(request.error || new Error("Failed to read card from IndexedDB."));
@@ -462,6 +452,130 @@ async function getCards(cardSet) {
     } catch (error) {
         console.error("getCards failed:", error);
         throw error;
+    }
+}
+
+// =====================================================
+// PROGRESS STORAGE (IndexedDB)
+// =====================================================
+
+async function getProgressFromDB(setName) {
+    try {
+        const db = await openDatabase();
+
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(PROGRESS_STORE_NAME, "readonly");
+            const store = tx.objectStore(PROGRESS_STORE_NAME);
+            const request = store.get(setName);
+
+            request.onerror = () => reject(request.error || new Error("Failed to read progress from IndexedDB."));
+            request.onsuccess = () => {
+                const result = request.result;
+                resolve(result ? result.data : null);
+            };
+        });
+    } catch (error) {
+        console.error("getProgressFromDB failed:", error);
+        return null;
+    }
+}
+
+async function setProgressToDB(setName, progressData) {
+    try {
+        const db = await openDatabase();
+
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(PROGRESS_STORE_NAME, "readwrite");
+            const store = tx.objectStore(PROGRESS_STORE_NAME);
+            const request = store.put({
+                setName: setName,
+                data: progressData,
+                lastUpdated: Date.now()
+            });
+
+            request.onerror = () => reject(request.error || new Error("Failed to write progress to IndexedDB."));
+
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error || new Error("Progress transaction failed."));
+        });
+    } catch (error) {
+        console.error("setProgressToDB failed:", error);
+        throw error;
+    }
+}
+
+// =====================================================
+// SETTINGS STORAGE (IndexedDB)
+// =====================================================
+
+async function getSettingsFromDB() {
+    try {
+        const db = await openDatabase();
+
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(SETTINGS_STORE_NAME, "readonly");
+            const store = tx.objectStore(SETTINGS_STORE_NAME);
+            const request = store.get("settings");
+
+            request.onerror = () => reject(request.error || new Error("Failed to read settings from IndexedDB."));
+            request.onsuccess = () => {
+                const result = request.result;
+                resolve(result ? result.data : {});
+            };
+        });
+    } catch (error) {
+        console.error("getSettingsFromDB failed:", error);
+        return {};
+    }
+}
+
+async function setSettingsToDB(settingsData) {
+    try {
+        const db = await openDatabase();
+
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(SETTINGS_STORE_NAME, "readwrite");
+            const store = tx.objectStore(SETTINGS_STORE_NAME);
+            const request = store.put({
+                key: "settings",
+                data: settingsData,
+                lastUpdated: Date.now()
+            });
+
+            request.onerror = () => reject(request.error || new Error("Failed to write settings to IndexedDB."));
+
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error || new Error("Settings transaction failed."));
+        });
+    } catch (error) {
+        console.error("setSettingsToDB failed:", error);
+        throw error;
+    }
+}
+
+// =====================================================
+// SETTINGS LOAD/SAVE (Updated for IndexedDB)
+// =====================================================
+
+async function loadSettings() {
+    try {
+        const settings = await getSettingsFromDB();
+        currentSet = settings.currentSet || "body-parts";
+        cardSetSelect.value = currentSet;
+    } catch (error) {
+        console.error("Failed to load settings:", error);
+        currentSet = "body-parts";
+        cardSetSelect.value = currentSet;
+    }
+}
+
+async function saveSettings() {
+    try {
+        await setSettingsToDB({
+            currentSet: currentSet
+        });
+    } catch (error) {
+        console.error("Failed to save settings:", error);
     }
 }
 
@@ -646,9 +760,9 @@ cardSetSelect.addEventListener(
         currentSet =
             cardSetSelect.value;
 
-        saveSettings();
+        await saveSettings();
 
-        loadProgress();
+        await loadProgress();
 
         await loadCardSet();
     }
@@ -737,9 +851,9 @@ closeProgressSetupBtn.addEventListener(
 
 confirmSetupProgressBtn.addEventListener(
     "click",
-    () => {
+    async () => {
         // Save the progress changes
-        saveProgress();
+        await saveProgress();
 
         // Clear the backup so closeProgressSetupModal won't restore old state
         progressBackup = null;
@@ -2066,7 +2180,7 @@ function handleImportProgress(event) {
     const reader =
         new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
 
         try {
 
@@ -2096,7 +2210,7 @@ function handleImportProgress(event) {
             }
 
             progress = data.progress;
-            saveProgress();
+            await saveProgress();
 
             renderProgressCardList("");
 
@@ -2140,9 +2254,9 @@ function handleImportProgress(event) {
 
 async function init() {
 
-    loadSettings();
+    await loadSettings();
 
-    loadProgress();
+    await loadProgress();
 
     await loadCardSet();
 
