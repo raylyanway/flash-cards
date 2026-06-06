@@ -197,6 +197,8 @@ const PROGRESS_STORE_NAME = "progress";
 const SETTINGS_STORE_NAME = "settings";
 const CACHE_VERSION_KEY = "cached_data_version";
 
+let dbConnection = null;
+
 const DEFAULT_CARDSETS = [
     { key: "body-parts", label: "Body Parts" },
     { key: "animals", label: "Animals" },
@@ -213,6 +215,10 @@ function ensureStorageAvailable() {
 
 function openDatabase() {
     ensureStorageAvailable();
+
+    if (dbConnection) {
+        return Promise.resolve(dbConnection);
+    }
 
     return new Promise((resolve, reject) => {
         const request = window.indexedDB.open(DB_NAME, DB_VERSION);
@@ -256,6 +262,13 @@ function openDatabase() {
             db.onerror = (event) => {
                 console.error("IndexedDB error:", event.target.error);
             };
+            db.onversionchange = () => {
+                db.close();
+                if (dbConnection === db) {
+                    dbConnection = null;
+                }
+            };
+            dbConnection = db;
             resolve(db);
         };
     });
@@ -942,6 +955,11 @@ function handleSystemThemeChange(event) {
 
 async function deleteAppDatabase() {
     try {
+        if (dbConnection) {
+            dbConnection.close();
+            dbConnection = null;
+        }
+
         return new Promise((resolve, reject) => {
             const request = window.indexedDB.deleteDatabase(DB_NAME);
             request.onsuccess = () => resolve();
