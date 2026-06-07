@@ -908,17 +908,6 @@ function createCsvFromCards(cards) {
     return rows.join("\r\n");
 }
 
-async function gzipText(text) {
-    if (!window.CompressionStream) {
-        throw new Error("Browser does not support gzip compression.");
-    }
-
-    const encoder = new TextEncoder();
-    const cs = new CompressionStream("gzip");
-    const compressedStream = new Blob([encoder.encode(text)]).stream().pipeThrough(cs);
-    return await new Response(compressedStream).blob();
-}
-
 async function exportCardset() {
     try {
         const cards = await getAllCardsForSet(currentSet);
@@ -931,11 +920,11 @@ async function exportCardset() {
             const { setName, ...rest } = card;
             return rest;
         }));
-        const blob = await gzipText(csvText);
+        const blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `${currentSet}.csv.gz`;
+        link.download = `${currentSet}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -949,6 +938,13 @@ async function exportCardset() {
 function handleImportCardset(event) {
     const file = event.target.files[0];
     if (!file) {
+        return;
+    }
+
+    const lowerName = file.name.toLowerCase();
+    if (!lowerName.endsWith('.csv')) {
+        alert("Please upload a .csv file only.");
+        event.target.value = "";
         return;
     }
 
@@ -1013,12 +1009,7 @@ function handleImportCardset(event) {
     reader.onload = async (e) => {
         try {
             const result = e.target.result;
-            if (file.name.toLowerCase().endsWith('.gz')) {
-                const text = await decompressOrDecodeBuffer(result);
-                await processFileText(text);
-            } else {
-                await processFileText(result);
-            }
+            await processFileText(result);
         } catch (error) {
             alert(`Failed to import cardset: ${error.message}`);
         } finally {
@@ -1026,11 +1017,7 @@ function handleImportCardset(event) {
         }
     };
 
-    if (file.name.toLowerCase().endsWith('.gz')) {
-        reader.readAsArrayBuffer(file);
-    } else {
-        reader.readAsText(file);
-    }
+    reader.readAsText(file);
 }
 
 async function clearDefaultCardsets(db) {
