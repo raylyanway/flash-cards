@@ -197,6 +197,7 @@ const CARDSET_METADATA_STORE_NAME = "cardsetMetadata";
 const PROGRESS_STORE_NAME = "progress";
 const SETTINGS_STORE_NAME = "settings";
 const CACHE_VERSION_KEY = "cached_data_version";
+const CSV_DELIMITER = ',';
 
 let dbConnection = null;
 
@@ -366,21 +367,190 @@ function getStoreCount(db) {
     });
 }
 
-async function fetchAndSeed(currentSet, db) {
-    const url = `cardsets/${currentSet}.json`;
+const CARDSET_FILE_FORMATS = [
+    { suffix: ".csv.gz", type: "csv" },
+    { suffix: ".csv", type: "csv" },
+    { suffix: ".json", type: "json" }
+];
 
+function getCardsetBaseName(fileName) {
+    let name = fileName;
+    if (name.toLowerCase().endsWith(".gz")) {
+        name = name.slice(0, -3);
+    }
+    if (name.toLowerCase().endsWith(".json")) {
+        name = name.slice(0, -5);
+    }
+    if (name.toLowerCase().endsWith(".csv")) {
+        name = name.slice(0, -4);
+    }
+    return name;
+}
+
+function csvCellToValue(value) {
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return "";
+    }
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        try {
+            return JSON.parse(trimmed);
+        } catch (error) {
+            // fallback to raw string
+        }
+    }
+    return trimmed;
+}
+
+function parseCsvToJson(csvText) {
+    const rows = [];
+    let row = [];
+    let cell = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < csvText.length; i++) {
+        const char = csvText[i];
+        const nextChar = csvText[i + 1];
+
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                cell += '"';
+                i += 1;
+                continue;
+            }
+            inQuotes = !inQuotes;
+            continue;
+        }
+
+        if (!inQuotes && char === CSV_DELIMITER) {
+            row.push(cell);
+            cell = "";
+            continue;
+        }
+
+        if (!inQuotes && char === '\n') {
+            row.push(cell);
+            rows.push(row);
+            row = [];
+            cell = "";
+            continue;
+        }
+
+        if (!inQuotes && char === '\r') {
+            continue;
+        }
+
+        cell += char;
+    }
+
+    if (cell !== "" || row.length > 0) {
+        row.push(cell);
+        rows.push(row);
+    }
+
+    const [headers, ...dataRows] = rows.filter((r) => r.some((cellValue) => cellValue !== ""));
+    if (!headers || headers.length === 0) {
+        throw new Error("CSV file is missing header row.");
+    }
+
+    const headerNames = headers.map((header) => header.trim());
+    if (!headerNames.includes("text")) {
+        throw new Error("CSV file must include a 'text' column.");
+    }
+
+    return dataRows.map((rowValues, rowIndex) => {
+        const record = {};
+        for (let index = 0; index < headerNames.length; index++) {
+            const key = headerNames[index];
+            const rawValue = rowValues[index] ?? "";
+            if (key === "answers") {
+                const trimmed = rawValue.trim();
+                if (!trimmed) {
+                    record.answers = [];
+                } else if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                    try {
+                        record.answers = JSON.parse(trimmed);
+                    } catch (error) {
+                        record.answers = trimmed.split("|").map((part) => part.trim()).filter(Boolean);
+                    }
+                } else {
+                    record.answers = trimmed.split("|").map((part) => part.trim()).filter(Boolean);
+                }
+            } else if (key === "text") {
+                record.text = String(rawValue).trim();
+            } else {
+                record[key] = csvCellToValue(rawValue);
+            }
+        }
+
+        if (!record.text) {
+            throw new Error(`CSV row ${rowIndex + 2} is missing a text value.`);
+        }
+
+        return record;
+    });
+}
+
+async function decompressOrDecodeBuffer(buffer) {
+    const bytes = new Uint8Array(buffer);
+    if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) {
+        return new TextDecoder().decode(buffer);
+    }
+
+    if (!window.DecompressionStream) {
+        throw new Error("Browser does not support gzip decompression.");
+    }
+
+    const ds = new DecompressionStream("gzip");
+    const decompressedStream = new Response(new Blob([buffer]).stream().pipeThrough(ds));
+    return decompressedStream.text();
+}
+
+function parseCardsetText(text, sourceName) {
+    const trimmed = text.trim();
+    if (sourceName.toLowerCase().endsWith(".json") || trimmed.startsWith("[") || trimmed.startsWith("{")) {
+        return JSON.parse(trimmed);
+    }
+
+    return parseCsvToJson(text);
+}
+
+async function resolveCardsetUrl(setName) {
+    const tried = [];
+    for (const format of CARDSET_FILE_FORMATS) {
+        const url = `cardsets/${setName}${format.suffix}`;
+        tried.push(url);
+        try {
+            const response = await fetch(url, { cache: "reload" });
+            if (response.ok) {
+                return { response, url };
+            }
+        } catch (error) {
+            // continue trying other formats
+        }
+    }
+    throw new Error(`Failed to fetch cardset data. Tried: ${tried.join(", ")}`);
+}
+
+async function fetchAndSeed(currentSet, db) {
     let data;
     try {
-        const response = await fetch(url, { cache: "reload" });
-        if (!response.ok) {
-            throw new Error(`Network response was not OK (${response.status}).`);
+        const { response, url } = await resolveCardsetUrl(currentSet);
+        let text;
+
+        if (url.endsWith(".gz")) {
+            const buffer = await response.arrayBuffer();
+            text = await decompressOrDecodeBuffer(buffer);
+        } else {
+            text = await response.text();
         }
-        data = await response.json();
+
+        data = parseCardsetText(text, url);
         if (!Array.isArray(data)) {
-            throw new Error("Expected JSON array from cardset file.");
+            throw new Error("Expected array data from cardset file.");
         }
     } catch (error) {
-        throw new Error(`Failed to fetch ${url}: ${error.message}`);
+        throw new Error(`Failed to fetch cardset for '${currentSet}': ${error.message}`);
     }
 
     return new Promise((resolve, reject) => {
@@ -694,6 +864,61 @@ async function importCardset(setName, cards) {
     });
 }
 
+function escapeCsvValue(value) {
+    if (value === undefined || value === null) {
+        return "";
+    }
+
+    let output = value;
+    if (Array.isArray(value)) {
+        output = value.join("|");
+    } else if (typeof value === "object") {
+        output = JSON.stringify(value);
+    }
+
+    output = String(output);
+    const shouldQuote = new RegExp(`["${CSV_DELIMITER}\\r\\n]`).test(output);
+    if (shouldQuote) {
+        output = `"${output.replace(/"/g, '""')}"`;
+    }
+    return output;
+}
+
+function createCsvFromCards(cards) {
+    const fieldSet = new Set();
+    for (const card of cards) {
+        Object.keys(card).forEach((key) => {
+            if (key === "setName") {
+                return;
+            }
+            fieldSet.add(key);
+        });
+    }
+
+    const preferredOrder = ["text", "answers"];
+    const extraFields = [...fieldSet].filter((key) => !preferredOrder.includes(key));
+    const headers = [...preferredOrder.filter((key) => fieldSet.has(key)), ...extraFields];
+
+    const rows = [headers.join(CSV_DELIMITER)];
+    for (const card of cards) {
+        const row = headers.map((key) => escapeCsvValue(card[key]));
+        rows.push(row.join(CSV_DELIMITER));
+    }
+
+    return rows.join("\r\n");
+}
+
+async function gzipText(text) {
+    if (!window.CompressionStream) {
+        throw new Error("Browser does not support gzip compression.");
+    }
+
+    const encoder = new TextEncoder();
+    const cs = new CompressionStream("gzip");
+    const compressedStream = new Blob([encoder.encode(text)]).stream().pipeThrough(cs);
+    return await new Response(compressedStream).blob();
+}
+
 async function exportCardset() {
     try {
         const cards = await getAllCardsForSet(currentSet);
@@ -702,22 +927,15 @@ async function exportCardset() {
             return;
         }
 
-        const metadata = await getCardsetMetadata(currentSet);
-        const payload = {
-            setName: currentSet,
-            displayName: metadata?.displayName || getDisplayNameForSet(currentSet),
-            cards: cards.map(card => {
-                const { setName, ...rest } = card;
-                return rest;
-            })
-        };
-
-        const json = JSON.stringify(payload, null, 2);
-        const blob = new Blob([json], { type: "application/json" });
+        const csvText = createCsvFromCards(cards.map((card) => {
+            const { setName, ...rest } = card;
+            return rest;
+        }));
+        const blob = await gzipText(csvText);
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `${currentSet}-cardset.json`;
+        link.download = `${currentSet}.csv.gz`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -734,23 +952,21 @@ function handleImportCardset(event) {
         return;
     }
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
+    const processFileText = async (text) => {
+        let data;
         try {
-            const data = JSON.parse(e.target.result);
-            if (!data || typeof data.setName !== "string" || !Array.isArray(data.cards)) {
-                throw new Error("Invalid cardset file format.");
-            }
+            data = parseCardsetText(text, file.name);
+        } catch (error) {
+            throw new Error(`Failed to parse cardset file: ${error.message}`);
+        }
 
-            const setName = data.setName.trim();
+        if (Array.isArray(data)) {
+            const setName = getCardsetBaseName(file.name);
             if (!setName) {
-                throw new Error("Cardset file must include a valid setName.");
+                throw new Error("Unable to infer cardset name from the uploaded file name.");
             }
 
-            const displayName = typeof data.displayName === "string"
-                ? data.displayName.trim()
-                : getDisplayNameForSet(setName);
-
+            const displayName = getDisplayNameForSet(setName);
             const existing = await getUniqueCardsetNames();
             if (existing.includes(setName)) {
                 const confirmed = confirm(`A cardset named "${setName}" already exists. Overwrite it?`);
@@ -759,11 +975,50 @@ function handleImportCardset(event) {
                 }
             }
 
-            await importCardset(setName, data.cards);
+            await importCardset(setName, data);
             await setCardsetMetadata({ setName, displayName, importedAt: Date.now() });
             await refreshCardSetOptions();
-
             alert(`Cardset "${displayName}" imported successfully.`);
+            return;
+        }
+
+        if (!data || typeof data.setName !== "string" || !Array.isArray(data.cards)) {
+            throw new Error("Invalid cardset file format.");
+        }
+
+        const setName = data.setName.trim();
+        if (!setName) {
+            throw new Error("Cardset file must include a valid setName.");
+        }
+
+        const displayName = typeof data.displayName === "string"
+            ? data.displayName.trim()
+            : getDisplayNameForSet(setName);
+
+        const existing = await getUniqueCardsetNames();
+        if (existing.includes(setName)) {
+            const confirmed = confirm(`A cardset named "${setName}" already exists. Overwrite it?`);
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        await importCardset(setName, data.cards);
+        await setCardsetMetadata({ setName, displayName, importedAt: Date.now() });
+        await refreshCardSetOptions();
+        alert(`Cardset "${displayName}" imported successfully.`);
+    };
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const result = e.target.result;
+            if (file.name.toLowerCase().endsWith('.gz')) {
+                const text = await decompressOrDecodeBuffer(result);
+                await processFileText(text);
+            } else {
+                await processFileText(result);
+            }
         } catch (error) {
             alert(`Failed to import cardset: ${error.message}`);
         } finally {
@@ -771,7 +1026,11 @@ function handleImportCardset(event) {
         }
     };
 
-    reader.readAsText(file);
+    if (file.name.toLowerCase().endsWith('.gz')) {
+        reader.readAsArrayBuffer(file);
+    } else {
+        reader.readAsText(file);
+    }
 }
 
 async function clearDefaultCardsets(db) {
