@@ -88,8 +88,8 @@ const nextBtn =
 const setupProgressBtn =
     document.getElementById("setupProgressBtn");
 
-const progressSetupModal =
-    document.getElementById("progressSetupModal");
+const progressSetupScreen =
+    document.getElementById("progressSetupScreen");
 
 const closeProgressSetupBtn =
     document.getElementById("closeProgressSetupBtn");
@@ -158,6 +158,7 @@ function showScreen(screen) {
     learnScreen.classList.remove("active");
     analyticsScreen.classList.remove("active");
     settingsScreen.classList.remove("active");
+    progressSetupScreen.classList.remove("active");
 
     screen.classList.add("active");
 }
@@ -196,10 +197,13 @@ const CARDSET_METADATA_STORE_NAME = "cardsetMetadata";
 const PROGRESS_STORE_NAME = "progress";
 const SETTINGS_STORE_NAME = "settings";
 const CACHE_VERSION_KEY = "cached_data_version";
+const CSV_DELIMITER = ',';
+
+let dbConnection = null;
 
 const DEFAULT_CARDSETS = [
     { key: "body-parts", label: "Body Parts" },
-    { key: "animals", label: "Animals" },
+    // { key: "animals", label: "Animals" },
     { key: "food", label: "Food" },
     { key: "sentences", label: "Sentences" }
     // { key: "medical", label: "Medical" }
@@ -213,6 +217,10 @@ function ensureStorageAvailable() {
 
 function openDatabase() {
     ensureStorageAvailable();
+
+    if (dbConnection) {
+        return Promise.resolve(dbConnection);
+    }
 
     return new Promise((resolve, reject) => {
         const request = window.indexedDB.open(DB_NAME, DB_VERSION);
@@ -256,6 +264,13 @@ function openDatabase() {
             db.onerror = (event) => {
                 console.error("IndexedDB error:", event.target.error);
             };
+            db.onversionchange = () => {
+                db.close();
+                if (dbConnection === db) {
+                    dbConnection = null;
+                }
+            };
+            dbConnection = db;
             resolve(db);
         };
     });
@@ -352,21 +367,175 @@ function getStoreCount(db) {
     });
 }
 
-async function fetchAndSeed(currentSet, db) {
-    const url = `cardsets/${currentSet}.json`;
+const CARDSET_FILE_FORMATS = [
+    { suffix: ".csv.gz", type: "csv" },
+    { suffix: ".csv", type: "csv" }
+];
 
+function getCardsetBaseName(fileName) {
+    let name = fileName;
+    if (name.toLowerCase().endsWith(".gz")) {
+        name = name.slice(0, -3);
+    }
+    if (name.toLowerCase().endsWith(".csv")) {
+        name = name.slice(0, -4);
+    }
+    return name;
+}
+
+function csvCellToValue(value) {
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return "";
+    }
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        return trimmed.slice(1, -1).trim();
+    }
+    return trimmed;
+}
+
+function parseCsvToJson(csvText) {
+    const rows = [];
+    let row = [];
+    let cell = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < csvText.length; i++) {
+        const char = csvText[i];
+        const nextChar = csvText[i + 1];
+
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                cell += '"';
+                i += 1;
+                continue;
+            }
+            inQuotes = !inQuotes;
+            continue;
+        }
+
+        if (!inQuotes && char === CSV_DELIMITER) {
+            row.push(cell);
+            cell = "";
+            continue;
+        }
+
+        if (!inQuotes && char === '\n') {
+            row.push(cell);
+            rows.push(row);
+            row = [];
+            cell = "";
+            continue;
+        }
+
+        if (!inQuotes && char === '\r') {
+            continue;
+        }
+
+        cell += char;
+    }
+
+    if (cell !== "" || row.length > 0) {
+        row.push(cell);
+        rows.push(row);
+    }
+
+    const [headers, ...dataRows] = rows.filter((r) => r.some((cellValue) => cellValue !== ""));
+    if (!headers || headers.length === 0) {
+        throw new Error("CSV file is missing header row.");
+    }
+
+    const headerNames = headers.map((header) => header.trim());
+    if (!headerNames.includes("text")) {
+        throw new Error("CSV file must include a 'text' column.");
+    }
+
+    return dataRows.map((rowValues, rowIndex) => {
+        const record = {};
+        for (let index = 0; index < headerNames.length; index++) {
+            const key = headerNames[index];
+            const rawValue = rowValues[index] ?? "";
+            if (key === "answers") {
+                const trimmed = rawValue.trim();
+                if (!trimmed) {
+                    record.answers = [];
+                } else {
+                    let answersText = trimmed;
+                    if (answersText.startsWith("[") && answersText.endsWith("]")) {
+                        answersText = answersText.slice(1, -1);
+                    }
+                    record.answers = answersText.split("|").map((part) => part.trim()).filter(Boolean);
+                }
+            } else if (key === "text") {
+                record.text = String(rawValue).trim();
+            } else {
+                record[key] = csvCellToValue(rawValue);
+            }
+        }
+
+        if (!record.text) {
+            throw new Error(`CSV row ${rowIndex + 2} is missing a text value.`);
+        }
+
+        return record;
+    });
+}
+
+async function decompressOrDecodeBuffer(buffer) {
+    const bytes = new Uint8Array(buffer);
+    if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) {
+        return new TextDecoder().decode(buffer);
+    }
+
+    if (!window.DecompressionStream) {
+        throw new Error("Browser does not support gzip decompression.");
+    }
+
+    const ds = new DecompressionStream("gzip");
+    const decompressedStream = new Response(new Blob([buffer]).stream().pipeThrough(ds));
+    return decompressedStream.text();
+}
+
+function parseCardsetText(text, sourceName) {
+    return parseCsvToJson(text);
+}
+
+async function resolveCardsetUrl(setName) {
+    const tried = [];
+    for (const format of CARDSET_FILE_FORMATS) {
+        const url = `cardsets/${setName}${format.suffix}`;
+        tried.push(url);
+        try {
+            const response = await fetch(url, { cache: "reload" });
+            if (response.ok) {
+                return { response, url };
+            }
+        } catch (error) {
+            // continue trying other formats
+        }
+    }
+    throw new Error(`Failed to fetch cardset data. Tried: ${tried.join(", ")}`);
+}
+
+async function fetchAndSeed(currentSet, db) {
     let data;
     try {
-        const response = await fetch(url, { cache: "reload" });
-        if (!response.ok) {
-            throw new Error(`Network response was not OK (${response.status}).`);
+        const { response, url } = await resolveCardsetUrl(currentSet);
+        let text;
+
+        if (url.endsWith(".gz")) {
+            const buffer = await response.arrayBuffer();
+            text = await decompressOrDecodeBuffer(buffer);
+        } else {
+            text = await response.text();
         }
-        data = await response.json();
+
+        data = parseCardsetText(text, url);
         if (!Array.isArray(data)) {
-            throw new Error("Expected JSON array from cardset file.");
+            throw new Error("Expected array data from cardset file.");
         }
     } catch (error) {
-        throw new Error(`Failed to fetch ${url}: ${error.message}`);
+        throw new Error(`Failed to fetch cardset for '${currentSet}': ${error.message}`);
     }
 
     return new Promise((resolve, reject) => {
@@ -680,6 +849,162 @@ async function importCardset(setName, cards) {
     });
 }
 
+function escapeCsvValue(value) {
+    if (value === undefined || value === null) {
+        return "";
+    }
+
+    let output = value;
+    if (Array.isArray(value)) {
+        output = value.join("|");
+    } else if (typeof value === "object") {
+        output = JSON.stringify(value);
+    }
+
+    output = String(output);
+    const shouldQuote = new RegExp(`["${CSV_DELIMITER}\\r\\n]`).test(output);
+    if (shouldQuote) {
+        output = `"${output.replace(/"/g, '""')}"`;
+    }
+    return output;
+}
+
+function createCsvFromCards(cards) {
+    const fieldSet = new Set();
+    for (const card of cards) {
+        Object.keys(card).forEach((key) => {
+            if (key === "setName") {
+                return;
+            }
+            fieldSet.add(key);
+        });
+    }
+
+    const preferredOrder = ["text", "answers"];
+    const extraFields = [...fieldSet].filter((key) => !preferredOrder.includes(key));
+    const headers = [...preferredOrder.filter((key) => fieldSet.has(key)), ...extraFields];
+
+    const rows = [headers.join(CSV_DELIMITER)];
+    for (const card of cards) {
+        const row = headers.map((key) => escapeCsvValue(card[key]));
+        rows.push(row.join(CSV_DELIMITER));
+    }
+
+    return rows.join("\r\n");
+}
+
+function createCsvFromProgress(progressData, cards) {
+    const headers = ["text", "stage", "nextReview", "correctCount"];
+    const rows = [headers.join(CSV_DELIMITER)];
+
+    for (const card of cards) {
+        const progressEntry = progressData[card.text] || {
+            stage: 0,
+            nextReview: 0,
+            correctCount: 0
+        };
+
+        const row = [
+            escapeCsvValue(card.text),
+            escapeCsvValue(progressEntry.stage),
+            escapeCsvValue(progressEntry.nextReview),
+            escapeCsvValue(progressEntry.correctCount)
+        ];
+
+        rows.push(row.join(CSV_DELIMITER));
+    }
+
+    return rows.join("\r\n");
+}
+
+async function exportProgress() {
+    try {
+        if (!cards.length) {
+            alert("Nothing to export for this cardset.");
+            return;
+        }
+
+        const csvText = createCsvFromProgress(progress, cards);
+        const blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${currentSet}-progress-${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("exportProgress failed:", error);
+        alert("Unable to export progress. See console for details.");
+    }
+}
+
+function handleImportProgress(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    const lowerName = file.name.toLowerCase();
+    if (!lowerName.endsWith('.csv')) {
+        alert("Please upload a .csv file only.");
+        event.target.value = "";
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const data = parseCsvToJson(e.target.result);
+            if (!Array.isArray(data)) {
+                throw new Error("Invalid progress file format.");
+            }
+
+            const importedProgress = {};
+            for (const row of data) {
+                const text = String(row.text || "").trim();
+                if (!text) {
+                    continue;
+                }
+
+                importedProgress[text] = {
+                    stage: Number(row.stage) || 0,
+                    nextReview: Number(row.nextReview) || 0,
+                    correctCount: Number(row.correctCount) || 0
+                };
+            }
+
+            if (Object.keys(importedProgress).length === 0) {
+                throw new Error("No valid progress rows found.");
+            }
+
+            const confirmed = confirm(
+                `Import progress for "${currentSet}"? This will overwrite progress for matching cards.`
+            );
+            if (!confirmed) {
+                return;
+            }
+
+            for (const [text, progressEntry] of Object.entries(importedProgress)) {
+                progress[text] = progressEntry;
+            }
+
+            initializeMissingProgress();
+            await saveProgress();
+            renderProgressCardList("");
+
+            alert("Progress imported successfully!");
+        } catch (error) {
+            alert(`Failed to import progress: ${error.message}`);
+        } finally {
+            event.target.value = "";
+        }
+    };
+
+    reader.readAsText(file);
+}
+
 async function exportCardset() {
     try {
         const cards = await getAllCardsForSet(currentSet);
@@ -688,22 +1013,15 @@ async function exportCardset() {
             return;
         }
 
-        const metadata = await getCardsetMetadata(currentSet);
-        const payload = {
-            setName: currentSet,
-            displayName: metadata?.displayName || getDisplayNameForSet(currentSet),
-            cards: cards.map(card => {
-                const { setName, ...rest } = card;
-                return rest;
-            })
-        };
-
-        const json = JSON.stringify(payload, null, 2);
-        const blob = new Blob([json], { type: "application/json" });
+        const csvText = createCsvFromCards(cards.map((card) => {
+            const { setName, ...rest } = card;
+            return rest;
+        }));
+        const blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `${currentSet}-cardset.json`;
+        link.download = `${currentSet}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -720,36 +1038,50 @@ function handleImportCardset(event) {
         return;
     }
 
+    const lowerName = file.name.toLowerCase();
+    if (!lowerName.endsWith('.csv')) {
+        alert("Please upload a .csv file only.");
+        event.target.value = "";
+        return;
+    }
+
+    const processFileText = async (text) => {
+        let data;
+        try {
+            data = parseCardsetText(text, file.name);
+        } catch (error) {
+            throw new Error(`Failed to parse cardset file: ${error.message}`);
+        }
+
+        if (!Array.isArray(data)) {
+            throw new Error("Invalid cardset file format. Please upload a CSV file with card rows.");
+        }
+
+        const setName = getCardsetBaseName(file.name);
+        if (!setName) {
+            throw new Error("Unable to infer cardset name from the uploaded file name.");
+        }
+
+        const displayName = getDisplayNameForSet(setName);
+        const existing = await getUniqueCardsetNames();
+        if (existing.includes(setName)) {
+            const confirmed = confirm(`A cardset named "${setName}" already exists. Overwrite it?`);
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        await importCardset(setName, data);
+        await setCardsetMetadata({ setName, displayName, importedAt: Date.now() });
+        await refreshCardSetOptions();
+        alert(`Cardset "${displayName}" imported successfully.`);
+    };
+
     const reader = new FileReader();
     reader.onload = async (e) => {
         try {
-            const data = JSON.parse(e.target.result);
-            if (!data || typeof data.setName !== "string" || !Array.isArray(data.cards)) {
-                throw new Error("Invalid cardset file format.");
-            }
-
-            const setName = data.setName.trim();
-            if (!setName) {
-                throw new Error("Cardset file must include a valid setName.");
-            }
-
-            const displayName = typeof data.displayName === "string"
-                ? data.displayName.trim()
-                : getDisplayNameForSet(setName);
-
-            const existing = await getUniqueCardsetNames();
-            if (existing.includes(setName)) {
-                const confirmed = confirm(`A cardset named "${setName}" already exists. Overwrite it?`);
-                if (!confirmed) {
-                    return;
-                }
-            }
-
-            await importCardset(setName, data.cards);
-            await setCardsetMetadata({ setName, displayName, importedAt: Date.now() });
-            await refreshCardSetOptions();
-
-            alert(`Cardset "${displayName}" imported successfully.`);
+            const result = e.target.result;
+            await processFileText(result);
         } catch (error) {
             alert(`Failed to import cardset: ${error.message}`);
         } finally {
@@ -942,6 +1274,11 @@ function handleSystemThemeChange(event) {
 
 async function deleteAppDatabase() {
     try {
+        if (dbConnection) {
+            dbConnection.close();
+            dbConnection = null;
+        }
+
         return new Promise((resolve, reject) => {
             const request = window.indexedDB.deleteDatabase(DB_NAME);
             request.onsuccess = () => resolve();
@@ -1292,14 +1629,14 @@ resetBtn.addEventListener(
 setupProgressBtn.addEventListener(
     "click",
     () => {
-        openProgressSetupModal();
+        openProgressSetupScreen();
     }
 );
 
 closeProgressSetupBtn.addEventListener(
     "click",
     () => {
-        closeProgressSetupModal();
+        closeProgressSetupScreen();
     }
 );
 
@@ -1309,10 +1646,10 @@ confirmSetupProgressBtn.addEventListener(
         // Save the progress changes
         await saveProgress();
 
-        // Clear the backup so closeProgressSetupModal won't restore old state
+        // Clear the backup so closeProgressSetupScreen won't restore old state
         progressBackup = null;
 
-        closeProgressSetupModal();
+        closeProgressSetupScreen();
         updateHomeStats();
 
         // Rebuild analytics if it's currently visible
@@ -1346,26 +1683,6 @@ markAllLearnedBtn.addEventListener(
     }
 );
 
-exportProgressBtn.addEventListener(
-    "click",
-    () => {
-        exportProgress();
-    }
-);
-
-importProgressBtn.addEventListener(
-    "click",
-    () => {
-        importProgressFile.click();
-    }
-);
-
-importProgressFile.addEventListener(
-    "change",
-    (event) => {
-        handleImportProgress(event);
-    }
-);
 
 exportCardsetBtn.addEventListener(
     "click",
@@ -1395,6 +1712,27 @@ importCardsetFile.addEventListener(
     }
 );
 
+exportProgressBtn.addEventListener(
+    "click",
+    () => {
+        exportProgress();
+    }
+);
+
+importProgressBtn.addEventListener(
+    "click",
+    () => {
+        importProgressFile.click();
+    }
+);
+
+importProgressFile.addEventListener(
+    "change",
+    (event) => {
+        handleImportProgress(event);
+    }
+);
+
 progressSearchInput.addEventListener(
     "input",
     (event) => {
@@ -1402,15 +1740,6 @@ progressSearchInput.addEventListener(
     }
 );
 
-// Close modal when clicking outside
-progressSetupModal.addEventListener(
-    "click",
-    (event) => {
-        if (event.target === progressSetupModal) {
-            closeProgressSetupModal();
-        }
-    }
-);
 
 // =====================================================
 // CARD SELECTION
@@ -2434,12 +2763,14 @@ setInterval(
 );
 
 // =====================================================
-// PROGRESS SETUP MODAL
+// PROGRESS SETUP SCREEN
 // =====================================================
 
 let progressBackup = null;
 
-function openProgressSetupModal() {
+let progressSetupPreviousScreen = analyticsScreen;
+
+function openProgressSetupScreen() {
 
     // Save current progress state before making changes
     progressBackup =
@@ -2449,19 +2780,19 @@ function openProgressSetupModal() {
 
     renderProgressCardList("");
     progressSearchInput.value = "";
-    progressSetupModal.classList.add("active");
+    progressSetupPreviousScreen = analyticsScreen;
+    showScreen(progressSetupScreen);
 }
 
-function closeProgressSetupModal() {
-
-    progressSetupModal.classList.remove("active");
+function closeProgressSetupScreen() {
 
     // Restore progress if no changes were confirmed
     if (progressBackup !== null) {
-
         progress = progressBackup;
         progressBackup = null;
     }
+
+    showScreen(progressSetupPreviousScreen);
 }
 
 function markAllCardsAsNew() {
@@ -2670,115 +3001,6 @@ function renderProgressCardList(searchTerm = "") {
             emptyMsg
         );
     }
-}
-
-function exportProgress() {
-
-    const dataToExport = {
-
-        setName: currentSet,
-        timestamp: new Date().toISOString(),
-        progress: progress,
-        cards: cards
-    };
-
-    const json =
-        JSON.stringify(
-            dataToExport,
-            null,
-            2
-        );
-
-    const blob =
-        new Blob(
-            [json],
-            { type: "application/json" }
-        );
-
-    const url =
-        URL.createObjectURL(blob);
-
-    const link =
-        document.createElement("a");
-
-    link.href = url;
-    link.download =
-        `${currentSet}-progress-${
-            new Date()
-                .toISOString()
-                .split("T")[0]
-        }.json`;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
-}
-
-function handleImportProgress(event) {
-
-    const file =
-        event.target.files[0];
-
-    if (!file) {
-        return;
-    }
-
-    const reader =
-        new FileReader();
-
-    reader.onload = async (e) => {
-
-        try {
-
-            const data =
-                JSON.parse(
-                    e.target.result
-                );
-
-            if (!data.progress) {
-
-                alert(
-                    "Invalid progress file"
-                );
-
-                return;
-            }
-
-            const confirmed =
-                confirm(
-                    `Import progress from "${
-                        data.setName
-                    }"? This will overwrite current progress.`
-                );
-
-            if (!confirmed) {
-                return;
-            }
-
-            progress = data.progress;
-            await saveProgress();
-
-            renderProgressCardList("");
-
-            alert(
-                "Progress imported successfully!"
-            );
-
-        } catch (error) {
-
-            alert(
-                "Error reading file: " +
-                error.message
-            );
-        }
-    };
-
-    reader.readAsText(file);
-
-    // Reset file input
-    event.target.value = "";
 }
 
 // =====================================================
