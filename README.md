@@ -1,3 +1,4 @@
 - [ ] check if it possible to send some data in google services
 - [ ] compress app if needed
 - [ ] think about redisign
+- [ ] auto detect from file name what progress I need to import so user don't need to pick card set for what progress is going on
