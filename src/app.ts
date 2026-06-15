@@ -2,165 +2,125 @@
 // APP STATE
 // =====================================================
 
-const STORAGE_KEY = "voice-trainer-progress";
-const SETTINGS_KEY = "voice-trainer-settings";
-const DEFAULT_THEME = "system";
-let themePreference = DEFAULT_THEME;
+const STORAGE_KEY = 'voice-trainer-progress'
+const SETTINGS_KEY = 'voice-trainer-settings'
+const DEFAULT_THEME = 'system'
+let themePreference = DEFAULT_THEME
 
-const REVIEW_1_DELAY = 30 * 1000; // 30 sec
-const REVIEW_2_DELAY = 60 * 1000; // 1 min
+const REVIEW_1_DELAY = 30 * 1000 // 30 sec
+const REVIEW_2_DELAY = 60 * 1000 // 1 min
 
-let cards = [];
-let progress = {};
-let currentCard = null;
-let listening = false;
-let recognition = null;
-let sessionSkippedCards = new Set();
-let wrongAttempts = 0;
-const MAX_WRONG_ATTEMPTS = 3;
+let cards = []
+let progress = {}
+let currentCard = null
+let listening = false
+let recognition = null
+let sessionSkippedCards = new Set()
+let wrongAttempts = 0
+const MAX_WRONG_ATTEMPTS = 3
 
-let currentSet = "body-parts";
+let currentSet = 'body-parts'
 
 // =====================================================
 // DOM
 // =====================================================
 
-const homeScreen =
-    document.getElementById("homeScreen");
+const homeScreen = document.getElementById('homeScreen')
 
-const learnScreen =
-    document.getElementById("learnScreen");
+const learnScreen = document.getElementById('learnScreen')
 
-const analyticsScreen =
-    document.getElementById("analyticsScreen");
+const analyticsScreen = document.getElementById('analyticsScreen')
 
-const cardSetSelect =
-    document.getElementById("cardSetSelect");
+const cardSetSelect = document.getElementById('cardSetSelect')
 
-const continueBtn =
-    document.getElementById("continueBtn");
+const continueBtn = document.getElementById('continueBtn')
 
-const analyticsBtn =
-    document.getElementById("analyticsBtn");
+const analyticsBtn = document.getElementById('analyticsBtn')
 
-const resetBtn =
-    document.getElementById("resetBtn");
+const resetBtn = document.getElementById('resetBtn')
 
-const backHomeBtn =
-    document.getElementById("backHomeBtn");
+const backHomeBtn = document.getElementById('backHomeBtn')
 
-const analyticsBackBtn =
-    document.getElementById("analyticsBackBtn");
+const analyticsBackBtn = document.getElementById('analyticsBackBtn')
 
-const wordEl =
-    document.getElementById("text");
+const wordEl = document.getElementById('text')
 
-const cardStatusEl =
-    document.getElementById("cardStatus");
+const cardStatusEl = document.getElementById('cardStatus')
 
-const progressFill =
-    document.getElementById("progressFill");
+const progressFill = document.getElementById('progressFill')
 
-const progressText =
-    document.getElementById("progressText");
+const progressText = document.getElementById('progressText')
 
-const nextReviewTime =
-    document.getElementById("nextReviewTime");
+const nextReviewTime = document.getElementById('nextReviewTime')
 
-const learnProgress =
-    document.getElementById("learnProgress");
+const learnProgress = document.getElementById('learnProgress')
 
-const recognizedText =
-    document.getElementById("recognizedText");
+const recognizedText = document.getElementById('recognizedText')
 
-const resultEl =
-    document.getElementById("result");
+const resultEl = document.getElementById('result')
 
-const listenBtn =
-    document.getElementById("listenBtn");
+const listenBtn = document.getElementById('listenBtn')
 
-const speakBtn =
-    document.getElementById("speakBtn");
+const speakBtn = document.getElementById('speakBtn')
 
-const nextBtn =
-    document.getElementById("nextBtn");
+const nextBtn = document.getElementById('nextBtn')
 
-const setupProgressBtn =
-    document.getElementById("setupProgressBtn");
+const setupProgressBtn = document.getElementById('setupProgressBtn')
 
-const progressSetupScreen =
-    document.getElementById("progressSetupScreen");
+const progressSetupScreen = document.getElementById('progressSetupScreen')
 
-const closeProgressSetupBtn =
-    document.getElementById("closeProgressSetupBtn");
+const closeProgressSetupBtn = document.getElementById('closeProgressSetupBtn')
 
-const markAllNewBtn =
-    document.getElementById("markAllNewBtn");
+const markAllNewBtn = document.getElementById('markAllNewBtn')
 
-const markAllLearningBtn =
-    document.getElementById("markAllLearningBtn");
+const markAllLearningBtn = document.getElementById('markAllLearningBtn')
 
-const markAllLearnedBtn =
-    document.getElementById("markAllLearnedBtn");
+const markAllLearnedBtn = document.getElementById('markAllLearnedBtn')
 
-const progressSearchInput =
-    document.getElementById("progressSearchInput");
+const progressSearchInput = document.getElementById('progressSearchInput')
 
-const progressCardList =
-    document.getElementById("progressCardList");
+const progressCardList = document.getElementById('progressCardList')
 
-const exportProgressBtn =
-    document.getElementById("exportProgressBtn");
+const exportProgressBtn = document.getElementById('exportProgressBtn')
 
-const importProgressBtn =
-    document.getElementById("importProgressBtn");
+const importProgressBtn = document.getElementById('importProgressBtn')
 
-const importProgressFile =
-    document.getElementById("importProgressFile");
+const importProgressFile = document.getElementById('importProgressFile')
 
-const exportCardsetBtn =
-    document.getElementById("exportCardsetBtn");
+const exportCardsetBtn = document.getElementById('exportCardsetBtn')
 
-const importCardsetBtn =
-    document.getElementById("importCardsetBtn");
+const importCardsetBtn = document.getElementById('importCardsetBtn')
 
-const deleteCardsetBtn =
-    document.getElementById("deleteCardsetBtn");
+const deleteCardsetBtn = document.getElementById('deleteCardsetBtn')
 
-const importCardsetFile =
-    document.getElementById("importCardsetFile");
+const importCardsetFile = document.getElementById('importCardsetFile')
 
-const settingsBtn =
-    document.getElementById("settingsBtn");
+const settingsBtn = document.getElementById('settingsBtn')
 
-const settingsScreen =
-    document.getElementById("settingsScreen");
+const settingsScreen = document.getElementById('settingsScreen')
 
-const settingsBackBtn =
-    document.getElementById("settingsBackBtn");
+const settingsBackBtn = document.getElementById('settingsBackBtn')
 
-const themeOptionInputs =
-    document.querySelectorAll('input[name="themeOption"]');
+const themeOptionInputs = document.querySelectorAll('input[name="themeOption"]')
 
-const deleteDatabaseBtn =
-    document.getElementById("deleteDatabaseBtn");
+const deleteDatabaseBtn = document.getElementById('deleteDatabaseBtn')
 
-const confirmSetupProgressBtn =
-    document.getElementById("confirmSetupProgressBtn");
+const confirmSetupProgressBtn = document.getElementById(
+  'confirmSetupProgressBtn'
+)
 
 // =====================================================
 // SCREEN NAVIGATION
 // =====================================================
 
 function showScreen(screen) {
+  homeScreen.classList.remove('active')
+  learnScreen.classList.remove('active')
+  analyticsScreen.classList.remove('active')
+  settingsScreen.classList.remove('active')
+  progressSetupScreen.classList.remove('active')
 
-    homeScreen.classList.remove("active");
-    learnScreen.classList.remove("active");
-    analyticsScreen.classList.remove("active");
-    settingsScreen.classList.remove("active");
-    progressSetupScreen.classList.remove("active");
-
-    screen.classList.add("active");
+  screen.classList.add('active')
 }
 
 // =====================================================
@@ -168,983 +128,1038 @@ function showScreen(screen) {
 // =====================================================
 
 async function loadProgress() {
-    try {
-        const storedProgress = await getProgressFromDB(currentSet);
-        progress = storedProgress || {};
-    } catch (error) {
-        console.error("Failed to load progress from IndexedDB:", error);
-        progress = {};
-    }
+  try {
+    const storedProgress = await getProgressFromDB(currentSet)
+    progress = storedProgress || {}
+  } catch (error) {
+    console.error('Failed to load progress from IndexedDB:', error)
+    progress = {}
+  }
 }
 
 async function saveProgress() {
-    try {
-        await setProgressToDB(currentSet, progress);
-    } catch (error) {
-        console.error("Failed to save progress to IndexedDB:", error);
-    }
+  try {
+    await setProgressToDB(currentSet, progress)
+  } catch (error) {
+    console.error('Failed to save progress to IndexedDB:', error)
+  }
 }
 
 // =====================================================
 // INDEXEDDB CACHING
 // =====================================================
 
-const LATEST_DATA_VERSION = 1;
-const DB_NAME = "flashCardDB";
-const DB_VERSION = 1;
-const CARDSETS_STORE_NAME = "cardsets";
-const CARDSET_METADATA_STORE_NAME = "cardsetMetadata";
-const PROGRESS_STORE_NAME = "progress";
-const SETTINGS_STORE_NAME = "settings";
-const CACHE_VERSION_KEY = "cached_data_version";
-const CSV_DELIMITER = ',';
+const LATEST_DATA_VERSION = 1
+const DB_NAME = 'flashCardDB'
+const DB_VERSION = 1
+const CARDSETS_STORE_NAME = 'cardsets'
+const CARDSET_METADATA_STORE_NAME = 'cardsetMetadata'
+const PROGRESS_STORE_NAME = 'progress'
+const SETTINGS_STORE_NAME = 'settings'
+const CACHE_VERSION_KEY = 'cached_data_version'
+const CSV_DELIMITER = ','
 
-let dbConnection = null;
+let dbConnection = null
 
 const DEFAULT_CARDSETS = [
-    { key: "body-parts", label: "Body Parts" },
-    // { key: "animals", label: "Animals" },
-    { key: "food", label: "Food" },
-    { key: "sentences", label: "Sentences" }
-    // { key: "medical", label: "Medical" }
-];
+  { key: 'body-parts', label: 'Body Parts' },
+  // { key: "animals", label: "Animals" },
+  { key: 'food', label: 'Food' },
+  { key: 'sentences', label: 'Sentences' },
+  // { key: "medical", label: "Medical" }
+]
 
 function ensureStorageAvailable() {
-    if (!window.indexedDB) {
-        throw new Error("IndexedDB is not supported by this browser.");
-    }
+  if (!window.indexedDB) {
+    throw new Error('IndexedDB is not supported by this browser.')
+  }
 }
 
 function openDatabase() {
-    ensureStorageAvailable();
+  ensureStorageAvailable()
 
-    if (dbConnection) {
-        return Promise.resolve(dbConnection);
+  if (dbConnection) {
+    return Promise.resolve(dbConnection)
+  }
+
+  return new Promise((resolve, reject) => {
+    const request = window.indexedDB.open(DB_NAME, DB_VERSION)
+
+    request.onerror = () => {
+      reject(request.error || new Error('Failed to open IndexedDB.'))
     }
 
-    return new Promise((resolve, reject) => {
-        const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+    request.onblocked = () => {
+      console.warn(
+        'IndexedDB open blocked. Close other tabs using this database.'
+      )
+    }
 
-        request.onerror = () => {
-            reject(request.error || new Error("Failed to open IndexedDB."));
-        };
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result
 
-        request.onblocked = () => {
-            console.warn("IndexedDB open blocked. Close other tabs using this database.");
-        };
+      if (!db.objectStoreNames.contains(CARDSETS_STORE_NAME)) {
+        const store = db.createObjectStore(CARDSETS_STORE_NAME, {
+          keyPath: 'text',
+        })
+        store.createIndex('setName', 'setName', { unique: false })
+      } else {
+        const store = event.target.transaction.objectStore(CARDSETS_STORE_NAME)
+        if (!store.indexNames.contains('setName')) {
+          store.createIndex('setName', 'setName', { unique: false })
+        }
+      }
 
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
+      if (!db.objectStoreNames.contains(CARDSET_METADATA_STORE_NAME)) {
+        db.createObjectStore(CARDSET_METADATA_STORE_NAME, {
+          keyPath: 'setName',
+        })
+      }
 
-            if (!db.objectStoreNames.contains(CARDSETS_STORE_NAME)) {
-                const store = db.createObjectStore(CARDSETS_STORE_NAME, { keyPath: "text" });
-                store.createIndex("setName", "setName", { unique: false });
-            } else {
-                const store = event.target.transaction.objectStore(CARDSETS_STORE_NAME);
-                if (!store.indexNames.contains("setName")) {
-                    store.createIndex("setName", "setName", { unique: false });
-                }
-            }
+      if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+        db.createObjectStore(PROGRESS_STORE_NAME, { keyPath: 'setName' })
+      }
 
-            if (!db.objectStoreNames.contains(CARDSET_METADATA_STORE_NAME)) {
-                db.createObjectStore(CARDSET_METADATA_STORE_NAME, { keyPath: "setName" });
-            }
+      if (!db.objectStoreNames.contains(SETTINGS_STORE_NAME)) {
+        db.createObjectStore(SETTINGS_STORE_NAME, { keyPath: 'key' })
+      }
+    }
 
-            if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
-                db.createObjectStore(PROGRESS_STORE_NAME, { keyPath: "setName" });
-            }
-
-            if (!db.objectStoreNames.contains(SETTINGS_STORE_NAME)) {
-                db.createObjectStore(SETTINGS_STORE_NAME, { keyPath: "key" });
-            }
-        };
-
-        request.onsuccess = () => {
-            const db = request.result;
-            db.onerror = (event) => {
-                console.error("IndexedDB error:", event.target.error);
-            };
-            db.onversionchange = () => {
-                db.close();
-                if (dbConnection === db) {
-                    dbConnection = null;
-                }
-            };
-            dbConnection = db;
-            resolve(db);
-        };
-    });
+    request.onsuccess = () => {
+      const db = request.result
+      db.onerror = (event) => {
+        console.error('IndexedDB error:', event.target.error)
+      }
+      db.onversionchange = () => {
+        db.close()
+        if (dbConnection === db) {
+          dbConnection = null
+        }
+      }
+      dbConnection = db
+      resolve(db)
+    }
+  })
 }
 
 async function getCachedDataVersion() {
-    try {
-        return Number(localStorage.getItem(CACHE_VERSION_KEY) ?? 0);
-    } catch (error) {
-        console.warn("Unable to read cached_data_version from localStorage.", error);
-        return 0;
-    }
+  try {
+    return Number(localStorage.getItem(CACHE_VERSION_KEY) ?? 0)
+  } catch (error) {
+    console.warn('Unable to read cached_data_version from localStorage.', error)
+    return 0
+  }
 }
 
 async function setCachedDataVersion(version) {
-    try {
-        localStorage.setItem(CACHE_VERSION_KEY, String(version));
-    } catch (error) {
-        console.warn("Unable to write cached_data_version to localStorage.", error);
-    }
+  try {
+    localStorage.setItem(CACHE_VERSION_KEY, String(version))
+  } catch (error) {
+    console.warn('Unable to write cached_data_version to localStorage.', error)
+  }
 }
 
 function clearCardstore(db) {
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
-        const store = tx.objectStore(CARDSETS_STORE_NAME);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CARDSETS_STORE_NAME, 'readwrite')
+    const store = tx.objectStore(CARDSETS_STORE_NAME)
 
-        const request = store.clear();
+    const request = store.clear()
 
-        request.onerror = () => {
-            reject(request.error || new Error("Failed to clear cardsets store."));
-        };
+    request.onerror = () => {
+      reject(request.error || new Error('Failed to clear cardsets store.'))
+    }
 
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error || new Error("Clear transaction failed."));
-    });
+    tx.oncomplete = () => resolve()
+    tx.onerror = () =>
+      reject(tx.error || new Error('Clear transaction failed.'))
+  })
 }
 
 function getStoreCountForSet(db, setName) {
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
-        const store = tx.objectStore(CARDSETS_STORE_NAME);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CARDSETS_STORE_NAME, 'readonly')
+    const store = tx.objectStore(CARDSETS_STORE_NAME)
 
-        if (store.indexNames.contains("setName")) {
-            const index = store.index("setName");
-            const request = index.count(IDBKeyRange.only(setName));
+    if (store.indexNames.contains('setName')) {
+      const index = store.index('setName')
+      const request = index.count(IDBKeyRange.only(setName))
 
-            request.onerror = () => {
-                reject(request.error || new Error("Failed to count records for cardset."));
-            };
+      request.onerror = () => {
+        reject(
+          request.error || new Error('Failed to count records for cardset.')
+        )
+      }
 
-            request.onsuccess = () => {
-                resolve(request.result);
-            };
-            return;
-        }
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+      return
+    }
 
-        let count = 0;
-        const cursorRequest = store.openCursor();
+    let count = 0
+    const cursorRequest = store.openCursor()
 
-        cursorRequest.onerror = () => {
-            reject(cursorRequest.error || new Error("Failed to count records for cardset."));
-        };
+    cursorRequest.onerror = () => {
+      reject(
+        cursorRequest.error || new Error('Failed to count records for cardset.')
+      )
+    }
 
-        cursorRequest.onsuccess = (event) => {
-            const cursor = event.target.result;
-            if (!cursor) {
-                resolve(count);
-                return;
-            }
+    cursorRequest.onsuccess = (event) => {
+      const cursor = event.target.result
+      if (!cursor) {
+        resolve(count)
+        return
+      }
 
-            const record = cursor.value;
-            if (record.setName === setName) {
-                count += 1;
-            }
+      const record = cursor.value
+      if (record.setName === setName) {
+        count += 1
+      }
 
-            cursor.continue();
-        };
-    });
+      cursor.continue()
+    }
+  })
 }
 
 function getStoreCount(db) {
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
-        const store = tx.objectStore(CARDSETS_STORE_NAME);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CARDSETS_STORE_NAME, 'readonly')
+    const store = tx.objectStore(CARDSETS_STORE_NAME)
 
-        const request = store.count();
-        request.onerror = () => {
-            reject(request.error || new Error("Failed to count records in cardsets."));
-        };
-        request.onsuccess = () => {
-            resolve(request.result);
-        };
-    });
+    const request = store.count()
+    request.onerror = () => {
+      reject(request.error || new Error('Failed to count records in cardsets.'))
+    }
+    request.onsuccess = () => {
+      resolve(request.result)
+    }
+  })
 }
 
 const CARDSET_FILE_FORMATS = [
-    { suffix: ".csv.gz", type: "csv" },
-    { suffix: ".csv", type: "csv" }
-];
+  { suffix: '.csv.gz', type: 'csv' },
+  { suffix: '.csv', type: 'csv' },
+]
 
 function getCardsetBaseName(fileName) {
-    let name = fileName;
-    if (name.toLowerCase().endsWith(".gz")) {
-        name = name.slice(0, -3);
-    }
-    if (name.toLowerCase().endsWith(".csv")) {
-        name = name.slice(0, -4);
-    }
-    return name;
+  let name = fileName
+  if (name.toLowerCase().endsWith('.gz')) {
+    name = name.slice(0, -3)
+  }
+  if (name.toLowerCase().endsWith('.csv')) {
+    name = name.slice(0, -4)
+  }
+  return name
 }
 
 function csvCellToValue(value) {
-    const trimmed = value.trim();
-    if (!trimmed) {
-        return "";
-    }
-    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-        return trimmed.slice(1, -1).trim();
-    }
-    return trimmed;
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ''
+  }
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    return trimmed.slice(1, -1).trim()
+  }
+  return trimmed
 }
 
 function parseCsvToJson(csvText) {
-    const rows = [];
-    let row = [];
-    let cell = "";
-    let inQuotes = false;
+  const rows = []
+  let row = []
+  let cell = ''
+  let inQuotes = false
 
-    for (let i = 0; i < csvText.length; i++) {
-        const char = csvText[i];
-        const nextChar = csvText[i + 1];
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i]
+    const nextChar = csvText[i + 1]
 
-        if (char === '"') {
-            if (inQuotes && nextChar === '"') {
-                cell += '"';
-                i += 1;
-                continue;
-            }
-            inQuotes = !inQuotes;
-            continue;
-        }
-
-        if (!inQuotes && char === CSV_DELIMITER) {
-            row.push(cell);
-            cell = "";
-            continue;
-        }
-
-        if (!inQuotes && char === '\n') {
-            row.push(cell);
-            rows.push(row);
-            row = [];
-            cell = "";
-            continue;
-        }
-
-        if (!inQuotes && char === '\r') {
-            continue;
-        }
-
-        cell += char;
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        cell += '"'
+        i += 1
+        continue
+      }
+      inQuotes = !inQuotes
+      continue
     }
 
-    if (cell !== "" || row.length > 0) {
-        row.push(cell);
-        rows.push(row);
+    if (!inQuotes && char === CSV_DELIMITER) {
+      row.push(cell)
+      cell = ''
+      continue
     }
 
-    const [headers, ...dataRows] = rows.filter((r) => r.some((cellValue) => cellValue !== ""));
-    if (!headers || headers.length === 0) {
-        throw new Error("CSV file is missing header row.");
+    if (!inQuotes && char === '\n') {
+      row.push(cell)
+      rows.push(row)
+      row = []
+      cell = ''
+      continue
     }
 
-    const headerNames = headers.map((header) => header.trim());
-    if (!headerNames.includes("text")) {
-        throw new Error("CSV file must include a 'text' column.");
+    if (!inQuotes && char === '\r') {
+      continue
     }
 
-    return dataRows.map((rowValues, rowIndex) => {
-        const record = {};
-        for (let index = 0; index < headerNames.length; index++) {
-            const key = headerNames[index];
-            const rawValue = rowValues[index] ?? "";
-            if (key === "answers") {
-                const trimmed = rawValue.trim();
-                if (!trimmed) {
-                    record.answers = [];
-                } else {
-                    let answersText = trimmed;
-                    if (answersText.startsWith("[") && answersText.endsWith("]")) {
-                        answersText = answersText.slice(1, -1);
-                    }
-                    record.answers = answersText.split("|").map((part) => part.trim()).filter(Boolean);
-                }
-            } else if (key === "text") {
-                record.text = String(rawValue).trim();
-            } else {
-                record[key] = csvCellToValue(rawValue);
-            }
+    cell += char
+  }
+
+  if (cell !== '' || row.length > 0) {
+    row.push(cell)
+    rows.push(row)
+  }
+
+  const [headers, ...dataRows] = rows.filter((r) =>
+    r.some((cellValue) => cellValue !== '')
+  )
+  if (!headers || headers.length === 0) {
+    throw new Error('CSV file is missing header row.')
+  }
+
+  const headerNames = headers.map((header) => header.trim())
+  if (!headerNames.includes('text')) {
+    throw new Error("CSV file must include a 'text' column.")
+  }
+
+  return dataRows.map((rowValues, rowIndex) => {
+    const record = {}
+    for (let index = 0; index < headerNames.length; index++) {
+      const key = headerNames[index]
+      const rawValue = rowValues[index] ?? ''
+      if (key === 'answers') {
+        const trimmed = rawValue.trim()
+        if (!trimmed) {
+          record.answers = []
+        } else {
+          let answersText = trimmed
+          if (answersText.startsWith('[') && answersText.endsWith(']')) {
+            answersText = answersText.slice(1, -1)
+          }
+          record.answers = answersText
+            .split('|')
+            .map((part) => part.trim())
+            .filter(Boolean)
         }
+      } else if (key === 'text') {
+        record.text = String(rawValue).trim()
+      } else {
+        record[key] = csvCellToValue(rawValue)
+      }
+    }
 
-        if (!record.text) {
-            throw new Error(`CSV row ${rowIndex + 2} is missing a text value.`);
-        }
+    if (!record.text) {
+      throw new Error(`CSV row ${rowIndex + 2} is missing a text value.`)
+    }
 
-        return record;
-    });
+    return record
+  })
 }
 
 async function decompressOrDecodeBuffer(buffer) {
-    const bytes = new Uint8Array(buffer);
-    if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) {
-        return new TextDecoder().decode(buffer);
-    }
+  const bytes = new Uint8Array(buffer)
+  if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) {
+    return new TextDecoder().decode(buffer)
+  }
 
-    if (!window.DecompressionStream) {
-        throw new Error("Browser does not support gzip decompression.");
-    }
+  if (!window.DecompressionStream) {
+    throw new Error('Browser does not support gzip decompression.')
+  }
 
-    const ds = new DecompressionStream("gzip");
-    const decompressedStream = new Response(new Blob([buffer]).stream().pipeThrough(ds));
-    return decompressedStream.text();
+  const ds = new DecompressionStream('gzip')
+  const decompressedStream = new Response(
+    new Blob([buffer]).stream().pipeThrough(ds)
+  )
+  return decompressedStream.text()
 }
 
 function parseCardsetText(text, sourceName) {
-    return parseCsvToJson(text);
+  return parseCsvToJson(text)
 }
 
 async function resolveCardsetUrl(setName) {
-    const tried = [];
-    for (const format of CARDSET_FILE_FORMATS) {
-        const url = `cardsets/${setName}${format.suffix}`;
-        tried.push(url);
-        try {
-            const response = await fetch(url, { cache: "reload" });
-            if (response.ok) {
-                return { response, url };
-            }
-        } catch (error) {
-            // continue trying other formats
-        }
+  const tried = []
+  for (const format of CARDSET_FILE_FORMATS) {
+    const url = `cardsets/${setName}${format.suffix}`
+    tried.push(url)
+    try {
+      const response = await fetch(url, { cache: 'reload' })
+      if (response.ok) {
+        return { response, url }
+      }
+    } catch (error) {
+      // continue trying other formats
     }
-    throw new Error(`Failed to fetch cardset data. Tried: ${tried.join(", ")}`);
+  }
+  throw new Error(`Failed to fetch cardset data. Tried: ${tried.join(', ')}`)
 }
 
 async function fetchAndSeed(currentSet, db) {
-    let data;
-    try {
-        const { response, url } = await resolveCardsetUrl(currentSet);
-        let text;
+  let data
+  try {
+    const { response, url } = await resolveCardsetUrl(currentSet)
+    let text
 
-        if (url.endsWith(".gz")) {
-            const buffer = await response.arrayBuffer();
-            text = await decompressOrDecodeBuffer(buffer);
-        } else {
-            text = await response.text();
-        }
-
-        data = parseCardsetText(text, url);
-        if (!Array.isArray(data)) {
-            throw new Error("Expected array data from cardset file.");
-        }
-    } catch (error) {
-        throw new Error(`Failed to fetch cardset for '${currentSet}': ${error.message}`);
+    if (url.endsWith('.gz')) {
+      const buffer = await response.arrayBuffer()
+      text = await decompressOrDecodeBuffer(buffer)
+    } else {
+      text = await response.text()
     }
 
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
-        const store = tx.objectStore(CARDSETS_STORE_NAME);
+    data = parseCardsetText(text, url)
+    if (!Array.isArray(data)) {
+      throw new Error('Expected array data from cardset file.')
+    }
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch cardset for '${currentSet}': ${error.message}`
+    )
+  }
 
-        tx.onerror = () => reject(tx.error || new Error("Transaction failed during seed."));
-        tx.oncomplete = () => {
-            setCachedDataVersion(LATEST_DATA_VERSION);
-            resolve();
-        };
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CARDSETS_STORE_NAME, 'readwrite')
+    const store = tx.objectStore(CARDSETS_STORE_NAME)
 
-        try {
-            for (const item of data) {
-                if (!item || typeof item.text !== "string") {
-                    throw new Error("Each card object must include a string `text` key.");
-                }
-                store.put({ ...item, setName: currentSet });
-            }
-        } catch (error) {
-            reject(error);
+    tx.onerror = () =>
+      reject(tx.error || new Error('Transaction failed during seed.'))
+    tx.oncomplete = () => {
+      setCachedDataVersion(LATEST_DATA_VERSION)
+      resolve()
+    }
+
+    try {
+      for (const item of data) {
+        if (!item || typeof item.text !== 'string') {
+          throw new Error('Each card object must include a string `text` key.')
         }
-    });
+        store.put({ ...item, setName: currentSet })
+      }
+    } catch (error) {
+      reject(error)
+    }
+  })
 }
 
 function getAllCardsForSet(currentSet) {
-    return openDatabase().then((db) => {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
-            const store = tx.objectStore(CARDSETS_STORE_NAME);
+  return openDatabase().then((db) => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(CARDSETS_STORE_NAME, 'readonly')
+      const store = tx.objectStore(CARDSETS_STORE_NAME)
 
-            const cardsForSet = [];
-            let request;
+      const cardsForSet = []
+      let request
 
-            if (store.indexNames.contains("setName")) {
-                const index = store.index("setName");
-                request = index.openCursor(IDBKeyRange.only(currentSet));
-            } else {
-                request = store.openCursor();
-            }
+      if (store.indexNames.contains('setName')) {
+        const index = store.index('setName')
+        request = index.openCursor(IDBKeyRange.only(currentSet))
+      } else {
+        request = store.openCursor()
+      }
 
-            request.onerror = () => {
-                reject(request.error || new Error("Failed to read cards from IndexedDB."));
-            };
+      request.onerror = () => {
+        reject(
+          request.error || new Error('Failed to read cards from IndexedDB.')
+        )
+      }
 
-            request.onsuccess = (event) => {
-                const cursor = event.target.result;
-                if (!cursor) {
-                    resolve(cardsForSet);
-                    return;
-                }
+      request.onsuccess = (event) => {
+        const cursor = event.target.result
+        if (!cursor) {
+          resolve(cardsForSet)
+          return
+        }
 
-                const record = cursor.value;
-                if (!record.setName || record.setName === currentSet) {
-                    cardsForSet.push(record);
-                }
+        const record = cursor.value
+        if (!record.setName || record.setName === currentSet) {
+          cardsForSet.push(record)
+        }
 
-                cursor.continue();
-            };
-        });
-    });
+        cursor.continue()
+      }
+    })
+  })
 }
 
 function getDisplayNameForSet(setName) {
-    const defaultEntry = DEFAULT_CARDSETS.find(item => item.key === setName);
-    if (defaultEntry) {
-        return defaultEntry.label;
-    }
+  const defaultEntry = DEFAULT_CARDSETS.find((item) => item.key === setName)
+  if (defaultEntry) {
+    return defaultEntry.label
+  }
 
-    return setName
-        .replace(/[-_]/g, " ")
-        .replace(/\b\w/g, char => char.toUpperCase());
+  return setName
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
 async function getCardsetMetadata(setName) {
-    try {
-        const db = await openDatabase();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(CARDSET_METADATA_STORE_NAME, "readonly");
-            const store = tx.objectStore(CARDSET_METADATA_STORE_NAME);
-            const request = store.get(setName);
+  try {
+    const db = await openDatabase()
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(CARDSET_METADATA_STORE_NAME, 'readonly')
+      const store = tx.objectStore(CARDSET_METADATA_STORE_NAME)
+      const request = store.get(setName)
 
-            request.onerror = () => reject(request.error || new Error("Failed to read cardset metadata."));
-            request.onsuccess = () => resolve(request.result || null);
-        });
-    } catch (error) {
-        console.error("getCardsetMetadata failed:", error);
-        return null;
-    }
+      request.onerror = () =>
+        reject(request.error || new Error('Failed to read cardset metadata.'))
+      request.onsuccess = () => resolve(request.result || null)
+    })
+  } catch (error) {
+    console.error('getCardsetMetadata failed:', error)
+    return null
+  }
 }
 
 async function setCardsetMetadata(metadata) {
-    try {
-        const db = await openDatabase();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(CARDSET_METADATA_STORE_NAME, "readwrite");
-            const store = tx.objectStore(CARDSET_METADATA_STORE_NAME);
-            const request = store.put(metadata);
+  try {
+    const db = await openDatabase()
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(CARDSET_METADATA_STORE_NAME, 'readwrite')
+      const store = tx.objectStore(CARDSET_METADATA_STORE_NAME)
+      const request = store.put(metadata)
 
-            request.onerror = () => reject(request.error || new Error("Failed to write cardset metadata."));
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error || new Error("Cardset metadata transaction failed."));
-        });
-    } catch (error) {
-        console.error("setCardsetMetadata failed:", error);
-        throw error;
-    }
+      request.onerror = () =>
+        reject(request.error || new Error('Failed to write cardset metadata.'))
+      tx.oncomplete = () => resolve()
+      tx.onerror = () =>
+        reject(tx.error || new Error('Cardset metadata transaction failed.'))
+    })
+  } catch (error) {
+    console.error('setCardsetMetadata failed:', error)
+    throw error
+  }
 }
 
 async function deleteCardsetMetadata(setName) {
-    try {
-        const db = await openDatabase();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(CARDSET_METADATA_STORE_NAME, "readwrite");
-            const store = tx.objectStore(CARDSET_METADATA_STORE_NAME);
-            const request = store.delete(setName);
+  try {
+    const db = await openDatabase()
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(CARDSET_METADATA_STORE_NAME, 'readwrite')
+      const store = tx.objectStore(CARDSET_METADATA_STORE_NAME)
+      const request = store.delete(setName)
 
-            request.onerror = () => reject(request.error || new Error("Failed to delete cardset metadata."));
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error || new Error("Cardset metadata delete transaction failed."));
-        });
-    } catch (error) {
-        console.error("deleteCardsetMetadata failed:", error);
-        throw error;
-    }
+      request.onerror = () =>
+        reject(request.error || new Error('Failed to delete cardset metadata.'))
+      tx.oncomplete = () => resolve()
+      tx.onerror = () =>
+        reject(
+          tx.error || new Error('Cardset metadata delete transaction failed.')
+        )
+    })
+  } catch (error) {
+    console.error('deleteCardsetMetadata failed:', error)
+    throw error
+  }
 }
 
 async function deleteProgressFromDB(setName) {
-    try {
-        const db = await openDatabase();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(PROGRESS_STORE_NAME, "readwrite");
-            const store = tx.objectStore(PROGRESS_STORE_NAME);
-            const request = store.delete(setName);
+  try {
+    const db = await openDatabase()
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(PROGRESS_STORE_NAME, 'readwrite')
+      const store = tx.objectStore(PROGRESS_STORE_NAME)
+      const request = store.delete(setName)
 
-            request.onerror = () => reject(request.error || new Error("Failed to delete progress data."));
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error || new Error("Progress delete transaction failed."));
-        });
-    } catch (error) {
-        console.error("deleteProgressFromDB failed:", error);
-        throw error;
-    }
+      request.onerror = () =>
+        reject(request.error || new Error('Failed to delete progress data.'))
+      tx.oncomplete = () => resolve()
+      tx.onerror = () =>
+        reject(tx.error || new Error('Progress delete transaction failed.'))
+    })
+  } catch (error) {
+    console.error('deleteProgressFromDB failed:', error)
+    throw error
+  }
 }
 
 async function deleteCardset(setName) {
-    const db = await openDatabase();
-    await deleteCardsetRecords(db, setName);
-    await deleteCardsetMetadata(setName);
-    await deleteProgressFromDB(setName);
+  const db = await openDatabase()
+  await deleteCardsetRecords(db, setName)
+  await deleteCardsetMetadata(setName)
+  await deleteProgressFromDB(setName)
 }
 
 function getCardsetDisplayName(setName) {
-    return getCardsetMetadata(setName)
-        .then(metadata => metadata?.displayName || getDisplayNameForSet(setName));
+  return getCardsetMetadata(setName).then(
+    (metadata) => metadata?.displayName || getDisplayNameForSet(setName)
+  )
 }
 
 async function handleDeleteCardset() {
-    const isDefault = DEFAULT_CARDSETS.some(item => item.key === currentSet);
-    if (isDefault) {
-        alert("Default cardsets cannot be deleted.");
-        return;
-    }
+  const isDefault = DEFAULT_CARDSETS.some((item) => item.key === currentSet)
+  if (isDefault) {
+    alert('Default cardsets cannot be deleted.')
+    return
+  }
 
-    const displayName = await getCardsetDisplayName(currentSet);
-    const confirmed = confirm(
-        `Delete cardset "${displayName}"? This will remove the cardset and its progress.`
-    );
+  const displayName = await getCardsetDisplayName(currentSet)
+  const confirmed = confirm(
+    `Delete cardset "${displayName}"? This will remove the cardset and its progress.`
+  )
 
-    if (!confirmed) {
-        return;
-    }
+  if (!confirmed) {
+    return
+  }
 
-    try {
-        await deleteCardset(currentSet);
-        await refreshCardSetOptions();
-        await saveSettings();
-        await loadProgress();
-        await loadCardSet();
-        updateHomeStats();
-        alert(`Cardset "${displayName}" deleted.`);
-    } catch (error) {
-        console.error("Failed to delete cardset:", error);
-        alert("Unable to delete cardset. See console for details.");
-    }
+  try {
+    await deleteCardset(currentSet)
+    await refreshCardSetOptions()
+    await saveSettings()
+    await loadProgress()
+    await loadCardSet()
+    updateHomeStats()
+    alert(`Cardset "${displayName}" deleted.`)
+  } catch (error) {
+    console.error('Failed to delete cardset:', error)
+    alert('Unable to delete cardset. See console for details.')
+  }
 }
 
 async function getUniqueCardsetNames() {
-    const names = new Set(DEFAULT_CARDSETS.map(item => item.key));
-    try {
-        const db = await openDatabase();
-        await new Promise((resolve, reject) => {
-            const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
-            const store = tx.objectStore(CARDSETS_STORE_NAME);
-            const request = store.openCursor();
+  const names = new Set(DEFAULT_CARDSETS.map((item) => item.key))
+  try {
+    const db = await openDatabase()
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(CARDSETS_STORE_NAME, 'readonly')
+      const store = tx.objectStore(CARDSETS_STORE_NAME)
+      const request = store.openCursor()
 
-            request.onerror = () => reject(request.error || new Error("Failed to iterate cardsets."));
-            request.onsuccess = (event) => {
-                const cursor = event.target.result;
-                if (!cursor) {
-                    resolve();
-                    return;
-                }
+      request.onerror = () =>
+        reject(request.error || new Error('Failed to iterate cardsets.'))
+      request.onsuccess = (event) => {
+        const cursor = event.target.result
+        if (!cursor) {
+          resolve()
+          return
+        }
 
-                if (cursor.value.setName) {
-                    names.add(cursor.value.setName);
-                }
-                cursor.continue();
-            };
-        });
-    } catch (error) {
-        console.warn("Unable to read stored cardset names:", error);
-    }
+        if (cursor.value.setName) {
+          names.add(cursor.value.setName)
+        }
+        cursor.continue()
+      }
+    })
+  } catch (error) {
+    console.warn('Unable to read stored cardset names:', error)
+  }
 
-    return Array.from(names);
+  return Array.from(names)
 }
 
 async function refreshCardSetOptions() {
-    const storedNames = await getUniqueCardsetNames();
-    cardSetSelect.innerHTML = "";
+  const storedNames = await getUniqueCardsetNames()
+  cardSetSelect.innerHTML = ''
 
-    const optionSet = new Set();
-    for (const cardset of DEFAULT_CARDSETS) {
-        optionSet.add(cardset.key);
-        const option = document.createElement("option");
-        option.value = cardset.key;
-        option.textContent = cardset.label;
-        cardSetSelect.appendChild(option);
+  const optionSet = new Set()
+  for (const cardset of DEFAULT_CARDSETS) {
+    optionSet.add(cardset.key)
+    const option = document.createElement('option')
+    option.value = cardset.key
+    option.textContent = cardset.label
+    cardSetSelect.appendChild(option)
+  }
+
+  for (const setName of storedNames) {
+    if (optionSet.has(setName)) {
+      continue
     }
+    optionSet.add(setName)
 
-    for (const setName of storedNames) {
-        if (optionSet.has(setName)) {
-            continue;
-        }
-        optionSet.add(setName);
+    const metadata = await getCardsetMetadata(setName)
+    const displayName = metadata?.displayName || getDisplayNameForSet(setName)
 
-        const metadata = await getCardsetMetadata(setName);
-        const displayName = metadata?.displayName || getDisplayNameForSet(setName);
+    const option = document.createElement('option')
+    option.value = setName
+    option.textContent = displayName
+    cardSetSelect.appendChild(option)
+  }
 
-        const option = document.createElement("option");
-        option.value = setName;
-        option.textContent = displayName;
-        cardSetSelect.appendChild(option);
-    }
+  if (optionSet.has(currentSet)) {
+    cardSetSelect.value = currentSet
+  } else if (cardSetSelect.options.length > 0) {
+    cardSetSelect.selectedIndex = 0
+    currentSet = cardSetSelect.value
+  }
 
-    if (optionSet.has(currentSet)) {
-        cardSetSelect.value = currentSet;
-    } else if (cardSetSelect.options.length > 0) {
-        cardSetSelect.selectedIndex = 0;
-        currentSet = cardSetSelect.value;
-    }
-
-    updateDeleteCardsetButtonState();
+  updateDeleteCardsetButtonState()
 }
 
 function updateDeleteCardsetButtonState() {
-    const isDefault = DEFAULT_CARDSETS.some(item => item.key === currentSet);
-    deleteCardsetBtn.disabled = isDefault;
-    deleteCardsetBtn.title = isDefault
-        ? "Default cardsets cannot be deleted"
-        : "Delete the selected cardset";
+  const isDefault = DEFAULT_CARDSETS.some((item) => item.key === currentSet)
+  deleteCardsetBtn.disabled = isDefault
+  deleteCardsetBtn.title = isDefault
+    ? 'Default cardsets cannot be deleted'
+    : 'Delete the selected cardset'
 }
 
 function deleteCardsetRecords(db, setName) {
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
-        const store = tx.objectStore(CARDSETS_STORE_NAME);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CARDSETS_STORE_NAME, 'readwrite')
+    const store = tx.objectStore(CARDSETS_STORE_NAME)
 
-        const request = store.indexNames.contains("setName")
-            ? store.index("setName").openCursor(IDBKeyRange.only(setName))
-            : store.openCursor();
+    const request = store.indexNames.contains('setName')
+      ? store.index('setName').openCursor(IDBKeyRange.only(setName))
+      : store.openCursor()
 
-        request.onerror = () => reject(request.error || new Error("Failed to delete cardset records."));
-        request.onsuccess = (event) => {
-            const cursor = event.target.result;
-            if (!cursor) {
-                resolve();
-                return;
-            }
+    request.onerror = () =>
+      reject(request.error || new Error('Failed to delete cardset records.'))
+    request.onsuccess = (event) => {
+      const cursor = event.target.result
+      if (!cursor) {
+        resolve()
+        return
+      }
 
-            if (!store.indexNames.contains("setName") || cursor.value.setName === setName) {
-                cursor.delete();
-            }
+      if (
+        !store.indexNames.contains('setName') ||
+        cursor.value.setName === setName
+      ) {
+        cursor.delete()
+      }
 
-            cursor.continue();
-        };
-    });
+      cursor.continue()
+    }
+  })
 }
 
 async function importCardset(setName, cards) {
-    const db = await openDatabase();
-    await deleteCardsetRecords(db, setName);
+  const db = await openDatabase()
+  await deleteCardsetRecords(db, setName)
 
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
-        const store = tx.objectStore(CARDSETS_STORE_NAME);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CARDSETS_STORE_NAME, 'readwrite')
+    const store = tx.objectStore(CARDSETS_STORE_NAME)
 
-        tx.onerror = () => reject(tx.error || new Error("Failed to import cardset."));
-        tx.oncomplete = () => resolve();
+    tx.onerror = () =>
+      reject(tx.error || new Error('Failed to import cardset.'))
+    tx.oncomplete = () => resolve()
 
-        try {
-            for (const item of cards) {
-                if (!item || typeof item.text !== "string") {
-                    throw new Error("Each card object must include a string `text` key.");
-                }
-                store.put({ ...item, setName });
-            }
-        } catch (error) {
-            reject(error);
+    try {
+      for (const item of cards) {
+        if (!item || typeof item.text !== 'string') {
+          throw new Error('Each card object must include a string `text` key.')
         }
-    });
+        store.put({ ...item, setName })
+      }
+    } catch (error) {
+      reject(error)
+    }
+  })
 }
 
 function escapeCsvValue(value) {
-    if (value === undefined || value === null) {
-        return "";
-    }
+  if (value === undefined || value === null) {
+    return ''
+  }
 
-    let output = value;
-    if (Array.isArray(value)) {
-        output = value.join("|");
-    } else if (typeof value === "object") {
-        output = JSON.stringify(value);
-    }
+  let output = value
+  if (Array.isArray(value)) {
+    output = value.join('|')
+  } else if (typeof value === 'object') {
+    output = JSON.stringify(value)
+  }
 
-    output = String(output);
-    const shouldQuote = new RegExp(`["${CSV_DELIMITER}\\r\\n]`).test(output);
-    if (shouldQuote) {
-        output = `"${output.replace(/"/g, '""')}"`;
-    }
-    return output;
+  output = String(output)
+  const shouldQuote = new RegExp(`["${CSV_DELIMITER}\\r\\n]`).test(output)
+  if (shouldQuote) {
+    output = `"${output.replace(/"/g, '""')}"`
+  }
+  return output
 }
 
 function createCsvFromCards(cards) {
-    const fieldSet = new Set();
-    for (const card of cards) {
-        Object.keys(card).forEach((key) => {
-            if (key === "setName") {
-                return;
-            }
-            fieldSet.add(key);
-        });
-    }
+  const fieldSet = new Set()
+  for (const card of cards) {
+    Object.keys(card).forEach((key) => {
+      if (key === 'setName') {
+        return
+      }
+      fieldSet.add(key)
+    })
+  }
 
-    const preferredOrder = ["text", "answers"];
-    const extraFields = [...fieldSet].filter((key) => !preferredOrder.includes(key));
-    const headers = [...preferredOrder.filter((key) => fieldSet.has(key)), ...extraFields];
+  const preferredOrder = ['text', 'answers']
+  const extraFields = [...fieldSet].filter(
+    (key) => !preferredOrder.includes(key)
+  )
+  const headers = [
+    ...preferredOrder.filter((key) => fieldSet.has(key)),
+    ...extraFields,
+  ]
 
-    const rows = [headers.join(CSV_DELIMITER)];
-    for (const card of cards) {
-        const row = headers.map((key) => escapeCsvValue(card[key]));
-        rows.push(row.join(CSV_DELIMITER));
-    }
+  const rows = [headers.join(CSV_DELIMITER)]
+  for (const card of cards) {
+    const row = headers.map((key) => escapeCsvValue(card[key]))
+    rows.push(row.join(CSV_DELIMITER))
+  }
 
-    return rows.join("\r\n");
+  return rows.join('\r\n')
 }
 
 function createCsvFromProgress(progressData, cards) {
-    const headers = ["text", "stage", "nextReview", "correctCount"];
-    const rows = [headers.join(CSV_DELIMITER)];
+  const headers = ['text', 'stage', 'nextReview', 'correctCount']
+  const rows = [headers.join(CSV_DELIMITER)]
 
-    for (const card of cards) {
-        const progressEntry = progressData[card.text] || {
-            stage: 0,
-            nextReview: 0,
-            correctCount: 0
-        };
-
-        const row = [
-            escapeCsvValue(card.text),
-            escapeCsvValue(progressEntry.stage),
-            escapeCsvValue(progressEntry.nextReview),
-            escapeCsvValue(progressEntry.correctCount)
-        ];
-
-        rows.push(row.join(CSV_DELIMITER));
+  for (const card of cards) {
+    const progressEntry = progressData[card.text] || {
+      stage: 0,
+      nextReview: 0,
+      correctCount: 0,
     }
 
-    return rows.join("\r\n");
+    const row = [
+      escapeCsvValue(card.text),
+      escapeCsvValue(progressEntry.stage),
+      escapeCsvValue(progressEntry.nextReview),
+      escapeCsvValue(progressEntry.correctCount),
+    ]
+
+    rows.push(row.join(CSV_DELIMITER))
+  }
+
+  return rows.join('\r\n')
 }
 
 async function exportProgress() {
-    try {
-        if (!cards.length) {
-            alert("Nothing to export for this cardset.");
-            return;
-        }
-
-        const csvText = createCsvFromProgress(progress, cards);
-        const blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${currentSet}-progress-${new Date().toISOString().split("T")[0]}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    } catch (error) {
-        console.error("exportProgress failed:", error);
-        alert("Unable to export progress. See console for details.");
+  try {
+    if (!cards.length) {
+      alert('Nothing to export for this cardset.')
+      return
     }
+
+    const csvText = createCsvFromProgress(progress, cards)
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${currentSet}-progress-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('exportProgress failed:', error)
+    alert('Unable to export progress. See console for details.')
+  }
 }
 
 function handleImportProgress(event) {
-    const file = event.target.files[0];
-    if (!file) {
-        return;
-    }
+  const file = event.target.files[0]
+  if (!file) {
+    return
+  }
 
-    const lowerName = file.name.toLowerCase();
-    if (!lowerName.endsWith('.csv')) {
-        alert("Please upload a .csv file only.");
-        event.target.value = "";
-        return;
-    }
+  const lowerName = file.name.toLowerCase()
+  if (!lowerName.endsWith('.csv')) {
+    alert('Please upload a .csv file only.')
+    event.target.value = ''
+    return
+  }
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const data = parseCsvToJson(e.target.result);
-            if (!Array.isArray(data)) {
-                throw new Error("Invalid progress file format.");
-            }
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    try {
+      const data = parseCsvToJson(e.target.result)
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid progress file format.')
+      }
 
-            const importedProgress = {};
-            for (const row of data) {
-                const text = String(row.text || "").trim();
-                if (!text) {
-                    continue;
-                }
-
-                importedProgress[text] = {
-                    stage: Number(row.stage) || 0,
-                    nextReview: Number(row.nextReview) || 0,
-                    correctCount: Number(row.correctCount) || 0
-                };
-            }
-
-            if (Object.keys(importedProgress).length === 0) {
-                throw new Error("No valid progress rows found.");
-            }
-
-            const confirmed = confirm(
-                `Import progress for "${currentSet}"? This will overwrite progress for matching cards.`
-            );
-            if (!confirmed) {
-                return;
-            }
-
-            for (const [text, progressEntry] of Object.entries(importedProgress)) {
-                progress[text] = progressEntry;
-            }
-
-            initializeMissingProgress();
-            await saveProgress();
-            renderProgressCardList("");
-
-            alert("Progress imported successfully!");
-        } catch (error) {
-            alert(`Failed to import progress: ${error.message}`);
-        } finally {
-            event.target.value = "";
+      const importedProgress = {}
+      for (const row of data) {
+        const text = String(row.text || '').trim()
+        if (!text) {
+          continue
         }
-    };
 
-    reader.readAsText(file);
+        importedProgress[text] = {
+          stage: Number(row.stage) || 0,
+          nextReview: Number(row.nextReview) || 0,
+          correctCount: Number(row.correctCount) || 0,
+        }
+      }
+
+      if (Object.keys(importedProgress).length === 0) {
+        throw new Error('No valid progress rows found.')
+      }
+
+      const confirmed = confirm(
+        `Import progress for "${currentSet}"? This will overwrite progress for matching cards.`
+      )
+      if (!confirmed) {
+        return
+      }
+
+      for (const [text, progressEntry] of Object.entries(importedProgress)) {
+        progress[text] = progressEntry
+      }
+
+      initializeMissingProgress()
+      await saveProgress()
+      renderProgressCardList('')
+
+      alert('Progress imported successfully!')
+    } catch (error) {
+      alert(`Failed to import progress: ${error.message}`)
+    } finally {
+      event.target.value = ''
+    }
+  }
+
+  reader.readAsText(file)
 }
 
 async function exportCardset() {
-    try {
-        const cards = await getAllCardsForSet(currentSet);
-        if (!cards.length) {
-            alert("Nothing to export for this cardset.");
-            return;
-        }
-
-        const csvText = createCsvFromCards(cards.map((card) => {
-            const { setName, ...rest } = card;
-            return rest;
-        }));
-        const blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${currentSet}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    } catch (error) {
-        console.error("exportCardset failed:", error);
-        alert("Unable to export cardset. See console for details.");
+  try {
+    const cards = await getAllCardsForSet(currentSet)
+    if (!cards.length) {
+      alert('Nothing to export for this cardset.')
+      return
     }
+
+    const csvText = createCsvFromCards(
+      cards.map((card) => {
+        const { setName, ...rest } = card
+        return rest
+      })
+    )
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${currentSet}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('exportCardset failed:', error)
+    alert('Unable to export cardset. See console for details.')
+  }
 }
 
 function handleImportCardset(event) {
-    const file = event.target.files[0];
-    if (!file) {
-        return;
+  const file = event.target.files[0]
+  if (!file) {
+    return
+  }
+
+  const lowerName = file.name.toLowerCase()
+  if (!lowerName.endsWith('.csv')) {
+    alert('Please upload a .csv file only.')
+    event.target.value = ''
+    return
+  }
+
+  const processFileText = async (text) => {
+    let data
+    try {
+      data = parseCardsetText(text, file.name)
+    } catch (error) {
+      throw new Error(`Failed to parse cardset file: ${error.message}`)
     }
 
-    const lowerName = file.name.toLowerCase();
-    if (!lowerName.endsWith('.csv')) {
-        alert("Please upload a .csv file only.");
-        event.target.value = "";
-        return;
+    if (!Array.isArray(data)) {
+      throw new Error(
+        'Invalid cardset file format. Please upload a CSV file with card rows.'
+      )
     }
 
-    const processFileText = async (text) => {
-        let data;
-        try {
-            data = parseCardsetText(text, file.name);
-        } catch (error) {
-            throw new Error(`Failed to parse cardset file: ${error.message}`);
-        }
+    const setName = getCardsetBaseName(file.name)
+    if (!setName) {
+      throw new Error(
+        'Unable to infer cardset name from the uploaded file name.'
+      )
+    }
 
-        if (!Array.isArray(data)) {
-            throw new Error("Invalid cardset file format. Please upload a CSV file with card rows.");
-        }
+    const displayName = getDisplayNameForSet(setName)
+    const existing = await getUniqueCardsetNames()
+    if (existing.includes(setName)) {
+      const confirmed = confirm(
+        `A cardset named "${setName}" already exists. Overwrite it?`
+      )
+      if (!confirmed) {
+        return
+      }
+    }
 
-        const setName = getCardsetBaseName(file.name);
-        if (!setName) {
-            throw new Error("Unable to infer cardset name from the uploaded file name.");
-        }
+    await importCardset(setName, data)
+    await setCardsetMetadata({ setName, displayName, importedAt: Date.now() })
+    await refreshCardSetOptions()
+    alert(`Cardset "${displayName}" imported successfully.`)
+  }
 
-        const displayName = getDisplayNameForSet(setName);
-        const existing = await getUniqueCardsetNames();
-        if (existing.includes(setName)) {
-            const confirmed = confirm(`A cardset named "${setName}" already exists. Overwrite it?`);
-            if (!confirmed) {
-                return;
-            }
-        }
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    try {
+      const result = e.target.result
+      await processFileText(result)
+    } catch (error) {
+      alert(`Failed to import cardset: ${error.message}`)
+    } finally {
+      event.target.value = ''
+    }
+  }
 
-        await importCardset(setName, data);
-        await setCardsetMetadata({ setName, displayName, importedAt: Date.now() });
-        await refreshCardSetOptions();
-        alert(`Cardset "${displayName}" imported successfully.`);
-    };
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const result = e.target.result;
-            await processFileText(result);
-        } catch (error) {
-            alert(`Failed to import cardset: ${error.message}`);
-        } finally {
-            event.target.value = "";
-        }
-    };
-
-    reader.readAsText(file);
+  reader.readAsText(file)
 }
 
 async function clearDefaultCardsets(db) {
-    const defaultKeys = DEFAULT_CARDSETS.map(item => item.key);
-    const tasks = defaultKeys.map(key => deleteCardsetRecords(db, key));
-    await Promise.all(tasks);
+  const defaultKeys = DEFAULT_CARDSETS.map((item) => item.key)
+  const tasks = defaultKeys.map((key) => deleteCardsetRecords(db, key))
+  await Promise.all(tasks)
 }
 
 async function initializeCardSet(currentSet) {
-    try {
-        ensureStorageAvailable();
-        const db = await openDatabase();
-        const cachedVersion = await getCachedDataVersion();
-        const setCount = await getStoreCountForSet(db, currentSet);
+  try {
+    ensureStorageAvailable()
+    const db = await openDatabase()
+    const cachedVersion = await getCachedDataVersion()
+    const setCount = await getStoreCountForSet(db, currentSet)
 
-        if (cachedVersion !== LATEST_DATA_VERSION) {
-            await clearDefaultCardsets(db);
+    if (cachedVersion !== LATEST_DATA_VERSION) {
+      await clearDefaultCardsets(db)
 
-            const isDefault = DEFAULT_CARDSETS.some(item => item.key === currentSet);
-            if (isDefault) {
-                await fetchAndSeed(currentSet, db);
-            }
+      const isDefault = DEFAULT_CARDSETS.some((item) => item.key === currentSet)
+      if (isDefault) {
+        await fetchAndSeed(currentSet, db)
+      }
 
-            return await getAllCardsForSet(currentSet);
-        }
-
-        if (setCount > 0) {
-            return await getAllCardsForSet(currentSet);
-        }
-
-        await fetchAndSeed(currentSet, db);
-        return await getAllCardsForSet(currentSet);
-    } catch (error) {
-        console.error("initializeCardSet failed:", error);
-        throw error;
+      return await getAllCardsForSet(currentSet)
     }
+
+    if (setCount > 0) {
+      return await getAllCardsForSet(currentSet)
+    }
+
+    await fetchAndSeed(currentSet, db)
+    return await getAllCardsForSet(currentSet)
+  } catch (error) {
+    console.error('initializeCardSet failed:', error)
+    throw error
+  }
 }
 
 async function getCards(cardSet) {
-    try {
-        ensureStorageAvailable();
-        const db = await openDatabase();
+  try {
+    ensureStorageAvailable()
+    const db = await openDatabase()
 
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
-            const store = tx.objectStore(CARDSETS_STORE_NAME);
-            const request = store.get(cardSet);
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(CARDSETS_STORE_NAME, 'readonly')
+      const store = tx.objectStore(CARDSETS_STORE_NAME)
+      const request = store.get(cardSet)
 
-            request.onerror = () => reject(request.error || new Error("Failed to read card from IndexedDB."));
-            request.onsuccess = () => resolve(request.result ?? null);
-        });
-    } catch (error) {
-        console.error("getCards failed:", error);
-        throw error;
-    }
+      request.onerror = () =>
+        reject(
+          request.error || new Error('Failed to read card from IndexedDB.')
+        )
+      request.onsuccess = () => resolve(request.result ?? null)
+    })
+  } catch (error) {
+    console.error('getCards failed:', error)
+    throw error
+  }
 }
 
 // =====================================================
@@ -1152,48 +1167,55 @@ async function getCards(cardSet) {
 // =====================================================
 
 async function getProgressFromDB(setName) {
-    try {
-        const db = await openDatabase();
+  try {
+    const db = await openDatabase()
 
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(PROGRESS_STORE_NAME, "readonly");
-            const store = tx.objectStore(PROGRESS_STORE_NAME);
-            const request = store.get(setName);
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(PROGRESS_STORE_NAME, 'readonly')
+      const store = tx.objectStore(PROGRESS_STORE_NAME)
+      const request = store.get(setName)
 
-            request.onerror = () => reject(request.error || new Error("Failed to read progress from IndexedDB."));
-            request.onsuccess = () => {
-                const result = request.result;
-                resolve(result ? result.data : null);
-            };
-        });
-    } catch (error) {
-        console.error("getProgressFromDB failed:", error);
-        return null;
-    }
+      request.onerror = () =>
+        reject(
+          request.error || new Error('Failed to read progress from IndexedDB.')
+        )
+      request.onsuccess = () => {
+        const result = request.result
+        resolve(result ? result.data : null)
+      }
+    })
+  } catch (error) {
+    console.error('getProgressFromDB failed:', error)
+    return null
+  }
 }
 
 async function setProgressToDB(setName, progressData) {
-    try {
-        const db = await openDatabase();
+  try {
+    const db = await openDatabase()
 
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(PROGRESS_STORE_NAME, "readwrite");
-            const store = tx.objectStore(PROGRESS_STORE_NAME);
-            const request = store.put({
-                setName: setName,
-                data: progressData,
-                lastUpdated: Date.now()
-            });
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(PROGRESS_STORE_NAME, 'readwrite')
+      const store = tx.objectStore(PROGRESS_STORE_NAME)
+      const request = store.put({
+        setName: setName,
+        data: progressData,
+        lastUpdated: Date.now(),
+      })
 
-            request.onerror = () => reject(request.error || new Error("Failed to write progress to IndexedDB."));
+      request.onerror = () =>
+        reject(
+          request.error || new Error('Failed to write progress to IndexedDB.')
+        )
 
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error || new Error("Progress transaction failed."));
-        });
-    } catch (error) {
-        console.error("setProgressToDB failed:", error);
-        throw error;
-    }
+      tx.oncomplete = () => resolve()
+      tx.onerror = () =>
+        reject(tx.error || new Error('Progress transaction failed.'))
+    })
+  } catch (error) {
+    console.error('setProgressToDB failed:', error)
+    throw error
+  }
 }
 
 // =====================================================
@@ -1201,48 +1223,55 @@ async function setProgressToDB(setName, progressData) {
 // =====================================================
 
 async function getSettingsFromDB() {
-    try {
-        const db = await openDatabase();
+  try {
+    const db = await openDatabase()
 
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(SETTINGS_STORE_NAME, "readonly");
-            const store = tx.objectStore(SETTINGS_STORE_NAME);
-            const request = store.get("settings");
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SETTINGS_STORE_NAME, 'readonly')
+      const store = tx.objectStore(SETTINGS_STORE_NAME)
+      const request = store.get('settings')
 
-            request.onerror = () => reject(request.error || new Error("Failed to read settings from IndexedDB."));
-            request.onsuccess = () => {
-                const result = request.result;
-                resolve(result ? result.data : {});
-            };
-        });
-    } catch (error) {
-        console.error("getSettingsFromDB failed:", error);
-        return {};
-    }
+      request.onerror = () =>
+        reject(
+          request.error || new Error('Failed to read settings from IndexedDB.')
+        )
+      request.onsuccess = () => {
+        const result = request.result
+        resolve(result ? result.data : {})
+      }
+    })
+  } catch (error) {
+    console.error('getSettingsFromDB failed:', error)
+    return {}
+  }
 }
 
 async function setSettingsToDB(settingsData) {
-    try {
-        const db = await openDatabase();
+  try {
+    const db = await openDatabase()
 
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(SETTINGS_STORE_NAME, "readwrite");
-            const store = tx.objectStore(SETTINGS_STORE_NAME);
-            const request = store.put({
-                key: "settings",
-                data: settingsData,
-                lastUpdated: Date.now()
-            });
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SETTINGS_STORE_NAME, 'readwrite')
+      const store = tx.objectStore(SETTINGS_STORE_NAME)
+      const request = store.put({
+        key: 'settings',
+        data: settingsData,
+        lastUpdated: Date.now(),
+      })
 
-            request.onerror = () => reject(request.error || new Error("Failed to write settings to IndexedDB."));
+      request.onerror = () =>
+        reject(
+          request.error || new Error('Failed to write settings to IndexedDB.')
+        )
 
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error || new Error("Settings transaction failed."));
-        });
-    } catch (error) {
-        console.error("setSettingsToDB failed:", error);
-        throw error;
-    }
+      tx.oncomplete = () => resolve()
+      tx.onerror = () =>
+        reject(tx.error || new Error('Settings transaction failed.'))
+    })
+  } catch (error) {
+    console.error('setSettingsToDB failed:', error)
+    throw error
+  }
 }
 
 // =====================================================
@@ -1250,72 +1279,79 @@ async function setSettingsToDB(settingsData) {
 // =====================================================
 
 function getPreferredTheme() {
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
+  return window.matchMedia &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light'
 }
 
 function applyTheme(value) {
-    themePreference = value || DEFAULT_THEME;
-    document.body.classList.remove('theme-system', 'theme-light', 'theme-dark');
-    document.body.classList.add(`theme-${themePreference}`);
+  themePreference = value || DEFAULT_THEME
+  document.body.classList.remove('theme-system', 'theme-light', 'theme-dark')
+  document.body.classList.add(`theme-${themePreference}`)
 
-    themeOptionInputs.forEach((input) => {
-        input.checked = input.value === themePreference;
-    });
+  themeOptionInputs.forEach((input) => {
+    input.checked = input.value === themePreference
+  })
 }
 
 function handleSystemThemeChange(event) {
-    if (themePreference === 'system') {
-        document.body.classList.remove('theme-light', 'theme-dark');
-        document.body.classList.add('theme-system');
-    }
+  if (themePreference === 'system') {
+    document.body.classList.remove('theme-light', 'theme-dark')
+    document.body.classList.add('theme-system')
+  }
 }
 
 async function deleteAppDatabase() {
-    try {
-        if (dbConnection) {
-            dbConnection.close();
-            dbConnection = null;
-        }
-
-        return new Promise((resolve, reject) => {
-            const request = window.indexedDB.deleteDatabase(DB_NAME);
-            request.onsuccess = () => resolve();
-            request.onblocked = () => reject(new Error('Delete blocked by another open connection. Close other tabs first.'));
-            request.onerror = () => reject(request.error || new Error('Failed to delete IndexedDB.'));
-        });
-    } catch (error) {
-        console.error('deleteAppDatabase failed:', error);
-        throw error;
+  try {
+    if (dbConnection) {
+      dbConnection.close()
+      dbConnection = null
     }
+
+    return new Promise((resolve, reject) => {
+      const request = window.indexedDB.deleteDatabase(DB_NAME)
+      request.onsuccess = () => resolve()
+      request.onblocked = () =>
+        reject(
+          new Error(
+            'Delete blocked by another open connection. Close other tabs first.'
+          )
+        )
+      request.onerror = () =>
+        reject(request.error || new Error('Failed to delete IndexedDB.'))
+    })
+  } catch (error) {
+    console.error('deleteAppDatabase failed:', error)
+    throw error
+  }
 }
 
 async function loadSettings() {
-    try {
-        const settings = await getSettingsFromDB();
-        currentSet = settings.currentSet || 'body-parts';
-        themePreference = settings.theme || DEFAULT_THEME;
-        applyTheme(themePreference);
-        cardSetSelect.value = currentSet;
-    } catch (error) {
-        console.error('Failed to load settings:', error);
-        currentSet = 'body-parts';
-        themePreference = DEFAULT_THEME;
-        applyTheme(themePreference);
-        cardSetSelect.value = currentSet;
-    }
+  try {
+    const settings = await getSettingsFromDB()
+    currentSet = settings.currentSet || 'body-parts'
+    themePreference = settings.theme || DEFAULT_THEME
+    applyTheme(themePreference)
+    cardSetSelect.value = currentSet
+  } catch (error) {
+    console.error('Failed to load settings:', error)
+    currentSet = 'body-parts'
+    themePreference = DEFAULT_THEME
+    applyTheme(themePreference)
+    cardSetSelect.value = currentSet
+  }
 }
 
 async function saveSettings() {
-    try {
-        await setSettingsToDB({
-            currentSet: currentSet,
-            theme: themePreference
-        });
-    } catch (error) {
-        console.error('Failed to save settings:', error);
-    }
+  try {
+    await setSettingsToDB({
+      currentSet: currentSet,
+      theme: themePreference,
+    })
+  } catch (error) {
+    console.error('Failed to save settings:', error)
+  }
 }
 
 // =====================================================
@@ -1323,35 +1359,31 @@ async function saveSettings() {
 // =====================================================
 
 async function loadCardSet() {
-    try {
-        cards = await initializeCardSet(currentSet);
-    } catch (error) {
-        console.error("Failed to load card set:", error);
-        cards = [];
-    }
+  try {
+    cards = await initializeCardSet(currentSet)
+  } catch (error) {
+    console.error('Failed to load card set:', error)
+    cards = []
+  }
 
-    initializeMissingProgress();
-    updateHomeStats();
+  initializeMissingProgress()
+  updateHomeStats()
 }
 
 function initializeMissingProgress() {
+  for (const card of cards) {
+    if (!progress[card.text]) {
+      progress[card.text] = {
+        stage: 0,
 
-    for (const card of cards) {
+        nextReview: 0,
 
-        if (!progress[card.text]) {
-
-            progress[card.text] = {
-
-                stage: 0,
-
-                nextReview: 0,
-
-                correctCount: 0
-            };
-        }
+        correctCount: 0,
+      }
     }
+  }
 
-    saveProgress();
+  saveProgress()
 }
 
 // =====================================================
@@ -1359,57 +1391,42 @@ function initializeMissingProgress() {
 // =====================================================
 
 function getCardProgress(text) {
-
-    return progress[text];
+  return progress[text]
 }
 
 function getStageName(stage) {
+  switch (stage) {
+    case 0:
+      return '🆕 New'
 
-    switch (stage) {
+    case 1:
+      return '🔁 Repeat x1'
 
-        case 0:
-            return "🆕 New";
+    case 2:
+      return '🔁 Repeat x2'
 
-        case 1:
-            return "🔁 Repeat x1";
+    case 3:
+      return '✅ Learned'
 
-        case 2:
-            return "🔁 Repeat x2";
-
-        case 3:
-            return "✅ Learned";
-
-        default:
-            return "Unknown";
-    }
+    default:
+      return 'Unknown'
+  }
 }
 
 function getLearnedCount() {
-
-    return Object.values(progress)
-        .filter(p => p.stage === 3)
-        .length;
+  return Object.values(progress).filter((p) => p.stage === 3).length
 }
 
 function getReview1Count() {
-
-    return Object.values(progress)
-        .filter(p => p.stage === 1)
-        .length;
+  return Object.values(progress).filter((p) => p.stage === 1).length
 }
 
 function getReview2Count() {
-
-    return Object.values(progress)
-        .filter(p => p.stage === 2)
-        .length;
+  return Object.values(progress).filter((p) => p.stage === 2).length
 }
 
 function getNewCount() {
-
-    return Object.values(progress)
-        .filter(p => p.stage === 0)
-        .length;
+  return Object.values(progress).filter((p) => p.stage === 0).length
 }
 
 // =====================================================
@@ -1417,27 +1434,17 @@ function getNewCount() {
 // =====================================================
 
 function updateHomeStats() {
+  const total = cards.length
 
-    const total =
-        cards.length;
+  const learned = getLearnedCount()
 
-    const learned =
-        getLearnedCount();
+  const percent = total === 0 ? 0 : Math.round((learned * 100) / total)
 
-    const percent =
-        total === 0
-            ? 0
-            : Math.round(
-                learned * 100 / total
-            );
+  progressFill.style.width = `${percent}%`
 
-    progressFill.style.width =
-        `${percent}%`;
+  progressText.textContent = `${percent}% Complete`
 
-    progressText.textContent =
-        `${percent}% Complete`;
-
-    updateNextReviewLabel();
+  updateNextReviewLabel()
 }
 
 // =====================================================
@@ -1445,392 +1452,255 @@ function updateHomeStats() {
 // =====================================================
 
 function updateNextReviewLabel() {
+  const now = Date.now()
 
-    const now = Date.now();
+  let nearest = null
 
-    let nearest = null;
-
-    for (const item of Object.values(progress)) {
-
-        if (
-            item.stage < 3 &&
-            item.nextReview > now
-        ) {
-
-            if (
-                nearest === null ||
-                item.nextReview < nearest
-            ) {
-
-                nearest =
-                    item.nextReview;
-            }
-        }
+  for (const item of Object.values(progress)) {
+    if (item.stage < 3 && item.nextReview > now) {
+      if (nearest === null || item.nextReview < nearest) {
+        nearest = item.nextReview
+      }
     }
+  }
 
-    if (nearest === null) {
+  if (nearest === null) {
+    nextReviewTime.textContent = 'Ready now'
 
-        nextReviewTime.textContent =
-            "Ready now";
+    return
+  }
 
-        return;
-    }
+  const seconds = Math.max(0, Math.ceil((nearest - now) / 1000))
 
-    const seconds =
-        Math.max(
-            0,
-            Math.ceil(
-                (nearest - now) / 1000
-            )
-        );
-
-    nextReviewTime.textContent =
-        `${seconds} sec`;
+  nextReviewTime.textContent = `${seconds} sec`
 }
 
 // =====================================================
 // EVENTS
 // =====================================================
 
-cardSetSelect.addEventListener(
-    "change",
-    async () => {
+cardSetSelect.addEventListener('change', async () => {
+  currentSet = cardSetSelect.value
 
-        currentSet =
-            cardSetSelect.value;
+  updateDeleteCardsetButtonState()
 
-        updateDeleteCardsetButtonState();
+  await saveSettings()
 
-        await saveSettings();
+  await loadProgress()
 
-        await loadProgress();
+  await loadCardSet()
+})
 
-        await loadCardSet();
-    }
-);
+settingsBtn.addEventListener('click', () => {
+  showScreen(settingsScreen)
+})
 
-settingsBtn.addEventListener(
-    "click",
-    () => {
-        showScreen(
-            settingsScreen
-        );
-    }
-);
+settingsBackBtn.addEventListener('click', () => {
+  showScreen(homeScreen)
+})
 
-settingsBackBtn.addEventListener(
-    "click",
-    () => {
-        showScreen(
-            homeScreen
-        );
-    }
-);
+deleteDatabaseBtn.addEventListener('click', async () => {
+  const confirmed = confirm(
+    'Delete the saved app database? This will remove all stored progress and cardset data in IndexedDB.'
+  )
+  if (!confirmed) {
+    return
+  }
 
-deleteDatabaseBtn.addEventListener(
-    "click",
-    async () => {
-        const confirmed = confirm(
-            'Delete the saved app database? This will remove all stored progress and cardset data in IndexedDB.'
-        );
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-            await deleteAppDatabase();
-            setCachedDataVersion(0);
-            alert('App database deleted. The app will reload to recreate fresh storage.');
-            location.reload();
-        } catch (error) {
-            console.error('Unable to delete database:', error);
-            alert('Could not delete the database. Close other tabs and try again.');
-        }
-    }
-);
+  try {
+    await deleteAppDatabase()
+    setCachedDataVersion(0)
+    alert(
+      'App database deleted. The app will reload to recreate fresh storage.'
+    )
+    location.reload()
+  } catch (error) {
+    console.error('Unable to delete database:', error)
+    alert('Could not delete the database. Close other tabs and try again.')
+  }
+})
 
 themeOptionInputs.forEach((input) => {
-    input.addEventListener(
-        "change",
-        async (event) => {
-            applyTheme(event.target.value);
-            await saveSettings();
-        }
-    );
-});
+  input.addEventListener('change', async (event) => {
+    applyTheme(event.target.value)
+    await saveSettings()
+  })
+})
 
-continueBtn.addEventListener(
-    "click",
-    () => {
+continueBtn.addEventListener('click', () => {
+  showScreen(learnScreen)
 
-        showScreen(
-            learnScreen
-        );
+  startLearningSession()
+})
 
-        startLearningSession();
-    }
-);
+analyticsBtn.addEventListener('click', () => {
+  buildAnalytics()
 
-analyticsBtn.addEventListener(
-    "click",
-    () => {
+  showScreen(analyticsScreen)
+})
 
-        buildAnalytics();
+backHomeBtn.addEventListener('click', () => {
+  showScreen(homeScreen)
 
-        showScreen(
-            analyticsScreen
-        );
-    }
-);
+  updateHomeStats()
+})
 
-backHomeBtn.addEventListener(
-    "click",
-    () => {
+analyticsBackBtn.addEventListener('click', () => {
+  showScreen(homeScreen)
+})
 
-        showScreen(
-            homeScreen
-        );
+resetBtn.addEventListener('click', () => {
+  const confirmed = confirm(`Reset progress for "${currentSet}"?`)
 
-        updateHomeStats();
-    }
-);
+  if (!confirmed) {
+    return
+  }
 
-analyticsBackBtn.addEventListener(
-    "click",
-    () => {
+  progress = {}
 
-        showScreen(
-            homeScreen
-        );
-    }
-);
+  initializeMissingProgress()
 
-resetBtn.addEventListener(
-    "click",
-    () => {
+  updateHomeStats()
+})
 
-        const confirmed =
-            confirm(
-                `Reset progress for "${currentSet}"?`
-            );
+setupProgressBtn.addEventListener('click', () => {
+  openProgressSetupScreen()
+})
 
-        if (!confirmed) {
-            return;
-        }
+closeProgressSetupBtn.addEventListener('click', () => {
+  closeProgressSetupScreen()
+})
 
-        progress = {};
+confirmSetupProgressBtn.addEventListener('click', async () => {
+  // Save the progress changes
+  await saveProgress()
 
-        initializeMissingProgress();
+  // Clear the backup so closeProgressSetupScreen won't restore old state
+  progressBackup = null
 
-        updateHomeStats();
-    }
-);
+  closeProgressSetupScreen()
+  updateHomeStats()
 
-setupProgressBtn.addEventListener(
-    "click",
-    () => {
-        openProgressSetupScreen();
-    }
-);
+  // Rebuild analytics if it's currently visible
+  if (analyticsScreen.classList.contains('active')) {
+    buildAnalytics()
+  }
+})
 
-closeProgressSetupBtn.addEventListener(
-    "click",
-    () => {
-        closeProgressSetupScreen();
-    }
-);
+markAllNewBtn.addEventListener('click', () => {
+  markAllCardsAsNew()
+})
 
-confirmSetupProgressBtn.addEventListener(
-    "click",
-    async () => {
-        // Save the progress changes
-        await saveProgress();
+markAllLearningBtn.addEventListener('click', () => {
+  markAllCardsAsLearning()
+})
 
-        // Clear the backup so closeProgressSetupScreen won't restore old state
-        progressBackup = null;
+markAllLearnedBtn.addEventListener('click', () => {
+  markAllCardsAsLearned()
+})
 
-        closeProgressSetupScreen();
-        updateHomeStats();
+exportCardsetBtn.addEventListener('click', () => {
+  exportCardset()
+})
 
-        // Rebuild analytics if it's currently visible
-        if (
-            analyticsScreen
-                .classList.contains("active")
-        ) {
-            buildAnalytics();
-        }
-    }
-);
+importCardsetBtn.addEventListener('click', () => {
+  importCardsetFile.click()
+})
 
-markAllNewBtn.addEventListener(
-    "click",
-    () => {
-        markAllCardsAsNew();
-    }
-);
+deleteCardsetBtn.addEventListener('click', () => {
+  handleDeleteCardset()
+})
 
-markAllLearningBtn.addEventListener(
-    "click",
-    () => {
-        markAllCardsAsLearning();
-    }
-);
+importCardsetFile.addEventListener('change', (event) => {
+  handleImportCardset(event)
+})
 
-markAllLearnedBtn.addEventListener(
-    "click",
-    () => {
-        markAllCardsAsLearned();
-    }
-);
+exportProgressBtn.addEventListener('click', () => {
+  exportProgress()
+})
 
+importProgressBtn.addEventListener('click', () => {
+  importProgressFile.click()
+})
 
-exportCardsetBtn.addEventListener(
-    "click",
-    () => {
-        exportCardset();
-    }
-);
+importProgressFile.addEventListener('change', (event) => {
+  handleImportProgress(event)
+})
 
-importCardsetBtn.addEventListener(
-    "click",
-    () => {
-        importCardsetFile.click();
-    }
-);
-
-deleteCardsetBtn.addEventListener(
-    "click",
-    () => {
-        handleDeleteCardset();
-    }
-);
-
-importCardsetFile.addEventListener(
-    "change",
-    (event) => {
-        handleImportCardset(event);
-    }
-);
-
-exportProgressBtn.addEventListener(
-    "click",
-    () => {
-        exportProgress();
-    }
-);
-
-importProgressBtn.addEventListener(
-    "click",
-    () => {
-        importProgressFile.click();
-    }
-);
-
-importProgressFile.addEventListener(
-    "change",
-    (event) => {
-        handleImportProgress(event);
-    }
-);
-
-progressSearchInput.addEventListener(
-    "input",
-    (event) => {
-        renderProgressCardList(event.target.value);
-    }
-);
-
+progressSearchInput.addEventListener('input', (event) => {
+  renderProgressCardList(event.target.value)
+})
 
 // =====================================================
 // CARD SELECTION
 // =====================================================
 
 function getDueCards() {
+  const now = Date.now()
 
-    const now = Date.now();
+  return cards.filter((card) => {
+    if (sessionSkippedCards.has(card.text)) {
+      return false
+    }
 
-    return cards.filter(card => {
+    const p = getCardProgress(card.text)
 
-        if (sessionSkippedCards.has(card.text)) {
-            return false;
-        }
+    if (!p) {
+      return false
+    }
 
-        const p =
-            getCardProgress(card.text);
+    if (p.stage >= 3) {
+      return false
+    }
 
-        if (!p) {
-            return false;
-        }
-
-        if (p.stage >= 3) {
-            return false;
-        }
-
-        return p.nextReview <= now;
-    });
+    return p.nextReview <= now
+  })
 }
 
 function getNextDueTimestamp() {
+  let nextTime = null
 
-    let nextTime = null;
+  for (const card of cards) {
+    const p = getCardProgress(card.text)
 
-    for (const card of cards) {
-
-        const p =
-            getCardProgress(card.text);
-
-        if (!p) {
-            continue;
-        }
-
-        if (p.stage >= 3) {
-            continue;
-        }
-
-        if (
-            nextTime === null ||
-            p.nextReview < nextTime
-        ) {
-
-            nextTime =
-                p.nextReview;
-        }
+    if (!p) {
+      continue
     }
 
-    return nextTime;
+    if (p.stage >= 3) {
+      continue
+    }
+
+    if (nextTime === null || p.nextReview < nextTime) {
+      nextTime = p.nextReview
+    }
+  }
+
+  return nextTime
 }
 
 function selectNextCard() {
+  const dueCards = getDueCards()
 
-    const dueCards =
-        getDueCards();
+  if (dueCards.length === 0) {
+    currentCard = null
 
-    if (
-        dueCards.length === 0
-    ) {
+    showWaitingScreen()
 
-        currentCard = null;
+    return
+  }
 
-        showWaitingScreen();
+  dueCards.sort((a, b) => {
+    const pa = getCardProgress(a.text)
 
-        return;
-    }
+    const pb = getCardProgress(b.text)
 
-    dueCards.sort((a, b) => {
+    return pa.stage - pb.stage
+  })
 
-        const pa =
-            getCardProgress(a.text);
+  currentCard = dueCards[0]
 
-        const pb =
-            getCardProgress(b.text);
-
-        return pa.stage - pb.stage;
-    });
-
-    currentCard =
-        dueCards[0];
-
-    showCurrentCard();
+  showCurrentCard()
 }
 
 // =====================================================
@@ -1838,83 +1708,65 @@ function selectNextCard() {
 // =====================================================
 
 function startLearningSession() {
+  resultEl.textContent = ''
+  recognizedText.textContent = ''
 
-    resultEl.textContent = "";
-    recognizedText.textContent = "";
+  sessionSkippedCards.clear()
 
-    sessionSkippedCards.clear();
-
-    selectNextCard();
+  selectNextCard()
 }
 
 function showCurrentCard() {
+  if (!currentCard) {
+    return
+  }
 
-    if (!currentCard) {
-        return;
-    }
+  learnScreen.classList.remove('waiting')
 
-    learnScreen.classList.remove("waiting");
+  wrongAttempts = 0
 
-    wrongAttempts = 0;
+  const p = getCardProgress(currentCard.text)
 
-    const p =
-        getCardProgress(
-            currentCard.text
-        );
+  wordEl.textContent = currentCard.text
 
-    wordEl.textContent =
-        currentCard.text;
+  cardStatusEl.textContent = getStageName(p.stage)
 
-    cardStatusEl.textContent =
-        getStageName(
-            p.stage
-        );
+  updateAttemptDisplay()
 
-    updateAttemptDisplay();
+  resultEl.textContent = ''
 
-    resultEl.textContent = "";
+  updateLearningProgress()
 
-    updateLearningProgress();
+  updateSkipButtonState(true)
 
-    updateSkipButtonState(true);
-
-    speakWord(
-        currentCard.text
-    );
+  speakWord(currentCard.text)
 }
 
 function updateAttemptDisplay() {
-    if (!currentCard) {
-        return;
-    }
+  if (!currentCard) {
+    return
+  }
 
-    const attemptsLeft =
-        Math.max(0, MAX_WRONG_ATTEMPTS - wrongAttempts);
+  const attemptsLeft = Math.max(0, MAX_WRONG_ATTEMPTS - wrongAttempts)
 
-    const statusText =
-        attemptsLeft > 0
-            ? `${attemptsLeft} attempt${attemptsLeft === 1 ? "" : "s"} left`
-            : "No attempts left";
+  const statusText =
+    attemptsLeft > 0
+      ? `${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} left`
+      : 'No attempts left'
 
-    recognizedText.textContent =
-        listening
-            ? `🎤 Listening... (${statusText})`
-            : `Press Start Listening — ${statusText}`;
+  recognizedText.textContent = listening
+    ? `🎤 Listening... (${statusText})`
+    : `Press Start Listening — ${statusText}`
 }
 
 function updateLearningProgress() {
+  const learned = getLearnedCount()
 
-    const learned =
-        getLearnedCount();
-
-    learnProgress.textContent =
-        `${learned} / ${cards.length} learned`;
+  learnProgress.textContent = `${learned} / ${cards.length} learned`
 }
 
 function updateSkipButtonState(enabled) {
-
-    nextBtn.disabled = !enabled;
-
+  nextBtn.disabled = !enabled
 }
 
 // =====================================================
@@ -1922,57 +1774,37 @@ function updateSkipButtonState(enabled) {
 // =====================================================
 
 function markCorrect(card) {
+  const p = getCardProgress(card.text)
 
-    const p =
-        getCardProgress(card.text);
+  const now = Date.now()
 
-    const now =
-        Date.now();
+  if (p.stage === 0) {
+    p.stage = 1
 
-    if (p.stage === 0) {
+    p.nextReview = now + REVIEW_1_DELAY
+  } else if (p.stage === 1) {
+    p.stage = 2
 
-        p.stage = 1;
+    p.nextReview = now + REVIEW_2_DELAY
+  } else if (p.stage === 2) {
+    p.stage = 3
 
-        p.nextReview =
-            now +
-            REVIEW_1_DELAY;
+    p.nextReview = 0
+  }
 
-    } else if (
-        p.stage === 1
-    ) {
+  p.correctCount++
 
-        p.stage = 2;
+  saveProgress()
 
-        p.nextReview =
-            now +
-            REVIEW_2_DELAY;
+  updateHomeStats()
 
-    } else if (
-        p.stage === 2
-    ) {
+  resultEl.textContent = '✅ Correct'
 
-        p.stage = 3;
+  resultEl.className = 'correct'
 
-        p.nextReview = 0;
-    }
-
-    p.correctCount++;
-
-    saveProgress();
-
-    updateHomeStats();
-
-    resultEl.textContent =
-        "✅ Correct";
-
-    resultEl.className =
-        "correct";
-
-    setTimeout(() => {
-
-        selectNextCard();
-
-    }, 1500);
+  setTimeout(() => {
+    selectNextCard()
+  }, 1500)
 }
 
 // =====================================================
@@ -1980,62 +1812,49 @@ function markCorrect(card) {
 // =====================================================
 
 function markWrong(card) {
+  const p = getCardProgress(card.text)
 
-    const p =
-        getCardProgress(card.text);
+  const now = Date.now()
 
-    const now =
-        Date.now();
+  wrongAttempts++
 
-    wrongAttempts++;
+  if (p.stage > 0) {
+    p.stage--
+  }
 
-    if (
-        p.stage > 0
-    ) {
+  p.nextReview = now
 
-        p.stage--;
-    }
+  saveProgress()
 
-    p.nextReview =
-        now;
+  updateHomeStats()
 
-    saveProgress();
+  if (wrongAttempts >= MAX_WRONG_ATTEMPTS) {
+    const answerText = Array.isArray(card.answers)
+      ? card.answers.join(', ')
+      : String(card.answers || card.text)
 
-    updateHomeStats();
+    sessionSkippedCards.add(card.text)
 
-    if (wrongAttempts >= MAX_WRONG_ATTEMPTS) {
-        const answerText =
-            Array.isArray(card.answers)
-                ? card.answers.join(", ")
-                : String(card.answers || card.text);
+    resultEl.textContent = `❌ Wrong — correct answer: ${answerText}`
 
-        sessionSkippedCards.add(card.text);
+    resultEl.className = 'wrong'
 
-        resultEl.textContent =
-            `❌ Wrong — correct answer: ${answerText}`;
+    recognizedText.textContent = 'Moving to another card...'
 
-        resultEl.className =
-            "wrong";
+    updateSkipButtonState(false)
 
-        recognizedText.textContent =
-            "Moving to another card...";
+    setTimeout(() => {
+      selectNextCard()
+    }, 5000)
 
-        updateSkipButtonState(false);
+    return
+  }
 
-        setTimeout(() => {
-            selectNextCard();
-        }, 5000);
+  resultEl.textContent = '❌ Wrong'
 
-        return;
-    }
+  resultEl.className = 'wrong'
 
-    resultEl.textContent =
-        "❌ Wrong";
-
-    resultEl.className =
-        "wrong";
-
-    updateAttemptDisplay();
+  updateAttemptDisplay()
 }
 
 // =====================================================
@@ -2043,152 +1862,97 @@ function markWrong(card) {
 // =====================================================
 
 function skipCurrentCard() {
+  if (!currentCard) {
+    return
+  }
 
-    if (!currentCard) {
-        return;
-    }
+  const p = getCardProgress(currentCard.text)
 
-    const p =
-        getCardProgress(
-            currentCard.text
-        );
+  const now = Date.now()
 
-    const now =
-        Date.now();
+  if (p.stage > 0) {
+    p.stage--
+  }
 
-    if (
-        p.stage > 0
-    ) {
+  p.nextReview = now
 
-        p.stage--;
-    }
+  sessionSkippedCards.add(currentCard.text)
 
-    p.nextReview =
-        now;
+  saveProgress()
 
-    sessionSkippedCards.add(
-        currentCard.text
-    );
+  updateHomeStats()
 
-    saveProgress();
+  const answerText = Array.isArray(currentCard.answers)
+    ? currentCard.answers.join(', ')
+    : String(currentCard.answers || currentCard.text)
 
-    updateHomeStats();
+  resultEl.textContent = `⏭ Skipped — correct answer: ${answerText}`
 
-    const answerText =
-        Array.isArray(currentCard.answers)
-            ? currentCard.answers.join(", ")
-            : String(currentCard.answers || currentCard.text);
+  resultEl.className = 'skipped'
 
-    resultEl.textContent =
-        `⏭ Skipped — correct answer: ${answerText}`;
+  updateSkipButtonState(false)
 
-    resultEl.className =
-        "skipped";
+  recognizedText.textContent = 'Moving to another card...'
 
-    updateSkipButtonState(false);
-
-    recognizedText.textContent =
-        "Moving to another card...";
-
-    setTimeout(() => {
-
-        selectNextCard();
-
-    }, 5000);
+  setTimeout(() => {
+    selectNextCard()
+  }, 5000)
 }
 
-nextBtn.addEventListener(
-    "click",
-    skipCurrentCard
-);
+nextBtn.addEventListener('click', skipCurrentCard)
 
 // =====================================================
 // WAITING SCREEN
 // =====================================================
 
-let waitingTimer = null;
+let waitingTimer = null
 
 function showWaitingScreen() {
+  stopListening()
 
-    stopListening();
+  learnScreen.classList.add('waiting')
 
-    learnScreen.classList.add("waiting");
+  wordEl.textContent = '🎉 Great job!'
 
-    wordEl.textContent =
-        "🎉 Great job!";
+  cardStatusEl.textContent = 'No cards are due'
 
-    cardStatusEl.textContent =
-        "No cards are due";
+  resultEl.textContent = ''
 
-    resultEl.textContent = "";
+  updateLearningProgress()
 
-    updateLearningProgress();
+  updateSkipButtonState(false)
 
-    updateSkipButtonState(false);
+  if (waitingTimer) {
+    clearInterval(waitingTimer)
+  }
 
-    if (
-        waitingTimer
-    ) {
+  updateWaitingDisplay()
 
-        clearInterval(
-            waitingTimer
-        );
-    }
-
-    updateWaitingDisplay();
-
-    waitingTimer =
-        setInterval(
-            updateWaitingDisplay,
-            1000
-        );
+  waitingTimer = setInterval(updateWaitingDisplay, 1000)
 }
 
 function updateWaitingDisplay() {
+  const nextTime = getNextDueTimestamp()
 
-    const nextTime =
-        getNextDueTimestamp();
+  if (nextTime === null) {
+    recognizedText.textContent = 'All cards learned 🎉'
 
-    if (
-        nextTime === null
-    ) {
+    clearInterval(waitingTimer)
 
-        recognizedText.textContent =
-            "All cards learned 🎉";
+    return
+  }
 
-        clearInterval(
-            waitingTimer
-        );
+  const now = Date.now()
 
-        return;
-    }
+  const remaining = Math.max(0, Math.ceil((nextTime - now) / 1000))
 
-    const now =
-        Date.now();
+  recognizedText.textContent = `⏳ Next review in ${remaining} sec`
 
-    const remaining =
-        Math.max(
-            0,
-            Math.ceil(
-                (
-                    nextTime - now
-                ) / 1000
-            )
-        );
+  if (remaining <= 0) {
+    clearInterval(waitingTimer)
 
-    recognizedText.textContent =
-        `⏳ Next review in ${remaining} sec`;
-
-    if (
-        remaining <= 0
-    ) {
-
-        clearInterval(
-            waitingTimer
-        );
-
-        selectNextCard();
-    }
+    selectNextCard()
+  }
 }
 
 // =====================================================
@@ -2196,253 +1960,158 @@ function updateWaitingDisplay() {
 // =====================================================
 
 function normalize(text) {
-
-    return text
-        .toLowerCase()
-        .trim()
-        .replace(
-            /[.,!?]/g,
-            ""
-        );
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[.,!?]/g, '')
 }
 
 function checkAnswer(text) {
+  if (!currentCard) {
+    return
+  }
 
-    if (
-        !currentCard
-    ) {
+  const spoken = normalize(text)
 
-        return;
-    }
+  const answers = currentCard.answers.map(normalize)
 
-    const spoken =
-        normalize(text);
-
-    const answers =
-        currentCard.answers.map(
-            normalize
-        );
-
-    if (
-        answers.includes(
-            spoken
-        )
-    ) {
-
-        markCorrect(
-            currentCard
-        );
-
-    } else {
-
-        markWrong(
-            currentCard
-        );
-    }
+  if (answers.includes(spoken)) {
+    markCorrect(currentCard)
+  } else {
+    markWrong(currentCard)
+  }
 }
 
 // =====================================================
 // SPEECH SYNTHESIS
 // =====================================================
 
-speechSynthesis.getVoices();
+speechSynthesis.getVoices()
 
 speechSynthesis.onvoiceschanged = () => {
-    speechSynthesis.getVoices();
-};
+  speechSynthesis.getVoices()
+}
 
 function getEnglishVoice() {
+  const voices = speechSynthesis.getVoices()
 
-    const voices =
-        speechSynthesis.getVoices();
+  let voice = voices.find((v) => v.lang === 'en-US')
 
-    let voice =
-        voices.find(v =>
-            v.lang === "en-US"
-        );
+  if (voice) {
+    return voice
+  }
 
-    if (voice) {
-        return voice;
-    }
+  voice = voices.find((v) => v.lang.startsWith('en'))
 
-    voice =
-        voices.find(v =>
-            v.lang.startsWith("en")
-        );
-
-    return voice || null;
+  return voice || null
 }
 
 function speakWord(text) {
+  if (!text) {
+    return
+  }
 
-    if (!text) {
-        return;
-    }
+  speechSynthesis.cancel()
 
-    speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text)
 
-    const utterance =
-        new SpeechSynthesisUtterance(
-            text
-        );
+  const voice = getEnglishVoice()
 
-    const voice =
-        getEnglishVoice();
+  if (voice) {
+    utterance.voice = voice
+  }
 
-    if (voice) {
-        utterance.voice =
-            voice;
-    }
+  utterance.lang = 'en-US'
 
-    utterance.lang =
-        "en-US";
+  utterance.rate = 0.9
 
-    utterance.rate =
-        0.9;
+  utterance.pitch = 1
 
-    utterance.pitch =
-        1;
-
-    speechSynthesis.speak(
-        utterance
-    );
+  speechSynthesis.speak(utterance)
 }
 
 // =====================================================
 // REPEAT BUTTON
 // =====================================================
 
-speakBtn.addEventListener(
-    "click",
-    () => {
-
-        if (
-            currentCard
-        ) {
-
-            speakWord(
-                currentCard.text
-            );
-        }
-    }
-);
+speakBtn.addEventListener('click', () => {
+  if (currentCard) {
+    speakWord(currentCard.text)
+  }
+})
 
 // =====================================================
 // SPEECH RECOGNITION
 // =====================================================
 
 const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
+  window.SpeechRecognition || window.webkitSpeechRecognition
 
 if (!SpeechRecognition) {
+  listenBtn.disabled = true
 
-    listenBtn.disabled =
-        true;
-
-    recognizedText.textContent =
-        "Speech recognition not supported";
-
+  recognizedText.textContent = 'Speech recognition not supported'
 } else {
+  recognition = new SpeechRecognition()
 
-    recognition =
-        new SpeechRecognition();
+  recognition.lang = 'ru-RU'
 
-    recognition.lang =
-        "ru-RU";
+  recognition.interimResults = false
 
-    recognition.interimResults =
-        false;
+  recognition.maxAlternatives = 1
 
-    recognition.maxAlternatives =
-        1;
+  // ==========================================
+  // RESULT
+  // ==========================================
 
-    // ==========================================
-    // RESULT
-    // ==========================================
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript
 
-    recognition.onresult =
-        event => {
+    recognizedText.textContent = `You said: ${transcript}`
 
-            const transcript =
-                event.results[0][0]
-                .transcript;
+    checkAnswer(transcript)
+  }
 
-            recognizedText.textContent =
-                `You said: ${transcript}`;
+  // ==========================================
+  // ERRORS
+  // ==========================================
 
-            checkAnswer(
-                transcript
-            );
-        };
+  recognition.onerror = (event) => {
+    if (event.error === 'no-speech') {
+      return
+    }
 
-    // ==========================================
-    // ERRORS
-    // ==========================================
+    console.log('Speech error:', event.error)
 
-    recognition.onerror =
-        event => {
+    recognizedText.textContent = `Error: ${event.error}`
+  }
 
-            if (
-                event.error ===
-                "no-speech"
-            ) {
+  // ==========================================
+  // AUTO RESTART
+  // ==========================================
 
-                return;
-            }
+  recognition.onend = () => {
+    if (listening) {
+      try {
+        recognition.start()
+      } catch (e) {
+        // browser may throw
+        // if already started
+      }
+    }
+  }
 
-            console.log(
-                "Speech error:",
-                event.error
-            );
+  // ==========================================
+  // LISTEN BUTTON
+  // ==========================================
 
-            recognizedText.textContent =
-                `Error: ${event.error}`;
-        };
-
-    // ==========================================
-    // AUTO RESTART
-    // ==========================================
-
-    recognition.onend =
-        () => {
-
-            if (
-                listening
-            ) {
-
-                try {
-
-                    recognition.start();
-
-                } catch (e) {
-
-                    // browser may throw
-                    // if already started
-                }
-            }
-        };
-
-    // ==========================================
-    // LISTEN BUTTON
-    // ==========================================
-
-    listenBtn.addEventListener(
-        "click",
-        () => {
-
-            if (
-                !listening
-            ) {
-
-                startListening();
-
-            } else {
-
-                stopListening();
-            }
-        }
-    );
+  listenBtn.addEventListener('click', () => {
+    if (!listening) {
+      startListening()
+    } else {
+      stopListening()
+    }
+  })
 }
 
 // =====================================================
@@ -2450,86 +2119,56 @@ if (!SpeechRecognition) {
 // =====================================================
 
 function startListening() {
+  if (!recognition) {
+    return
+  }
 
-    if (
-        !recognition
-    ) {
+  listening = true
 
-        return;
-    }
+  listenBtn.textContent = '⏹ Stop Listening'
 
-    listening =
-        true;
+  listenBtn.classList.add('listening')
 
-    listenBtn.textContent =
-        "⏹ Stop Listening";
+  updateAttemptDisplay()
 
-    listenBtn.classList.add(
-        "listening"
-    );
-
-    updateAttemptDisplay();
-
-    try {
-
-        recognition.start();
-
-    } catch (e) {
-
-        // ignore
-    }
+  try {
+    recognition.start()
+  } catch (e) {
+    // ignore
+  }
 }
 
 function stopListening() {
+  if (!recognition) {
+    return
+  }
 
-    if (
-        !recognition
-    ) {
+  listening = false
 
-        return;
-    }
+  listenBtn.textContent = '🎤 Start Listening'
 
-    listening =
-        false;
+  listenBtn.classList.remove('listening')
 
-    listenBtn.textContent =
-        "🎤 Start Listening";
+  updateAttemptDisplay()
 
-    listenBtn.classList.remove(
-        "listening"
-    );
-
-    updateAttemptDisplay();
-
-    try {
-
-        recognition.stop();
-
-    } catch (e) {
-
-        // ignore
-    }
+  try {
+    recognition.stop()
+  } catch (e) {
+    // ignore
+  }
 }
 
 // =====================================================
 // STOP LISTENING WHEN LEAVING
 // =====================================================
 
-backHomeBtn.addEventListener(
-    "click",
-    () => {
+backHomeBtn.addEventListener('click', () => {
+  stopListening()
+})
 
-        stopListening();
-    }
-);
-
-analyticsBackBtn.addEventListener(
-    "click",
-    () => {
-
-        stopListening();
-    }
-);
+analyticsBackBtn.addEventListener('click', () => {
+  stopListening()
+})
 
 // =====================================================
 // OPTIONAL AUTO-LISTEN
@@ -2552,455 +2191,298 @@ analyticsBackBtn.addEventListener(
 // =====================================================
 
 function buildAnalytics() {
+  document.getElementById('analyticsLearned').textContent = getLearnedCount()
 
-    document.getElementById(
-        "analyticsLearned"
-    ).textContent =
-        getLearnedCount();
+  document.getElementById('analyticsStage1').textContent = getReview1Count()
 
-    document.getElementById(
-        "analyticsStage1"
-    ).textContent =
-        getReview1Count();
+  document.getElementById('analyticsStage2').textContent = getReview2Count()
 
-    document.getElementById(
-        "analyticsStage2"
-    ).textContent =
-        getReview2Count();
+  document.getElementById('analyticsNew').textContent = getNewCount()
 
-    document.getElementById(
-        "analyticsNew"
-    ).textContent =
-        getNewCount();
+  const tbody = document.querySelector('#analyticsTable tbody')
 
-    const tbody =
-        document.querySelector(
-            "#analyticsTable tbody"
-        );
+  tbody.innerHTML = ''
 
-    tbody.innerHTML = "";
+  const sortedCards = [...cards].sort((a, b) => a.text.localeCompare(b.text))
 
-    const sortedCards =
-        [...cards].sort(
-            (a, b) =>
-                a.text.localeCompare(
-                    b.text
-                )
-        );
+  for (const card of sortedCards) {
+    const p = getCardProgress(card.text)
 
-    for (const card of sortedCards) {
+    const row = document.createElement('tr')
 
-        const p =
-            getCardProgress(
-                card.text
-            );
+    const wordCell = document.createElement('td')
 
-        const row =
-            document.createElement(
-                "tr"
-            );
+    wordCell.textContent = card.text
 
-        const wordCell =
-            document.createElement(
-                "td"
-            );
+    const statusCell = document.createElement('td')
 
-        wordCell.textContent =
-            card.text;
+    let statusText = ''
 
-        const statusCell =
-            document.createElement(
-                "td"
-            );
+    let className = ''
 
-        let statusText =
-            "";
+    switch (p.stage) {
+      case 0:
+        statusText = '🆕 New'
 
-        let className =
-            "";
+        className = 'status-new'
 
-        switch (
-            p.stage
-        ) {
+        break
 
-            case 0:
+      case 1:
+        statusText = '🔁 Repeat x1'
 
-                statusText =
-                    "🆕 New";
+        className = 'status-review1'
 
-                className =
-                    "status-new";
+        break
 
-                break;
+      case 2:
+        statusText = '🔁 Repeat x2'
 
-            case 1:
+        className = 'status-review2'
 
-                statusText =
-                    "🔁 Repeat x1";
+        break
 
-                className =
-                    "status-review1";
+      case 3:
+        statusText = '✅ Learned'
 
-                break;
+        className = 'status-learned'
 
-            case 2:
-
-                statusText =
-                    "🔁 Repeat x2";
-
-                className =
-                    "status-review2";
-
-                break;
-
-            case 3:
-
-                statusText =
-                    "✅ Learned";
-
-                className =
-                    "status-learned";
-
-                break;
-        }
-
-        statusCell.textContent =
-            statusText;
-
-        statusCell.className =
-            className;
-
-        row.appendChild(
-            wordCell
-        );
-
-        row.appendChild(
-            statusCell
-        );
-
-        const answerCell =
-            document.createElement(
-                "td"
-            );
-
-        answerCell.textContent =
-            Array.isArray(card.answers)
-                ? card.answers.join(", ")
-                : String(card.answers || "");
-
-        row.appendChild(
-            answerCell
-        );
-
-        tbody.appendChild(
-            row
-        );
+        break
     }
+
+    statusCell.textContent = statusText
+
+    statusCell.className = className
+
+    row.appendChild(wordCell)
+
+    row.appendChild(statusCell)
+
+    const answerCell = document.createElement('td')
+
+    answerCell.textContent = Array.isArray(card.answers)
+      ? card.answers.join(', ')
+      : String(card.answers || '')
+
+    row.appendChild(answerCell)
+
+    tbody.appendChild(row)
+  }
 }
 
 // =====================================================
 // HOME SCREEN AUTO REFRESH
 // =====================================================
 
-setInterval(
-    () => {
-
-        if (
-            homeScreen.classList.contains(
-                "active"
-            )
-        ) {
-
-            updateNextReviewLabel();
-        }
-
-    },
-    1000
-);
+setInterval(() => {
+  if (homeScreen.classList.contains('active')) {
+    updateNextReviewLabel()
+  }
+}, 1000)
 
 // =====================================================
 // AUTO REFRESH LEARNING SCREEN
 // =====================================================
 
-setInterval(
-    () => {
+setInterval(() => {
+  if (!learnScreen.classList.contains('active')) {
+    return
+  }
 
-        if (
-            !learnScreen.classList.contains(
-                "active"
-            )
-        ) {
+  if (currentCard) {
+    return
+  }
 
-            return;
-        }
+  const nextDue = getNextDueTimestamp()
 
-        if (
-            currentCard
-        ) {
+  if (nextDue === null) {
+    return
+  }
 
-            return;
-        }
-
-        const nextDue =
-            getNextDueTimestamp();
-
-        if (
-            nextDue === null
-        ) {
-
-            return;
-        }
-
-        if (
-            nextDue <= Date.now()
-        ) {
-
-            selectNextCard();
-        }
-
-    },
-    1000
-);
+  if (nextDue <= Date.now()) {
+    selectNextCard()
+  }
+}, 1000)
 
 // =====================================================
 // PROGRESS SETUP SCREEN
 // =====================================================
 
-let progressBackup = null;
+let progressBackup = null
 
-let progressSetupPreviousScreen = analyticsScreen;
+let progressSetupPreviousScreen = analyticsScreen
 
 function openProgressSetupScreen() {
+  // Save current progress state before making changes
+  progressBackup = JSON.parse(JSON.stringify(progress))
 
-    // Save current progress state before making changes
-    progressBackup =
-        JSON.parse(
-            JSON.stringify(progress)
-        );
-
-    renderProgressCardList("");
-    progressSearchInput.value = "";
-    progressSetupPreviousScreen = analyticsScreen;
-    showScreen(progressSetupScreen);
+  renderProgressCardList('')
+  progressSearchInput.value = ''
+  progressSetupPreviousScreen = analyticsScreen
+  showScreen(progressSetupScreen)
 }
 
 function closeProgressSetupScreen() {
+  // Restore progress if no changes were confirmed
+  if (progressBackup !== null) {
+    progress = progressBackup
+    progressBackup = null
+  }
 
-    // Restore progress if no changes were confirmed
-    if (progressBackup !== null) {
-        progress = progressBackup;
-        progressBackup = null;
-    }
-
-    showScreen(progressSetupPreviousScreen);
+  showScreen(progressSetupPreviousScreen)
 }
 
 function markAllCardsAsNew() {
+  const confirmed = confirm(
+    'Mark all cards as new? This will reset progress for all cards.'
+  )
 
-    const confirmed =
-        confirm(
-            "Mark all cards as new? This will reset progress for all cards."
-        );
+  if (!confirmed) {
+    return
+  }
 
-    if (!confirmed) {
-        return;
+  for (const card of cards) {
+    progress[card.text] = {
+      stage: 0,
+      nextReview: 0,
+      correctCount: 0,
     }
+  }
 
-    for (const card of cards) {
-
-        progress[card.text] = {
-            stage: 0,
-            nextReview: 0,
-            correctCount: 0
-        };
-    }
-
-    renderProgressCardList("");
+  renderProgressCardList('')
 }
 
 function markAllCardsAsLearning() {
+  const confirmed = confirm('Mark all cards as learning (Stage 1)?')
 
-    const confirmed =
-        confirm(
-            "Mark all cards as learning (Stage 1)?"
-        );
+  if (!confirmed) {
+    return
+  }
 
-    if (!confirmed) {
-        return;
+  const now = Date.now()
+
+  for (const card of cards) {
+    progress[card.text] = {
+      stage: 1,
+      nextReview: now,
+      correctCount: 1,
     }
+  }
 
-    const now = Date.now();
-
-    for (const card of cards) {
-
-        progress[card.text] = {
-            stage: 1,
-            nextReview: now,
-            correctCount: 1
-        };
-    }
-
-    renderProgressCardList("");
+  renderProgressCardList('')
 }
 
 function markAllCardsAsLearned() {
+  const confirmed = confirm(
+    'Mark all cards as learned? You can always undo this.'
+  )
 
-    const confirmed =
-        confirm(
-            "Mark all cards as learned? You can always undo this."
-        );
+  if (!confirmed) {
+    return
+  }
 
-    if (!confirmed) {
-        return;
+  for (const card of cards) {
+    progress[card.text] = {
+      stage: 3,
+      nextReview: 0,
+      correctCount: 3,
     }
+  }
 
-    for (const card of cards) {
-
-        progress[card.text] = {
-            stage: 3,
-            nextReview: 0,
-            correctCount: 3
-        };
-    }
-
-    renderProgressCardList("");
+  renderProgressCardList('')
 }
 
-function renderProgressCardList(searchTerm = "") {
+function renderProgressCardList(searchTerm = '') {
+  const filteredCards = cards.filter((card) =>
+    card.text.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
-    const filteredCards =
-        cards.filter(card =>
-            card.text
-                .toLowerCase()
-                .includes(
-                    searchTerm.toLowerCase()
-                )
-        );
+  progressCardList.innerHTML = ''
 
-    progressCardList.innerHTML = "";
+  for (const card of filteredCards) {
+    const p = getCardProgress(card.text)
 
-    for (const card of filteredCards) {
+    const item = document.createElement('div')
 
-        const p =
-            getCardProgress(card.text);
+    item.className = 'progress-card-item'
 
-        const item =
-            document.createElement("div");
+    const info = document.createElement('div')
 
-        item.className =
-            "progress-card-item";
+    info.className = 'progress-card-info'
 
-        const info =
-            document.createElement("div");
+    const wordDiv = document.createElement('div')
 
-        info.className =
-            "progress-card-info";
+    wordDiv.className = 'progress-card-text'
 
-        const wordDiv =
-            document.createElement("div");
+    wordDiv.textContent = card.text
 
-        wordDiv.className =
-            "progress-card-text";
+    const statusDiv = document.createElement('div')
 
-        wordDiv.textContent =
-            card.text;
+    statusDiv.className = 'progress-card-status'
 
-        const statusDiv =
-            document.createElement("div");
+    statusDiv.textContent =
+      getStageName(p.stage) + ' (Correct: ' + p.correctCount + ')'
 
-        statusDiv.className =
-            "progress-card-status";
+    info.appendChild(wordDiv)
+    info.appendChild(statusDiv)
 
-        statusDiv.textContent =
-            getStageName(p.stage) +
-            " (Correct: " +
-            p.correctCount +
-            ")";
+    const controls = document.createElement('div')
 
-        info.appendChild(wordDiv);
-        info.appendChild(statusDiv);
+    controls.className = 'progress-card-controls'
 
-        const controls =
-            document.createElement("div");
+    const select = document.createElement('select')
 
-        controls.className =
-            "progress-card-controls";
+    const stages = [
+      { value: 0, label: '🆕 New' },
+      { value: 1, label: '🔁 Repeat x1' },
+      { value: 2, label: '🔁 Repeat x2' },
+      { value: 3, label: '✅ Learned' },
+    ]
 
-        const select =
-            document.createElement("select");
+    for (const stage of stages) {
+      const option = document.createElement('option')
 
-        const stages = [
-            { value: 0, label: "🆕 New" },
-            { value: 1, label: "🔁 Repeat x1" },
-            { value: 2, label: "🔁 Repeat x2" },
-            { value: 3, label: "✅ Learned" }
-        ];
+      option.value = stage.value
+      option.textContent = stage.label
+      option.selected = p.stage === stage.value
 
-        for (const stage of stages) {
-
-            const option =
-                document.createElement("option");
-
-            option.value = stage.value;
-            option.textContent = stage.label;
-            option.selected =
-                p.stage === stage.value;
-
-            select.appendChild(option);
-        }
-
-        select.addEventListener(
-            "change",
-            (event) => {
-
-                const newStage =
-                    parseInt(
-                        event.target.value
-                    );
-
-                p.stage = newStage;
-                p.nextReview = 0;
-
-                if (newStage > 0) {
-                    p.nextReview =
-                        Date.now();
-                }
-
-                renderProgressCardList(
-                    progressSearchInput.value
-                );
-            }
-        );
-
-        controls.appendChild(select);
-
-        item.appendChild(info);
-        item.appendChild(controls);
-
-        progressCardList.appendChild(item);
+      select.appendChild(option)
     }
 
-    if (filteredCards.length === 0) {
+    select.addEventListener('change', (event) => {
+      const newStage = parseInt(event.target.value)
 
-        const emptyMsg =
-            document.createElement("div");
+      p.stage = newStage
+      p.nextReview = 0
 
-        emptyMsg.style.padding =
-            "20px";
+      if (newStage > 0) {
+        p.nextReview = Date.now()
+      }
 
-        emptyMsg.style.textAlign =
-            "center";
+      renderProgressCardList(progressSearchInput.value)
+    })
 
-        emptyMsg.style.color =
-            "var(--muted)";
+    controls.appendChild(select)
 
-        emptyMsg.textContent =
-            "No cards found";
+    item.appendChild(info)
+    item.appendChild(controls)
 
-        progressCardList.appendChild(
-            emptyMsg
-        );
-    }
+    progressCardList.appendChild(item)
+  }
+
+  if (filteredCards.length === 0) {
+    const emptyMsg = document.createElement('div')
+
+    emptyMsg.style.padding = '20px'
+
+    emptyMsg.style.textAlign = 'center'
+
+    emptyMsg.style.color = 'var(--muted)'
+
+    emptyMsg.textContent = 'No cards found'
+
+    progressCardList.appendChild(emptyMsg)
+  }
 }
 
 // =====================================================
@@ -3023,27 +2505,23 @@ function renderProgressCardList(searchTerm = "") {
 // =====================================================
 
 async function init() {
+  await loadSettings()
 
-    await loadSettings();
+  await refreshCardSetOptions()
 
-    await refreshCardSetOptions();
+  await loadProgress()
 
-    await loadProgress();
+  await loadCardSet()
 
-    await loadCardSet();
+  updateHomeStats()
 
-    updateHomeStats();
+  if (window.matchMedia) {
+    window
+      .matchMedia('(prefers-color-scheme: dark)')
+      .addEventListener('change', handleSystemThemeChange)
+  }
 
-    if (window.matchMedia) {
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener(
-            'change',
-            handleSystemThemeChange
-        );
-    }
-
-    showScreen(
-        homeScreen
-    );
+  showScreen(homeScreen)
 }
 
-init();
+init()
