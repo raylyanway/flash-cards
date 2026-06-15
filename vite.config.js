@@ -27,6 +27,7 @@ function copyStaticAssets() {
 }
 
 export default defineConfig({
+  base: "./",
   build: {
     outDir: "docs",
     emptyOutDir: true,
