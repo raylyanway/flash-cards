@@ -15,10 +15,7 @@ const DEFAULT_THEME: ThemePreference = "system";
 const DEFAULT_SET = "body-parts";
 
 export function useFlashCardData() {
-  const cards = useAppStore((state) => state.cards);
-  const cardsetOptions = useAppStore((state) => state.cardsetOptions);
   const currentSet = useAppStore((state) => state.currentSet);
-  const progress = useAppStore((state) => state.progress);
   const setCards = useAppStore((state) => state.setCards);
   const setCardsetOptions = useAppStore((state) => state.setCardsetOptions);
   const setCurrentSet = useAppStore((state) => state.setCurrentSet);
@@ -105,17 +102,9 @@ export function useFlashCardData() {
   };
 
   return {
-    cards,
-    cardsetOptions,
-    currentSet,
     loadSetData,
-    progress,
     refreshCardsetOptions,
     saveProgress,
-    setCardsetOptions,
-    setCurrentSet,
-    setProgress,
-    theme,
     handleSetChange,
     handleThemeChange,
   };

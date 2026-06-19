@@ -39,28 +39,30 @@ import { downloadCsv } from "./utils/downloadCsv";
 export default function App() {
   const importCardsetInputRef = useRef<HTMLInputElement | null>(null);
   const importProgressInputRef = useRef<HTMLInputElement | null>(null);
+
+  const cards = useAppStore((state) => state.cards);
+  const cardsetOptions = useAppStore((state) => state.cardsetOptions);
   const currentCard = useAppStore((state) => state.currentCard);
   const now = useAppStore((state) => state.now);
   const progressSearch = useAppStore((state) => state.progressSearch);
   const screen = useAppStore((state) => state.screen);
   const setupBackup = useAppStore((state) => state.setupBackup);
+  const currentSet = useAppStore((state) => state.currentSet);
+  const progress = useAppStore((state) => state.progress);
+  const theme = useAppStore((state) => state.theme);
+
   const setNow = useAppStore((state) => state.setNow);
   const setProgressSearch = useAppStore((state) => state.setProgressSearch);
   const setScreen = useAppStore((state) => state.setScreen);
   const setSetupBackup = useAppStore((state) => state.setSetupBackup);
+  const setCardsetOptions = useAppStore((state) => state.setCardsetOptions);
+  const setCurrentSet = useAppStore((state) => state.setCurrentSet);
+  const setProgress = useAppStore((state) => state.setProgress);
 
   const {
-    cards,
-    cardsetOptions,
-    currentSet,
     loadSetData,
-    progress,
     refreshCardsetOptions,
     saveProgress,
-    setCardsetOptions,
-    setCurrentSet,
-    setProgress,
-    theme,
     handleSetChange,
     handleThemeChange,
   } = useFlashCardData();
