@@ -1,4 +1,4 @@
-import { ChangeEvent, useMemo, useRef, useState, useEffect } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef } from "react";
 import {
   DEFAULT_CARDSETS,
   createCsvFromCards,
@@ -25,7 +25,8 @@ import { ProgressSetupScreen } from "./components/ProgressSetupScreen";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { useFlashCardData } from "./hooks/useFlashCardData";
 import { useLearningSession } from "./hooks/useLearningSession";
-import type { Card, ProgressMap, Screen } from "./types";
+import { useAppStore } from "./store/useAppStore";
+import type { Card, ProgressMap } from "./types";
 import {
   countStages,
   getCompletePercent,
@@ -36,14 +37,17 @@ import {
 import { downloadCsv } from "./utils/downloadCsv";
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>("home");
-  const [currentCard, setCurrentCard] = useState<Card | null>(null);
-  const [progressSearch, setProgressSearch] = useState("");
-  const [setupBackup, setSetupBackup] = useState<ProgressMap | null>(null);
-  const [now, setNow] = useState(Date.now());
-
   const importCardsetInputRef = useRef<HTMLInputElement | null>(null);
   const importProgressInputRef = useRef<HTMLInputElement | null>(null);
+  const currentCard = useAppStore((state) => state.currentCard);
+  const now = useAppStore((state) => state.now);
+  const progressSearch = useAppStore((state) => state.progressSearch);
+  const screen = useAppStore((state) => state.screen);
+  const setupBackup = useAppStore((state) => state.setupBackup);
+  const setNow = useAppStore((state) => state.setNow);
+  const setProgressSearch = useAppStore((state) => state.setProgressSearch);
+  const setScreen = useAppStore((state) => state.setScreen);
+  const setSetupBackup = useAppStore((state) => state.setSetupBackup);
 
   const {
     cards,
@@ -76,14 +80,8 @@ export default function App() {
   );
 
   const learning = useLearningSession({
-    cards,
-    currentCard,
     nextDueTimestamp,
-    now,
-    progress,
     saveProgress,
-    screen,
-    setCurrentCard,
   });
 
   useEffect(() => {

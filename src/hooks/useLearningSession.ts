@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   createSpeechRecognition,
   speakWord,
   type SpeechRecognitionInstance,
 } from "../speech";
-import type { Card, ProgressEntry, ProgressMap, Screen } from "../types";
+import { useAppStore } from "../store/useAppStore";
+import type { Card, ProgressEntry, ProgressMap } from "../types";
 import {
   getAnswerText,
   getAttemptsText,
@@ -15,33 +16,34 @@ import {
 } from "../utils/cardProgress";
 
 type UseLearningSessionParams = {
-  cards: Card[];
-  currentCard: Card | null;
   nextDueTimestamp: number | null;
-  now: number;
-  progress: ProgressMap;
   saveProgress: (progress: ProgressMap) => Promise<void>;
-  screen: Screen;
-  setCurrentCard: (card: Card | null) => void;
 };
 
 export function useLearningSession({
-  cards,
-  currentCard,
   nextDueTimestamp,
-  now,
-  progress,
   saveProgress,
-  screen,
-  setCurrentCard,
 }: UseLearningSessionParams) {
-  const [listening, setListening] = useState(false);
-  const [recognizedText, setRecognizedText] = useState("Press Start Listening");
-  const [result, setResult] = useState("");
-  const [resultClass, setResultClass] = useState("");
-  const [wrongAttempts, setWrongAttempts] = useState(0);
-  const [skipEnabled, setSkipEnabled] = useState(true);
-  const [speechSupported, setSpeechSupported] = useState(false);
+  const cards = useAppStore((state) => state.cards);
+  const currentCard = useAppStore((state) => state.currentCard);
+  const listening = useAppStore((state) => state.listening);
+  const now = useAppStore((state) => state.now);
+  const progress = useAppStore((state) => state.progress);
+  const recognizedText = useAppStore((state) => state.recognizedText);
+  const result = useAppStore((state) => state.result);
+  const resultClass = useAppStore((state) => state.resultClass);
+  const screen = useAppStore((state) => state.screen);
+  const skipEnabled = useAppStore((state) => state.skipEnabled);
+  const speechSupported = useAppStore((state) => state.speechSupported);
+  const wrongAttempts = useAppStore((state) => state.wrongAttempts);
+  const setCurrentCard = useAppStore((state) => state.setCurrentCard);
+  const setListening = useAppStore((state) => state.setListening);
+  const setRecognizedText = useAppStore((state) => state.setRecognizedText);
+  const setResult = useAppStore((state) => state.setResult);
+  const setResultClass = useAppStore((state) => state.setResultClass);
+  const setSkipEnabled = useAppStore((state) => state.setSkipEnabled);
+  const setSpeechSupported = useAppStore((state) => state.setSpeechSupported);
+  const setWrongAttempts = useAppStore((state) => state.setWrongAttempts);
 
   const skippedCardsRef = useRef(new Set<string>());
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);

@@ -1,6 +1,5 @@
-import { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect } from "react";
 import {
-  DEFAULT_CARDSETS,
   getCardsetOptions,
   getProgressFromDB,
   getSettingsFromDB,
@@ -8,24 +7,24 @@ import {
   setProgressToDB,
   setSettingsToDB,
 } from "../cardData";
-import type {
-  Card,
-  CardsetOption,
-  ProgressMap,
-  ThemePreference,
-} from "../types";
+import { useAppStore } from "../store/useAppStore";
+import type { ProgressMap, ThemePreference } from "../types";
 import { initializeMissingProgress } from "../utils/cardProgress";
 
 const DEFAULT_THEME: ThemePreference = "system";
 const DEFAULT_SET = "body-parts";
 
 export function useFlashCardData() {
-  const [currentSet, setCurrentSet] = useState(DEFAULT_SET);
-  const [theme, setTheme] = useState<ThemePreference>(DEFAULT_THEME);
-  const [cardsetOptions, setCardsetOptions] =
-    useState<CardsetOption[]>(DEFAULT_CARDSETS);
-  const [cards, setCards] = useState<Card[]>([]);
-  const [progress, setProgress] = useState<ProgressMap>({});
+  const cards = useAppStore((state) => state.cards);
+  const cardsetOptions = useAppStore((state) => state.cardsetOptions);
+  const currentSet = useAppStore((state) => state.currentSet);
+  const progress = useAppStore((state) => state.progress);
+  const setCards = useAppStore((state) => state.setCards);
+  const setCardsetOptions = useAppStore((state) => state.setCardsetOptions);
+  const setCurrentSet = useAppStore((state) => state.setCurrentSet);
+  const setProgress = useAppStore((state) => state.setProgress);
+  const setTheme = useAppStore((state) => state.setTheme);
+  const theme = useAppStore((state) => state.theme);
 
   const saveProgress = useCallback(
     async (nextProgress: ProgressMap) => {
@@ -114,10 +113,8 @@ export function useFlashCardData() {
     refreshCardsetOptions,
     saveProgress,
     setCardsetOptions,
-    setCards,
     setCurrentSet,
     setProgress,
-    setTheme,
     theme,
     handleSetChange,
     handleThemeChange,
