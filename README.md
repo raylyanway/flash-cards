@@ -6,3 +6,4 @@
 - [ ] show available storage size
 - [ ] allow import subtitles format
 - [ ] allow silent answering (text or select)
+- [ ] create tips component which can be shown at the begining

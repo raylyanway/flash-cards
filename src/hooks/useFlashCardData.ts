@@ -1,8 +1,7 @@
-import { ChangeEvent, useCallback, useEffect } from "react";
+import { ChangeEvent, useCallback } from "react";
 import {
   getCardsetOptions,
   getProgressFromDB,
-  getSettingsFromDB,
   initializeCardSet,
   setProgressToDB,
   setSettingsToDB,
@@ -10,9 +9,6 @@ import {
 import { useAppStore } from "../store/useAppStore";
 import type { ProgressMap, ThemePreference } from "../types";
 import { initializeMissingProgress } from "../utils/cardProgress";
-
-const DEFAULT_THEME: ThemePreference = "system";
-const DEFAULT_SET = "body-parts";
 
 export function useFlashCardData() {
   const currentSet = useAppStore((state) => state.currentSet);
@@ -32,18 +28,16 @@ export function useFlashCardData() {
   );
 
   const refreshCardsetOptions = useCallback(
-    async (preferredSet = currentSet) => {
+    async (preferredSet?: string) => {
+      const targetSet = preferredSet || currentSet;
       const options = await getCardsetOptions();
       setCardsetOptions(options);
-      if (
-        !options.some((option) => option.key === preferredSet) &&
-        options[0]
-      ) {
+      if (!options.some((option) => option.key === targetSet) && options[0]) {
         setCurrentSet(options[0].key);
       }
       return options;
     },
-    [currentSet],
+    [setCardsetOptions, setCurrentSet, currentSet],
   );
 
   const loadSetData = useCallback(async (setName: string) => {
@@ -59,35 +53,6 @@ export function useFlashCardData() {
     setProgress(nextProgress);
     await setProgressToDB(setName, nextProgress);
   }, []);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function boot() {
-      const settings = await getSettingsFromDB();
-      if (!mounted) return;
-
-      const savedSet = settings.currentSet || DEFAULT_SET;
-      const savedTheme = settings.theme || DEFAULT_THEME;
-      setCurrentSet(savedSet);
-      setTheme(savedTheme);
-      await refreshCardsetOptions(savedSet);
-      await loadSetData(savedSet);
-    }
-
-    boot().catch((error) => {
-      console.error("Failed to initialize app:", error);
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, [loadSetData, refreshCardsetOptions]);
-
-  useEffect(() => {
-    document.body.classList.remove("theme-system", "theme-light", "theme-dark");
-    document.body.classList.add(`theme-${theme}`);
-  }, [theme]);
 
   const handleSetChange = async (event: ChangeEvent<HTMLSelectElement>) => {
     const nextSet = event.target.value;
