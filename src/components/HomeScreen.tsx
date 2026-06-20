@@ -36,7 +36,7 @@ export function HomeScreen() {
     (state) => state.refreshCardsetOptions,
   );
 
-  const { loadSetData, handleSetChange } = useFlashCardData();
+  const { loadSetData } = useFlashCardData();
 
   const completePercent = useMemo(
     () => getCompletePercent(cards, progress),
@@ -148,6 +148,13 @@ export function HomeScreen() {
       console.error("Failed to delete cardset:", error);
       alert("Unable to delete cardset. See console for details.");
     }
+  };
+
+  const handleSetChange = async (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextSet = event.target.value;
+    setCurrentSet(nextSet);
+    await setSettingsToDB({ currentSet: nextSet, theme });
+    await loadSetData(nextSet);
   };
 
   return (
