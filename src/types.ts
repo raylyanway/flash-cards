@@ -3,6 +3,7 @@ export type ThemePreference = "system" | "light" | "dark";
 export type Screen =
   | "home"
   | "learn"
+  | "cardSet"
   | "analytics"
   | "settings"
   | "progressSetup";
