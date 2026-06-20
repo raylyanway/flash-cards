@@ -1,5 +1,8 @@
-import { deleteAppDatabase, setCachedDataVersion } from "../cardData";
-import { useFlashCardData } from "../hooks/useFlashCardData";
+import {
+  deleteAppDatabase,
+  setCachedDataVersion,
+  setSettingsToDB,
+} from "../cardData";
 import { useAppStore } from "../store/useAppStore";
 import type { ThemePreference } from "../types";
 
@@ -13,8 +16,9 @@ function getThemeDescription(option: ThemePreference) {
 
 export function SettingsScreen() {
   const theme = useAppStore((state) => state.theme);
+  const currentSet = useAppStore((state) => state.currentSet);
+  const setTheme = useAppStore((state) => state.setTheme);
   const setScreen = useAppStore((state) => state.setScreen);
-  const { handleThemeChange } = useFlashCardData();
 
   const handleDeleteDatabase = async () => {
     const confirmed = confirm(
@@ -33,6 +37,11 @@ export function SettingsScreen() {
       console.error("Unable to delete database:", error);
       alert("Could not delete the database. Close other tabs and try again.");
     }
+  };
+
+  const handleThemeChange = async (nextTheme: ThemePreference) => {
+    setTheme(nextTheme);
+    await setSettingsToDB({ currentSet, theme: nextTheme });
   };
 
   return (

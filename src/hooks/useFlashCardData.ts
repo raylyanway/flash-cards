@@ -7,7 +7,7 @@ import {
   setSettingsToDB,
 } from "../cardData";
 import { useAppStore } from "../store/useAppStore";
-import type { ProgressMap, ThemePreference } from "../types";
+import type { ProgressMap } from "../types";
 import { initializeMissingProgress } from "../utils/cardProgress";
 
 export function useFlashCardData() {
@@ -16,7 +16,6 @@ export function useFlashCardData() {
   const setCardsetOptions = useAppStore((state) => state.setCardsetOptions);
   const setCurrentSet = useAppStore((state) => state.setCurrentSet);
   const setProgress = useAppStore((state) => state.setProgress);
-  const setTheme = useAppStore((state) => state.setTheme);
   const theme = useAppStore((state) => state.theme);
 
   const saveProgress = useCallback(
@@ -61,16 +60,10 @@ export function useFlashCardData() {
     await loadSetData(nextSet);
   };
 
-  const handleThemeChange = async (nextTheme: ThemePreference) => {
-    setTheme(nextTheme);
-    await setSettingsToDB({ currentSet, theme: nextTheme });
-  };
-
   return {
     loadSetData,
     refreshCardsetOptions,
     saveProgress,
     handleSetChange,
-    handleThemeChange,
   };
 }
