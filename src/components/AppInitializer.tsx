@@ -1,6 +1,5 @@
 import { ReactNode, useEffect, useState } from "react";
 import { getSettingsFromDB } from "../cardData";
-import { useFlashCardData } from "../hooks/useFlashCardData";
 import { useAppStore } from "../store/useAppStore";
 import type { ThemePreference } from "../types";
 import { AppLoader } from "./AppLoader";
