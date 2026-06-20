@@ -1,11 +1,7 @@
+import { deleteAppDatabase, setCachedDataVersion } from "../cardData";
+import { useFlashCardData } from "../hooks/useFlashCardData";
+import { useAppStore } from "../store/useAppStore";
 import type { ThemePreference } from "../types";
-
-type SettingsScreenProps = {
-  theme: ThemePreference;
-  onBackHome: () => void;
-  onDeleteDatabase: () => void;
-  onThemeChange: (theme: ThemePreference) => void;
-};
 
 const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
 
@@ -15,16 +11,34 @@ function getThemeDescription(option: ThemePreference) {
   return "High-contrast dark mode for low vision support.";
 }
 
-export function SettingsScreen({
-  theme,
-  onBackHome,
-  onDeleteDatabase,
-  onThemeChange,
-}: SettingsScreenProps) {
+export function SettingsScreen() {
+  const theme = useAppStore((state) => state.theme);
+  const setScreen = useAppStore((state) => state.setScreen);
+  const { handleThemeChange } = useFlashCardData();
+
+  const handleDeleteDatabase = async () => {
+    const confirmed = confirm(
+      "Delete the saved app database? This will remove all stored progress and cardset data in IndexedDB.",
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteAppDatabase();
+      await setCachedDataVersion(0);
+      alert(
+        "App database deleted. The app will reload to recreate fresh storage.",
+      );
+      location.reload();
+    } catch (error) {
+      console.error("Unable to delete database:", error);
+      alert("Could not delete the database. Close other tabs and try again.");
+    }
+  };
+
   return (
     <section className="screen active">
       <div className="top-bar">
-        <button onClick={onBackHome}>← Home</button>
+        <button onClick={() => setScreen("home")}>← Home</button>
         <h2>Settings</h2>
       </div>
 
@@ -43,7 +57,7 @@ export function SettingsScreen({
                 name="themeOption"
                 value={option}
                 checked={theme === option}
-                onChange={() => onThemeChange(option)}
+                onChange={() => handleThemeChange(option)}
               />
               <div>
                 <strong>{option[0].toUpperCase() + option.slice(1)}</strong>
@@ -60,7 +74,7 @@ export function SettingsScreen({
             remove your cardset files.
           </p>
           <div className="button-group">
-            <button className="danger" onClick={onDeleteDatabase}>
+            <button className="danger" onClick={handleDeleteDatabase}>
               Delete Database
             </button>
           </div>

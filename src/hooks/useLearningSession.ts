@@ -228,6 +228,7 @@ export function useLearningSession({
     };
 
     return () => {
+      setListening(false);
       recognition.onresult = null;
       recognition.onerror = null;
       recognition.onend = null;
