@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { DEFAULT_CARDSETS } from "../cardData";
+import { DEFAULT_CARDSETS, setProgressToDB } from "../cardData";
 import type {
   Card,
   CardsetOption,
@@ -32,6 +32,7 @@ type AppState = {
 };
 
 type AppActions = {
+  saveProgress: (progress: ProgressMap) => Promise<void>;
   setCardsetOptions: (options: CardsetOption[]) => void;
   setCards: (cards: Card[]) => void;
   setCurrentCard: (card: Card | null) => void;
@@ -53,7 +54,7 @@ type AppActions = {
 
 export type AppStore = AppState & AppActions;
 
-export const useAppStore = create<AppStore>((set) => ({
+export const useAppStore = create<AppStore>((set, get) => ({
   cardsetOptions: DEFAULT_CARDSETS,
   cards: [],
   currentCard: null,
@@ -72,6 +73,10 @@ export const useAppStore = create<AppStore>((set) => ({
   theme: DEFAULT_THEME,
   wrongAttempts: 0,
 
+  saveProgress: async (progress) => {
+    set({ progress });
+    await setProgressToDB(get().currentSet, progress);
+  },
   setCardsetOptions: (cardsetOptions) => set({ cardsetOptions }),
   setCards: (cards) => set({ cards }),
   setCurrentCard: (currentCard) => set({ currentCard }),

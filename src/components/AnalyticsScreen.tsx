@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { useFlashCardData } from "../hooks/useFlashCardData";
 import { useAppStore } from "../store/useAppStore";
 import {
   countStages,
@@ -13,11 +12,11 @@ export function AnalyticsScreen() {
   const cards = useAppStore((state) => state.cards);
   const currentSet = useAppStore((state) => state.currentSet);
   const progress = useAppStore((state) => state.progress);
+  const saveProgress = useAppStore((state) => state.saveProgress);
   const setProgressSearch = useAppStore((state) => state.setProgressSearch);
   const setScreen = useAppStore((state) => state.setScreen);
   const setSetupBackup = useAppStore((state) => state.setSetupBackup);
 
-  const { saveProgress } = useFlashCardData();
   const stageCounts = useMemo(() => countStages(progress), [progress]);
   const sortedCards = useMemo(
     () => [...cards].sort((a, b) => a.text.localeCompare(b.text)),

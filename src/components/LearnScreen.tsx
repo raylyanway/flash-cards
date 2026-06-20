@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react";
-import { useFlashCardData } from "../hooks/useFlashCardData";
 import { useLearningSession } from "../hooks/useLearningSession";
 import { useAppStore } from "../store/useAppStore";
 import {
@@ -15,7 +14,6 @@ export function LearnScreen() {
   const progress = useAppStore((state) => state.progress);
   const setScreen = useAppStore((state) => state.setScreen);
 
-  const { saveProgress } = useFlashCardData();
   const stageCounts = useMemo(() => countStages(progress), [progress]);
   const nextDueTimestamp = useMemo(
     () => getNextDueTimestamp(cards, progress),
@@ -23,7 +21,6 @@ export function LearnScreen() {
   );
   const learning = useLearningSession({
     nextDueTimestamp,
-    saveProgress,
   });
 
   useEffect(() => {

@@ -5,7 +5,7 @@ import {
   type SpeechRecognitionInstance,
 } from "../speech";
 import { useAppStore } from "../store/useAppStore";
-import type { Card, ProgressEntry, ProgressMap } from "../types";
+import type { Card, ProgressEntry } from "../types";
 import {
   getAnswerText,
   getAttemptsText,
@@ -17,13 +17,9 @@ import {
 
 type UseLearningSessionParams = {
   nextDueTimestamp: number | null;
-  saveProgress: (progress: ProgressMap) => Promise<void>;
 };
 
-export function useLearningSession({
-  nextDueTimestamp,
-  saveProgress,
-}: UseLearningSessionParams) {
+export function useLearningSession({ nextDueTimestamp }: UseLearningSessionParams) {
   const cards = useAppStore((state) => state.cards);
   const currentCard = useAppStore((state) => state.currentCard);
   const listening = useAppStore((state) => state.listening);
@@ -41,6 +37,7 @@ export function useLearningSession({
   const setRecognizedText = useAppStore((state) => state.setRecognizedText);
   const setResult = useAppStore((state) => state.setResult);
   const setResultClass = useAppStore((state) => state.setResultClass);
+  const saveProgress = useAppStore((state) => state.saveProgress);
   const setSkipEnabled = useAppStore((state) => state.setSkipEnabled);
   const setSpeechSupported = useAppStore((state) => state.setSpeechSupported);
   const setWrongAttempts = useAppStore((state) => state.setWrongAttempts);

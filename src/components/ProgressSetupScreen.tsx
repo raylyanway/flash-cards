@@ -1,6 +1,5 @@
 import { ChangeEvent, useRef } from "react";
 import { createCsvFromProgress, parseCsvToJson } from "../cardData";
-import { useFlashCardData } from "../hooks/useFlashCardData";
 import { useAppStore } from "../store/useAppStore";
 import type { Card, ProgressMap } from "../types";
 import { getStageName, initializeMissingProgress } from "../utils/cardProgress";
@@ -15,12 +14,11 @@ export function ProgressSetupScreen() {
   const progressSearch = useAppStore((state) => state.progressSearch);
   const setupBackup = useAppStore((state) => state.setupBackup);
 
+  const saveProgress = useAppStore((state) => state.saveProgress);
   const setProgress = useAppStore((state) => state.setProgress);
   const setProgressSearch = useAppStore((state) => state.setProgressSearch);
   const setScreen = useAppStore((state) => state.setScreen);
   const setSetupBackup = useAppStore((state) => state.setSetupBackup);
-
-  const { saveProgress } = useFlashCardData();
 
   const filteredCards = cards.filter((card) =>
     card.text.toLowerCase().includes(progressSearch.toLowerCase()),
