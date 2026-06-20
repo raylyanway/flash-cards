@@ -32,9 +32,11 @@ export function HomeScreen() {
   const setCardsetOptions = useAppStore((state) => state.setCardsetOptions);
   const setCurrentSet = useAppStore((state) => state.setCurrentSet);
   const setScreen = useAppStore((state) => state.setScreen);
+  const refreshCardsetOptions = useAppStore(
+    (state) => state.refreshCardsetOptions,
+  );
 
-  const { loadSetData, refreshCardsetOptions, handleSetChange } =
-    useFlashCardData();
+  const { loadSetData, handleSetChange } = useFlashCardData();
 
   const completePercent = useMemo(
     () => getCompletePercent(cards, progress),

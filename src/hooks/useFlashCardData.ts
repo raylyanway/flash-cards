@@ -1,6 +1,5 @@
 import { ChangeEvent, useCallback } from "react";
 import {
-  getCardsetOptions,
   getProgressFromDB,
   initializeCardSet,
   setProgressToDB,
@@ -10,25 +9,10 @@ import { useAppStore } from "../store/useAppStore";
 import { initializeMissingProgress } from "../utils/cardProgress";
 
 export function useFlashCardData() {
-  const currentSet = useAppStore((state) => state.currentSet);
   const setCards = useAppStore((state) => state.setCards);
-  const setCardsetOptions = useAppStore((state) => state.setCardsetOptions);
   const setCurrentSet = useAppStore((state) => state.setCurrentSet);
   const setProgress = useAppStore((state) => state.setProgress);
   const theme = useAppStore((state) => state.theme);
-
-  const refreshCardsetOptions = useCallback(
-    async (preferredSet?: string) => {
-      const targetSet = preferredSet || currentSet;
-      const options = await getCardsetOptions();
-      setCardsetOptions(options);
-      if (!options.some((option) => option.key === targetSet) && options[0]) {
-        setCurrentSet(options[0].key);
-      }
-      return options;
-    },
-    [setCardsetOptions, setCurrentSet, currentSet],
-  );
 
   const loadSetData = useCallback(async (setName: string) => {
     const [storedProgress, loadedCards] = await Promise.all([
@@ -53,7 +37,6 @@ export function useFlashCardData() {
 
   return {
     loadSetData,
-    refreshCardsetOptions,
     handleSetChange,
   };
 }
