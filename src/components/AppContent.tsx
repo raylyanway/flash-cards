@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { AppHeader } from "./AppHeader";
 import { HomeScreen } from "./HomeScreen";
 import { LearnScreen } from "./LearnScreen";
@@ -9,13 +8,7 @@ import { useAppStore } from "../store/useAppStore";
 
 export function AppContent() {
   const screen = useAppStore((state) => state.screen);
-  const setNow = useAppStore((state) => state.setNow);
   const setScreen = useAppStore((state) => state.setScreen);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, [setNow]);
 
   return (
     <>
