@@ -2,6 +2,8 @@ import { create } from "zustand";
 import {
   DEFAULT_CARDSETS,
   getCardsetOptions,
+  getProgressFromDB,
+  initializeCardSet,
   setProgressToDB,
 } from "../cardData";
 import type {
@@ -11,6 +13,7 @@ import type {
   Screen,
   ThemePreference,
 } from "../types";
+import { initializeMissingProgress } from "../utils/cardProgress";
 
 const DEFAULT_THEME: ThemePreference = "system";
 const DEFAULT_SET = "body-parts";
@@ -36,6 +39,7 @@ type AppState = {
 };
 
 type AppActions = {
+  loadSetData: (setName: string) => Promise<void>;
   refreshCardsetOptions: (preferredSet?: string) => Promise<CardsetOption[]>;
   saveProgress: (progress: ProgressMap) => Promise<void>;
   setCardsetOptions: (options: CardsetOption[]) => void;
@@ -78,9 +82,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
   theme: DEFAULT_THEME,
   wrongAttempts: 0,
 
-  saveProgress: async (progress) => {
-    set({ progress });
-    await setProgressToDB(get().currentSet, progress);
+  loadSetData: async (setName: string) => {
+    const [storedProgress, loadedCards] = await Promise.all([
+      getProgressFromDB(setName),
+      initializeCardSet(setName),
+    ]);
+    const nextProgress = initializeMissingProgress(
+      loadedCards,
+      storedProgress || {},
+    );
+    set({ cards: loadedCards, progress: nextProgress });
+    await setProgressToDB(setName, nextProgress);
   },
   refreshCardsetOptions: async (preferredSet?: string) => {
     const targetSet = preferredSet || get().currentSet;
@@ -90,6 +102,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ currentSet: options[0].key });
     }
     return options;
+  },
+  saveProgress: async (progress) => {
+    set({ progress });
+    await setProgressToDB(get().currentSet, progress);
   },
   setCardsetOptions: (cardsetOptions) => set({ cardsetOptions }),
   setCards: (cards) => set({ cards }),

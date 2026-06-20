@@ -19,13 +19,12 @@ export function AppInitializer({ children }: AppInitializerProps) {
   );
 
   const theme = useAppStore((state) => state.theme);
-  const setCurrentSet = useAppStore((state) => state.setCurrentSet);
   const setTheme = useAppStore((state) => state.setTheme);
+  const loadSetData = useAppStore((state) => state.loadSetData);
+  const setCurrentSet = useAppStore((state) => state.setCurrentSet);
   const refreshCardsetOptions = useAppStore(
     (state) => state.refreshCardsetOptions,
   );
-
-  const { loadSetData } = useFlashCardData();
 
   useEffect(() => {
     let mounted = true;

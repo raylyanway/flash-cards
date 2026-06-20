@@ -14,7 +14,6 @@ import {
   setCardsetMetadata,
   setSettingsToDB,
 } from "../cardData";
-import { useFlashCardData } from "../hooks/useFlashCardData";
 import { useAppStore } from "../store/useAppStore";
 import { getCompletePercent, getNextReviewLabel } from "../utils/cardProgress";
 import { downloadCsv } from "../utils/downloadCsv";
@@ -31,12 +30,11 @@ export function HomeScreen() {
 
   const setCardsetOptions = useAppStore((state) => state.setCardsetOptions);
   const setCurrentSet = useAppStore((state) => state.setCurrentSet);
+  const loadSetData = useAppStore((state) => state.loadSetData);
   const setScreen = useAppStore((state) => state.setScreen);
   const refreshCardsetOptions = useAppStore(
     (state) => state.refreshCardsetOptions,
   );
-
-  const { loadSetData } = useFlashCardData();
 
   const completePercent = useMemo(
     () => getCompletePercent(cards, progress),
