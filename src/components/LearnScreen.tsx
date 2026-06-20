@@ -1,47 +1,51 @@
-import type { Card, ProgressMap } from "../types";
-import { getStageName } from "../utils/cardProgress";
+import { useEffect, useMemo } from "react";
+import { useLearningSession } from "../hooks/useLearningSession";
+import { useAppStore } from "../store/useAppStore";
+import {
+  countStages,
+  getNextDueTimestamp,
+  getStageName,
+} from "../utils/cardProgress";
 
-type LearnScreenProps = {
-  cardsLength: number;
-  currentCard: Card | null;
-  learnedCount: number;
-  listening: boolean;
-  progress: ProgressMap;
-  recognizedText: string;
-  result: string;
-  resultClass: string;
-  skipEnabled: boolean;
-  speechSupported: boolean;
-  waitingMessage: string;
-  onBackHome: () => void;
-  onRepeat: () => void;
-  onSkip: () => void;
-  onToggleListening: () => void;
-};
+export function LearnScreen() {
+  const cards = useAppStore((state) => state.cards);
+  const currentCard = useAppStore((state) => state.currentCard);
+  const now = useAppStore((state) => state.now);
+  const progress = useAppStore((state) => state.progress);
+  const setScreen = useAppStore((state) => state.setScreen);
 
-export function LearnScreen({
-  cardsLength,
-  currentCard,
-  learnedCount,
-  listening,
-  progress,
-  recognizedText,
-  result,
-  resultClass,
-  skipEnabled,
-  speechSupported,
-  waitingMessage,
-  onBackHome,
-  onRepeat,
-  onSkip,
-  onToggleListening,
-}: LearnScreenProps) {
+  const stageCounts = useMemo(() => countStages(progress), [progress]);
+  const nextDueTimestamp = useMemo(
+    () => getNextDueTimestamp(cards, progress),
+    [cards, progress],
+  );
+  const learning = useLearningSession({
+    nextDueTimestamp,
+  });
+
+  useEffect(() => {
+    learning.startLearningSession();
+  }, []);
+
+  const goHome = () => {
+    learning.stopListening();
+    setScreen("home");
+  };
+
+  const waitingMessage =
+    nextDueTimestamp === null
+      ? "All cards learned 🎉"
+      : `⏳ Next review in ${Math.max(
+          0,
+          Math.ceil((nextDueTimestamp - now) / 1000),
+        )} sec`;
+
   return (
     <section className={`screen active ${currentCard ? "" : "waiting"}`}>
       <div className="top-bar">
-        <button onClick={onBackHome}>← Home</button>
+        <button onClick={goHome}>← Home</button>
         <div id="learnProgress">
-          {learnedCount} / {cardsLength} learned
+          {stageCounts.learnedCount} / {cards.length} learned
         </div>
       </div>
 
@@ -55,24 +59,27 @@ export function LearnScreen({
       </div>
 
       <div id="recognizedText">
-        {currentCard ? recognizedText : waitingMessage}
+        {currentCard ? learning.recognizedText : waitingMessage}
       </div>
-      <div id="result" className={resultClass}>
-        {result}
+      <div id="result" className={learning.resultClass}>
+        {learning.result}
       </div>
 
       <div className="actions">
         <button
-          className={listening ? "listening" : ""}
-          disabled={!speechSupported || !currentCard}
-          onClick={onToggleListening}
+          className={learning.listening ? "listening" : ""}
+          disabled={!learning.speechSupported || !currentCard}
+          onClick={learning.toggleListening}
         >
-          {listening ? "⏹ Stop Listening" : "🎤 Start Listening"}
+          {learning.listening ? "⏹ Stop Listening" : "🎤 Start Listening"}
         </button>
-        <button disabled={!currentCard} onClick={onRepeat}>
+        <button disabled={!currentCard} onClick={learning.repeatCurrentCard}>
           🔊 Repeat
         </button>
-        <button disabled={!currentCard || !skipEnabled} onClick={onSkip}>
+        <button
+          disabled={!currentCard || !learning.skipEnabled}
+          onClick={learning.skipCurrentCard}
+        >
           ⏭ Skip
         </button>
       </div>

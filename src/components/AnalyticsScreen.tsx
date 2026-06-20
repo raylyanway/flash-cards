@@ -1,58 +1,63 @@
-import type { Card, ProgressMap } from "../types";
+import { useMemo } from "react";
+import { useAppStore } from "../store/useAppStore";
 import {
+  countStages,
   getAnswerText,
   getStageClass,
   getStageName,
+  initializeMissingProgress,
 } from "../utils/cardProgress";
 
-type AnalyticsScreenProps = {
-  cards: Card[];
-  learnedCount: number;
-  newCount: number;
-  progress: ProgressMap;
-  review1Count: number;
-  review2Count: number;
-  onBackHome: () => void;
-  onOpenProgressSetup: () => void;
-  onResetProgress: () => void;
-};
+export function AnalyticsScreen() {
+  const cards = useAppStore((state) => state.cards);
+  const currentSet = useAppStore((state) => state.currentSet);
+  const progress = useAppStore((state) => state.progress);
+  const saveProgress = useAppStore((state) => state.saveProgress);
+  const setProgressSearch = useAppStore((state) => state.setProgressSearch);
+  const setScreen = useAppStore((state) => state.setScreen);
+  const setSetupBackup = useAppStore((state) => state.setSetupBackup);
 
-export function AnalyticsScreen({
-  cards,
-  learnedCount,
-  newCount,
-  progress,
-  review1Count,
-  review2Count,
-  onBackHome,
-  onOpenProgressSetup,
-  onResetProgress,
-}: AnalyticsScreenProps) {
-  const sortedCards = [...cards].sort((a, b) => a.text.localeCompare(b.text));
+  const stageCounts = useMemo(() => countStages(progress), [progress]);
+  const sortedCards = useMemo(
+    () => [...cards].sort((a, b) => a.text.localeCompare(b.text)),
+    [cards],
+  );
+
+  const resetProgress = async () => {
+    if (!confirm(`Reset progress for "${currentSet}"?`)) return;
+    const nextProgress = initializeMissingProgress(cards, {});
+    await saveProgress(nextProgress);
+  };
+
+  const openProgressSetup = () => {
+    setSetupBackup(progress);
+    setProgressSearch("");
+    setScreen("progressSetup");
+  };
 
   return (
     <section className="screen active">
       <div className="top-bar">
-        <button onClick={onBackHome}>← Home</button>
+        <button onClick={() => setScreen("home")}>← Home</button>
         <h2>Analytics</h2>
       </div>
 
       <div className="card">
         <div className="stats-grid">
           <div className="stat">
-            <div>{learnedCount}</div>
+            <div>{stageCounts.learnedCount}</div>
             <span>Learned</span>
           </div>
           <div className="stat">
-            <div>{review2Count}</div>
+            <div>{stageCounts.review2Count}</div>
             <span>Repeat x2</span>
           </div>
           <div className="stat">
-            <div>{review1Count}</div>
+            <div>{stageCounts.review1Count}</div>
             <span>Repeat x1</span>
           </div>
           <div className="stat">
-            <div>{newCount}</div>
+            <div>{stageCounts.newCount}</div>
             <span>New</span>
           </div>
         </div>
@@ -85,10 +90,10 @@ export function AnalyticsScreen({
       </div>
 
       <div className="actions">
-        <button className="danger" onClick={onResetProgress}>
+        <button className="danger" onClick={resetProgress}>
           🔄 Reset Progress
         </button>
-        <button className="secondary" onClick={onOpenProgressSetup}>
+        <button className="secondary" onClick={openProgressSetup}>
           ⚙️ Setup Progress
         </button>
       </div>
