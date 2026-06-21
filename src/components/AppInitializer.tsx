@@ -18,12 +18,18 @@ export function AppInitializer({ children }: AppInitializerProps) {
   );
 
   const theme = useAppStore((state) => state.theme);
+  const setNow = useAppStore((state) => state.setNow);
   const setTheme = useAppStore((state) => state.setTheme);
   const loadSetData = useAppStore((state) => state.loadSetData);
   const setCurrentSet = useAppStore((state) => state.setCurrentSet);
   const refreshCardsetOptions = useAppStore(
     (state) => state.refreshCardsetOptions,
   );
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [setNow]);
 
   useEffect(() => {
     let mounted = true;
