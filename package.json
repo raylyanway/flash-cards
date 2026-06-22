@@ -1,16 +1,22 @@
 {
   "name": "flash-cards",
   "version": "1.0.0",
-  "description": "- [ ] check if it possible to send some data in google services - [ ] compress app if needed - [ ] think about redisign - [ ] auto detect from file name what progress I need to import so user don't need to pick card set for what progress is going on",
+  "description": "",
   "main": "app.js",
   "scripts": {
     "start": "vite",
     "build": "vite build",
     "build:watch": "vite build --watch",
     "preview": "vite preview",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run format:check",
+    "fix": "npm run lint:fix && npm run format",
     "css:types": "tcm src --camelCase",
-    "css:watch": "tcm src --camelCase --watch"
+    "css:watch": "tcm src --camelCase --watch",
+    "ci": "npm run css:types && npm run check && npm run build"
   },
   "repository": {
     "type": "git",
