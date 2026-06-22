@@ -1,12 +1,15 @@
 {
+  // Extentions (copy/past to search bar):
+  // fongandrew.css-class-autocomplete dbaeumer.vscode-eslint esbenp.prettier-vscode mhutchie.git-graph openai.chatgpt
+  "git.confirmSync": false,
+  "git.autofetch": true,
+
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "explicit"
   },
-
   "eslint.validate": [
     "javascript",
     "javascriptreact",
@@ -14,7 +17,6 @@
     "typescriptreact"
   ],
   "eslint.codeActionsOnSave.mode": "all",
-
   "eslint.workingDirectories": [
     {
       "mode": "auto"
