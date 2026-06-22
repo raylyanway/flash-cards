@@ -19,7 +19,9 @@ type UseLearningSessionParams = {
   nextDueTimestamp: number | null;
 };
 
-export function useLearningSession({ nextDueTimestamp }: UseLearningSessionParams) {
+export function useLearningSession({
+  nextDueTimestamp,
+}: UseLearningSessionParams) {
   const cards = useAppStore((state) => state.cards);
   const currentCard = useAppStore((state) => state.currentCard);
   const listening = useAppStore((state) => state.listening);

@@ -1,0 +1,18 @@
+.currentSet {
+  background: var(--card);
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.currentSet .setLabel {
+  color: var(--muted);
+  margin-right: 6px;
+}
+
+.headerActions {
+  width: 100%;
+  text-align: center;
+}
