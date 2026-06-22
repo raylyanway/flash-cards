@@ -1,4 +1,5 @@
 import { useAppStore } from "../store/useAppStore";
+import s from "./AppHeader.module.css";
 
 type AppHeaderProps = {
   onOpenSettings: () => void;
@@ -9,11 +10,11 @@ export function AppHeader({ onOpenSettings }: AppHeaderProps) {
 
   return (
     <header>
-      <div className="current-set">
-        <span className="set-label">Current set:</span>
+      <div className={s.currentSet}>
+        <span className={s.setLabel}>Current set:</span>
         <strong>{currentSet}</strong>
       </div>
-      <div className="header-actions">
+      <div className={s.headerActions}>
         <button className="secondary" onClick={onOpenSettings}>
           ⚙️ Settings
         </button>

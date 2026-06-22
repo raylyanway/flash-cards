@@ -1,4 +1,4 @@
-.current-set {
+.currentSet {
   background: var(--card);
   padding: 8px 16px;
   border-radius: 9999px;
@@ -7,12 +7,12 @@
   white-space: nowrap;
 }
 
-.current-set .set-label {
+.currentSet .setLabel {
   color: var(--muted);
   margin-right: 6px;
 }
 
-.header-actions {
+.headerActions {
   width: 100%;
   text-align: center;
 }
