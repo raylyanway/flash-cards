@@ -1,11 +1,18 @@
+import { useAppStore } from "../store/useAppStore";
+
 type AppHeaderProps = {
   onOpenSettings: () => void;
 };
 
 export function AppHeader({ onOpenSettings }: AppHeaderProps) {
+  const currentSet = useAppStore((state) => state.currentSet);
+
   return (
     <header>
-      <h1>🎓 English Trainer</h1>
+      <div className="current-set">
+        <span className="set-label">Current set:</span>
+        <strong>{currentSet}</strong>
+      </div>
       <div className="header-actions">
         <button className="secondary" onClick={onOpenSettings}>
           ⚙️ Settings
