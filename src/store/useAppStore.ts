@@ -3,6 +3,7 @@ import {
   DEFAULT_CARDSETS,
   getCardsetOptions,
   getProgressFromDB,
+  getSettingsFromDB,
   initializeCardSet,
   setProgressToDB,
 } from "../cardData";
@@ -19,6 +20,7 @@ const DEFAULT_THEME: ThemePreference = "system";
 const DEFAULT_SET = "body-parts";
 
 type AppState = {
+  initialized: boolean;
   cardsetOptions: CardsetOption[];
   cards: Card[];
   currentCard: Card | null;
@@ -39,6 +41,7 @@ type AppState = {
 };
 
 type AppActions = {
+  initialize: () => Promise<void>;
   loadSetData: (setName: string) => Promise<void>;
   refreshCardsetOptions: (preferredSet?: string) => Promise<CardsetOption[]>;
   saveProgress: (progress: ProgressMap) => Promise<void>;
@@ -64,6 +67,7 @@ type AppActions = {
 export type AppStore = AppState & AppActions;
 
 export const useAppStore = create<AppStore>((set, get) => ({
+  initialized: false,
   cardsetOptions: DEFAULT_CARDSETS,
   cards: [],
   currentCard: null,
@@ -81,6 +85,24 @@ export const useAppStore = create<AppStore>((set, get) => ({
   speechSupported: false,
   theme: DEFAULT_THEME,
   wrongAttempts: 0,
+
+  initialize: async () => {
+    const settings = await getSettingsFromDB();
+    const savedSet = settings.currentSet || DEFAULT_SET;
+    const cardsetOptions = await get().refreshCardsetOptions(savedSet);
+
+    const setToLoad = cardsetOptions.some((option) => option.key === savedSet)
+      ? savedSet
+      : cardsetOptions[0]?.key || DEFAULT_SET;
+
+    await get().loadSetData(setToLoad);
+
+    set({
+      theme: settings.theme ?? DEFAULT_THEME,
+      currentSet: savedSet,
+      initialized: true,
+    });
+  },
 
   loadSetData: async (setName: string) => {
     const [storedProgress, loadedCards] = await Promise.all([

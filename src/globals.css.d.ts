@@ -54,7 +54,6 @@ declare const styles: {
   readonly "themeLight": string;
   readonly "themeOption": string;
   readonly "themeOptions": string;
-  readonly "themeSystem": string;
   readonly "topBar": string;
   readonly "waiting": string;
   readonly "waitingBox": string;
