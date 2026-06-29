@@ -1,8 +1,8 @@
 import { useAppStore } from "../store/useAppStore";
 import { AnalyticsScreen } from "./AnalyticsScreen";
-import { AppHeader } from "./AppHeader";
+import { AppHeader } from "./appHeader";
 import { CardSetScreen } from "./CardSetScreen";
-import { HomeScreen } from "./HomeScreen";
+import { HomeScreen } from "./homeScreen";
 import { LearnScreen } from "./LearnScreen";
 import { ProgressSetupScreen } from "./ProgressSetupScreen";
 import { SettingsScreen } from "./SettingsScreen";

@@ -1,4 +1,4 @@
-import { useAppStore } from "../store/useAppStore";
+import { useAppStore } from "../../store/useAppStore";
 import s from "./AppHeader.module.css";
 
 type AppHeaderProps = {

@@ -1,7 +1,10 @@
 import clsx from "clsx";
 import { useMemo } from "react";
-import { useAppStore } from "../store/useAppStore";
-import { getCompletePercent, getNextReviewLabel } from "../utils/cardProgress";
+import { useAppStore } from "../../store/useAppStore";
+import {
+  getCompletePercent,
+  getNextReviewLabel,
+} from "../../utils/cardProgress";
 import s from "./HomeScreen.module.css";
 
 export function HomeScreen() {
