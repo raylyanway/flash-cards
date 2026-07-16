@@ -1,52 +1,71 @@
-.icon-button {
-  width: 48px;
-  height: 48px;
+.iconButton {
+  width: 40px;
+  height: 40px;
 
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 
+  padding: 0;
   border: none;
-  border-radius: 14px;
-
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
   cursor: pointer;
 
   transition:
-    background 0.2s,
-    transform 0.15s,
-    box-shadow 0.2s;
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
-.icon-button:hover {
+.iconButton:hover:not(:disabled) {
   transform: translateY(-1px);
-
-  box-shadow: 0 4px 12px rgb(0 0 0 /0.12);
+  background: rgb(15 23 42 /0.06);
+  color: var(--primary);
 }
 
-.icon-button:focus-visible {
-  outline: 3px solid var(--accent);
-
-  outline-offset: 3px;
+.iconButton:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
-.icon-button:disabled {
+.iconButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.iconButton:disabled {
   opacity: 0.45;
-
   cursor: not-allowed;
-
   transform: none;
 }
 
-.icon-button__spinner {
+.iconButtonIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.iconButtonIcon svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.iconButtonSpinner {
   width: 20px;
   height: 20px;
 
   border-radius: 50%;
-
   border: 3px solid currentColor;
   border-top-color: transparent;
 
   animation: spin 0.8s linear infinite;
+}
+
+.active {
+  animation: pulse 1.6s infinite;
 }
 
 @keyframes spin {
@@ -55,38 +74,13 @@
   }
 }
 
-.icon-button {
-  transition:
-    transform 0.15s,
-    box-shadow 0.2s,
-    background 0.2s;
-}
-
-.icon-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.12);
-}
-
-.icon-button:active {
-  transform: scale(0.94);
-}
-
-.icon-button:active:not(:disabled) {
-  transform: scale(0.94);
-}
-
-.icon-button.active {
-  animation: pulse 1.6s infinite;
-}
-
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgb(37 99 235 /0.35);
+    box-shadow: 0 0 0 0 rgb(37 99 235 /0.2);
   }
 
   70% {
-    box-shadow: 0 0 0 12px transparent;
+    box-shadow: 0 0 0 8px transparent;
   }
 
   100% {

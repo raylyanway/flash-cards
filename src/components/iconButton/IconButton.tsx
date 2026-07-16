@@ -1,9 +1,9 @@
-import s from "./IconButton.module.css";
 import clsx from "clsx";
-
+import type { ReactNode } from "react";
+import s from "./IconButton.module.css";
 
 type Props = {
-  icon: string;
+  icon: ReactNode;
   ariaLabel: string;
   loading?: boolean;
   active?: boolean;
@@ -23,14 +23,15 @@ export function IconButton({
     <button
       type="button"
       aria-label={ariaLabel}
-      className={clsx("icon-button", active && "active")}
+      title={ariaLabel}
+      className={clsx(s.iconButton, active && s.active)}
       disabled={disabled || loading}
       onClick={onClick}
     >
       {loading ? (
         <span className={s.iconButtonSpinner} />
       ) : (
-        <span className="icon-button__icon">{icon}</span>
+        <span className={s.iconButtonIcon}>{icon}</span>
       )}
     </button>
   );
