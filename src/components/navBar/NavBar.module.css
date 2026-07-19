@@ -1,4 +1,26 @@
 .headerActions {
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
   text-align: center;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .headerActions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    width: auto;
+    justify-content: space-around;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 24px rgb(15 23 42 / 0.12);
+  }
 }

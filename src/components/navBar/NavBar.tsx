@@ -13,7 +13,7 @@ export function NavBar() {
   };
 
   return (
-    <div className={s.headerActions}>
+    <nav className={s.headerActions} aria-label="Primary navigation">
       <IconButton
         active={screen === "home"}
         icon={<HomeIcon />}
@@ -34,6 +34,6 @@ export function NavBar() {
         icon={<SettingsIcon />}
         onClick={() => handleClick("settings")}
       />
-    </div>
+    </nav>
   );
 }

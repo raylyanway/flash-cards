@@ -34,6 +34,7 @@ declare const styles: {
   readonly "progressText": string;
   readonly "recognizedText": string;
   readonly "result": string;
+  readonly "root": string;
   readonly "screen": string;
   readonly "searchInput": string;
   readonly "setupSection": string;
