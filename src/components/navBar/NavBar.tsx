@@ -1,43 +1,39 @@
 import { useAppStore } from "../../store/useAppStore";
+import { Screen } from "../../types";
+import { IconButton } from "../iconButton";
+import { AnalyticsIcon, ContentIcon, HomeIcon, SettingsIcon } from "../Icons";
 import s from "./NavBar.module.css";
 
 export function NavBar() {
   const screen = useAppStore((state) => state.screen);
   const setScreen = useAppStore((state) => state.setScreen);
 
+  const handleClick = (screen: Screen) => {
+    setScreen(screen);
+  };
+
   return (
-    <header className={s.navbar}>
-      <div className={s.navbarBrand}>📚 Flash Cards</div>
-
-      <nav className={s.navbarNav}>
-        <button
-          className={screen === "home" ? s.active : ""}
-          onClick={() => setScreen("home")}
-        >
-          Home
-        </button>
-
-        <button
-          className={screen === "learn" ? s.active : ""}
-          onClick={() => setScreen("learn")}
-        >
-          Learn
-        </button>
-
-        <button
-          className={screen === "analytics" ? s.active : ""}
-          onClick={() => setScreen("analytics")}
-        >
-          Analytics
-        </button>
-
-        <button
-          className={screen === "settings" ? s.active : ""}
-          onClick={() => setScreen("settings")}
-        >
-          Settings
-        </button>
-      </nav>
-    </header>
+    <div className={s.headerActions}>
+      <IconButton
+        active={screen === "home"}
+        icon={<HomeIcon />}
+        onClick={() => handleClick("home")}
+      />
+      <IconButton
+        active={screen === "cardSet"}
+        icon={<ContentIcon />}
+        onClick={() => handleClick("cardSet")}
+      />
+      <IconButton
+        active={screen === "analytics"}
+        icon={<AnalyticsIcon />}
+        onClick={() => handleClick("analytics")}
+      />
+      <IconButton
+        active={screen === "settings"}
+        icon={<SettingsIcon />}
+        onClick={() => handleClick("settings")}
+      />
+    </div>
   );
 }
