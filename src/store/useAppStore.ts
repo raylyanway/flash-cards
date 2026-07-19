@@ -1,15 +1,15 @@
 import { create } from "zustand";
 import {
-  DEFAULT_CARDSETS,
-  getCardsetOptions,
+  DEFAULT_CONTENT,
+  getContentOptions,
   getProgressFromDB,
   getSettingsFromDB,
-  initializeCardSet,
+  initializeContent,
   setProgressToDB,
 } from "../cardData";
 import type {
   Card,
-  CardsetOption,
+  ContentOption,
   ProgressMap,
   Screen,
   ThemePreference,
@@ -21,7 +21,7 @@ const DEFAULT_SET = "body-parts";
 
 type AppState = {
   initialized: boolean;
-  cardsetOptions: CardsetOption[];
+  contentOptions: ContentOption[];
   cards: Card[];
   currentCard: Card | null;
   currentSet: string;
@@ -43,9 +43,9 @@ type AppState = {
 type AppActions = {
   initialize: () => Promise<void>;
   loadSetData: (setName: string) => Promise<void>;
-  refreshCardsetOptions: (preferredSet?: string) => Promise<CardsetOption[]>;
+  refreshContentOptions: (preferredSet?: string) => Promise<ContentOption[]>;
   saveProgress: (progress: ProgressMap) => Promise<void>;
-  setCardsetOptions: (options: CardsetOption[]) => void;
+  setContentOptions: (options: ContentOption[]) => void;
   setCards: (cards: Card[]) => void;
   setCurrentCard: (card: Card | null) => void;
   setCurrentSet: (setName: string) => void;
@@ -68,7 +68,7 @@ export type AppStore = AppState & AppActions;
 
 export const useAppStore = create<AppStore>((set, get) => ({
   initialized: false,
-  cardsetOptions: DEFAULT_CARDSETS,
+  contentOptions: DEFAULT_CONTENT,
   cards: [],
   currentCard: null,
   currentSet: DEFAULT_SET,
@@ -89,11 +89,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
   initialize: async () => {
     const settings = await getSettingsFromDB();
     const savedSet = settings.currentSet || DEFAULT_SET;
-    const cardsetOptions = await get().refreshCardsetOptions(savedSet);
+    const contentOptions = await get().refreshContentOptions(savedSet);
 
-    const setToLoad = cardsetOptions.some((option) => option.key === savedSet)
+    const setToLoad = contentOptions.some((option) => option.key === savedSet)
       ? savedSet
-      : cardsetOptions[0]?.key || DEFAULT_SET;
+      : contentOptions[0]?.key || DEFAULT_SET;
 
     await get().loadSetData(setToLoad);
 
@@ -107,7 +107,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   loadSetData: async (setName: string) => {
     const [storedProgress, loadedCards] = await Promise.all([
       getProgressFromDB(setName),
-      initializeCardSet(setName),
+      initializeContent(setName),
     ]);
     const nextProgress = initializeMissingProgress(
       loadedCards,
@@ -116,10 +116,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ cards: loadedCards, progress: nextProgress });
     await setProgressToDB(setName, nextProgress);
   },
-  refreshCardsetOptions: async (preferredSet?: string) => {
+  refreshContentOptions: async (preferredSet?: string) => {
     const targetSet = preferredSet || get().currentSet;
-    const options = await getCardsetOptions();
-    set({ cardsetOptions: options });
+    const options = await getContentOptions();
+    set({ contentOptions: options });
     if (!options.some((option) => option.key === targetSet) && options[0]) {
       set({ currentSet: options[0].key });
     }
@@ -129,7 +129,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ progress });
     await setProgressToDB(get().currentSet, progress);
   },
-  setCardsetOptions: (cardsetOptions) => set({ cardsetOptions }),
+  setContentOptions: (contentOptions) => set({ contentOptions }),
   setCards: (cards) => set({ cards }),
   setCurrentCard: (currentCard) => set({ currentCard }),
   setCurrentSet: (currentSet) => set({ currentSet }),

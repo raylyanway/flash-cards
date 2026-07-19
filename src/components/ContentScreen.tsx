@@ -1,44 +1,43 @@
 import { ChangeEvent, useRef } from "react";
 import {
   createCsvFromCards,
-  DEFAULT_CARDSETS,
-  deleteCardset,
+  DEFAULT_CONTENT,
+  deleteContent,
   getAllCardsForSet,
-  getCardsetBaseName,
-  getCardsetDisplayName,
-  getCardsetOptions,
+  getContentBaseName,
+  getContentDisplayName,
+  getContentOptions,
   getDisplayNameForSet,
-  getUniqueCardsetNames,
-  importCardset,
+  getUniqueContentNames,
+  importContent,
   parseCsvToJson,
-  setCardsetMetadata,
+  setContentMetadata,
   setSettingsToDB,
 } from "../cardData";
 import { useAppStore } from "../store/useAppStore";
 import { downloadCsv } from "../utils/downloadCsv";
 
-export function CardSetScreen() {
-  const importCardsetInputRef = useRef<HTMLInputElement | null>(null);
+export function ContentScreen() {
+  const importContentInputRef = useRef<HTMLInputElement | null>(null);
 
   const theme = useAppStore((state) => state.theme);
 
-  const cardsetOptions = useAppStore((state) => state.cardsetOptions);
+  const contentOptions = useAppStore((state) => state.contentOptions);
   const currentSet = useAppStore((state) => state.currentSet);
-  const setCardsetOptions = useAppStore((state) => state.setCardsetOptions);
+  const setContentOptions = useAppStore((state) => state.setContentOptions);
   const setCurrentSet = useAppStore((state) => state.setCurrentSet);
-  const setScreen = useAppStore((state) => state.setScreen);
   const loadSetData = useAppStore((state) => state.loadSetData);
-  const refreshCardsetOptions = useAppStore(
-    (state) => state.refreshCardsetOptions,
+  const refreshContentOptions = useAppStore(
+    (state) => state.refreshContentOptions,
   );
 
-  const isDefaultSet = DEFAULT_CARDSETS.some((item) => item.key === currentSet);
+  const isDefaultSet = DEFAULT_CONTENT.some((item) => item.key === currentSet);
 
-  const exportCardset = async () => {
+  const exportContent = async () => {
     try {
       const allCards = await getAllCardsForSet(currentSet);
       if (!allCards.length) {
-        alert("Nothing to export for this cardset.");
+        alert("Nothing to export for this content set.");
         return;
       }
       downloadCsv(
@@ -52,12 +51,12 @@ export function CardSetScreen() {
         `${currentSet}.csv`,
       );
     } catch (error) {
-      console.error("exportCardset failed:", error);
-      alert("Unable to export cardset. See console for details.");
+      console.error("exportContent failed:", error);
+      alert("Unable to export content. See console for details.");
     }
   };
 
-  const handleImportCardset = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImportContent = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.name.toLowerCase().endsWith(".csv")) {
@@ -70,35 +69,35 @@ export function CardSetScreen() {
     reader.onload = async (loadEvent) => {
       try {
         const data = parseCsvToJson(String(loadEvent.target?.result || ""));
-        const setName = getCardsetBaseName(file.name);
+        const setName = getContentBaseName(file.name);
         if (!setName) {
           throw new Error(
-            "Unable to infer cardset name from the uploaded file name.",
+            "Unable to infer content name from the uploaded file name.",
           );
         }
 
-        const existing = await getUniqueCardsetNames();
+        const existing = await getUniqueContentNames();
         if (existing.includes(setName)) {
           const confirmed = confirm(
-            `A cardset named "${setName}" already exists. Overwrite it?`,
+            `A content named "${setName}" already exists. Overwrite it?`,
           );
           if (!confirmed) return;
         }
 
         const displayName = getDisplayNameForSet(setName);
-        await importCardset(setName, data);
-        await setCardsetMetadata({
+        await importContent(setName, data);
+        await setContentMetadata({
           setName,
           displayName,
           importedAt: Date.now(),
         });
-        await refreshCardsetOptions(setName);
+        await refreshContentOptions(setName);
         setCurrentSet(setName);
         await setSettingsToDB({ currentSet: setName, theme });
         await loadSetData(setName);
-        alert(`Cardset "${displayName}" imported successfully.`);
+        alert(`Content "${displayName}" imported successfully.`);
       } catch (error) {
-        alert(`Failed to import cardset: ${(error as Error).message}`);
+        alert(`Failed to import content: ${(error as Error).message}`);
       } finally {
         event.target.value = "";
       }
@@ -106,33 +105,33 @@ export function CardSetScreen() {
     reader.readAsText(file);
   };
 
-  const handleDeleteCardset = async () => {
+  const handleDeleteContent = async () => {
     if (isDefaultSet) {
-      alert("Default cardsets cannot be deleted.");
+      alert("Default content sets cannot be deleted.");
       return;
     }
 
-    const displayName = await getCardsetDisplayName(currentSet);
+    const displayName = await getContentDisplayName(currentSet);
     if (
       !confirm(
-        `Delete cardset "${displayName}"? This will remove the cardset and its progress.`,
+        `Delete content "${displayName}"? This will remove the content and its progress.`,
       )
     ) {
       return;
     }
 
     try {
-      await deleteCardset(currentSet);
-      const options = await getCardsetOptions();
+      await deleteContent(currentSet);
+      const options = await getContentOptions();
       const nextSet = options[0]?.key || "body-parts";
-      setCardsetOptions(options);
+      setContentOptions(options);
       setCurrentSet(nextSet);
       await setSettingsToDB({ currentSet: nextSet, theme });
       await loadSetData(nextSet);
-      alert(`Cardset "${displayName}" deleted.`);
+      alert(`Content "${displayName}" deleted.`);
     } catch (error) {
-      console.error("Failed to delete cardset:", error);
-      alert("Unable to delete cardset. See console for details.");
+      console.error("Failed to delete content:", error);
+      alert("Unable to delete content. See console for details.");
     }
   };
 
@@ -146,39 +145,36 @@ export function CardSetScreen() {
   return (
     <section className="screen active">
       <div className="card">
-        <h2>Choose Card Set</h2>
-        <button onClick={() => setScreen("home")}>← Home</button>
-
         <select value={currentSet} onChange={handleSetChange}>
-          {cardsetOptions.map((option) => (
+          {contentOptions.map((option) => (
             <option key={option.key} value={option.key}>
               {option.label}
             </option>
           ))}
         </select>
-        <div className="button-group cardset-actions">
-          <button className="secondary" onClick={exportCardset}>
-            📦 Export Cardset
+        <div className="button-group content-actions">
+          <button className="secondary" onClick={exportContent}>
+            📦 Export Content
           </button>
           <button
             className="secondary"
-            onClick={() => importCardsetInputRef.current?.click()}
+            onClick={() => importContentInputRef.current?.click()}
           >
-            📤 Import Cardset
+            📤 Import Content
           </button>
           <button
             className="danger"
             disabled={isDefaultSet}
-            onClick={handleDeleteCardset}
+            onClick={handleDeleteContent}
           >
-            🗑 Delete Cardset
+            🗑 Delete Content
           </button>
           <input
-            ref={importCardsetInputRef}
+            ref={importContentInputRef}
             type="file"
             hidden
             accept=".csv"
-            onChange={handleImportCardset}
+            onChange={handleImportContent}
           />
         </div>
       </div>

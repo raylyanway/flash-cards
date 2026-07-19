@@ -18,11 +18,10 @@ export function SettingsScreen() {
   const theme = useAppStore((state) => state.theme);
   const currentSet = useAppStore((state) => state.currentSet);
   const setTheme = useAppStore((state) => state.setTheme);
-  const setScreen = useAppStore((state) => state.setScreen);
 
   const handleDeleteDatabase = async () => {
     const confirmed = confirm(
-      "Delete the saved app database? This will remove all stored progress and cardset data in IndexedDB.",
+      "Delete the saved app database? This will remove all stored progress and content data in IndexedDB.",
     );
     if (!confirmed) return;
 
@@ -46,11 +45,6 @@ export function SettingsScreen() {
 
   return (
     <section className="screen active">
-      <div className="top-bar">
-        <button onClick={() => setScreen("home")}>← Home</button>
-        <h2>Settings</h2>
-      </div>
-
       <div className="card">
         <h3>App Theme</h3>
         <p className="help-text">
@@ -80,7 +74,7 @@ export function SettingsScreen() {
           <h3>Database</h3>
           <p className="help-text">
             Delete the saved app database and reset indexed data. This does not
-            remove your cardset files.
+            remove your content files.
           </p>
           <div className="button-group">
             <button className="danger" onClick={handleDeleteDatabase}>

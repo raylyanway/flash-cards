@@ -25,6 +25,16 @@ body {
     color 0.25s ease;
 }
 
+#root {
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 84px;
+  }
+}
+
 body.theme-light {
   --bg: #f4f7fb;
   --card: #ffffff;
@@ -169,7 +179,7 @@ header h1 {
   padding: 60px 20px;
 }
 
-#cardSetSelect {
+#contentSelect {
   margin-bottom: 8px;
 }
 
@@ -217,7 +227,7 @@ header h1 {
   justify-content: center;
 }
 
-button {
+/* button {
   border: none;
   border-radius: 12px;
   padding: 14px 22px;
@@ -235,7 +245,7 @@ button:hover {
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
+} */
 
 #learnScreen.waiting .actions,
 #learnScreen.waiting #recognizedText,
@@ -243,13 +253,13 @@ button:disabled {
   display: none;
 }
 
-button.danger {
+/* button.danger {
   background: var(--danger);
 }
 
 button.listening {
   background: var(--success);
-}
+} */
 
 select {
   width: 100%;
@@ -392,9 +402,9 @@ td {
     flex-direction: column;
   }
 
-  button {
+  /* button {
     width: 100%;
-  }
+  } */
 
   .top-bar {
     flex-direction: column;
@@ -532,7 +542,7 @@ td {
   gap: 8px;
 }
 
-button.secondary {
+/* button.secondary {
   background: var(--primary);
   opacity: 0.8;
 }
@@ -549,7 +559,7 @@ button.primary {
 button.primary:hover {
   background: #15803d;
   transform: translateY(-1px);
-}
+} */
 
 .search-input {
   width: 100%;

@@ -1,6 +1,6 @@
-import type { Card, CardsetOption, ProgressMap, Settings } from "./types";
+import type { Card, ContentOption, ProgressMap, Settings } from "./types";
 
-export const DEFAULT_CARDSETS: CardsetOption[] = [
+export const DEFAULT_CONTENT: ContentOption[] = [
   { key: "body-parts", label: "Body Parts" },
   { key: "food", label: "Food" },
   { key: "sentences", label: "Sentences" },
@@ -9,8 +9,8 @@ export const DEFAULT_CARDSETS: CardsetOption[] = [
 const LATEST_DATA_VERSION = 1;
 const DB_NAME = "flashCardDB";
 const DB_VERSION = 1;
-const CARDSETS_STORE_NAME = "cardsets";
-const CARDSET_METADATA_STORE_NAME = "cardsetMetadata";
+const CONTENT_STORE_NAME = "content";
+const CONTENT_METADATA_STORE_NAME = "contentMetadata";
 const PROGRESS_STORE_NAME = "progress";
 const SETTINGS_STORE_NAME = "settings";
 const CACHE_VERSION_KEY = "cached_data_version";
@@ -47,22 +47,22 @@ function openDatabase(): Promise<IDBDatabase> {
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
 
-      if (!db.objectStoreNames.contains(CARDSETS_STORE_NAME)) {
-        const store = db.createObjectStore(CARDSETS_STORE_NAME, {
+      if (!db.objectStoreNames.contains(CONTENT_STORE_NAME)) {
+        const store = db.createObjectStore(CONTENT_STORE_NAME, {
           keyPath: "text",
         });
         store.createIndex("setName", "setName", { unique: false });
       } else {
         const store = (
           event.target as IDBOpenDBRequest
-        ).transaction?.objectStore(CARDSETS_STORE_NAME);
+        ).transaction?.objectStore(CONTENT_STORE_NAME);
         if (store && !store.indexNames.contains("setName")) {
           store.createIndex("setName", "setName", { unique: false });
         }
       }
 
-      if (!db.objectStoreNames.contains(CARDSET_METADATA_STORE_NAME)) {
-        db.createObjectStore(CARDSET_METADATA_STORE_NAME, {
+      if (!db.objectStoreNames.contains(CONTENT_METADATA_STORE_NAME)) {
+        db.createObjectStore(CONTENT_METADATA_STORE_NAME, {
           keyPath: "setName",
         });
       }
@@ -118,14 +118,14 @@ function getStoreCountForSet(
   setName: string,
 ): Promise<number> {
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
-    const store = tx.objectStore(CARDSETS_STORE_NAME);
+    const tx = db.transaction(CONTENT_STORE_NAME, "readonly");
+    const store = tx.objectStore(CONTENT_STORE_NAME);
 
     if (store.indexNames.contains("setName")) {
       const request = store.index("setName").count(IDBKeyRange.only(setName));
       request.onerror = () => {
         reject(
-          request.error || new Error("Failed to count records for cardset."),
+          request.error || new Error("Failed to count records for content."),
         );
       };
       request.onsuccess = () => resolve(request.result);
@@ -137,7 +137,7 @@ function getStoreCountForSet(
     cursorRequest.onerror = () => {
       reject(
         cursorRequest.error ||
-          new Error("Failed to count records for cardset."),
+          new Error("Failed to count records for content."),
       );
     };
     cursorRequest.onsuccess = (event) => {
@@ -154,7 +154,7 @@ function getStoreCountForSet(
   });
 }
 
-export function getCardsetBaseName(fileName: string) {
+export function getContentBaseName(fileName: string) {
   let name = fileName;
   if (name.toLowerCase().endsWith(".gz")) name = name.slice(0, -3);
   if (name.toLowerCase().endsWith(".csv")) name = name.slice(0, -4);
@@ -269,10 +269,10 @@ async function decompressOrDecodeBuffer(buffer: ArrayBuffer) {
   return new Response(new Blob([buffer]).stream().pipeThrough(ds)).text();
 }
 
-async function resolveCardsetUrl(setName: string) {
+async function resolveContentUrl(setName: string) {
   const tried: string[] = [];
   for (const suffix of [".csv.gz", ".csv"]) {
-    const url = `cardsets/${setName}${suffix}`;
+    const url = `content/${setName}${suffix}`;
     tried.push(url);
     try {
       const response = await fetch(url, { cache: "reload" });
@@ -281,19 +281,19 @@ async function resolveCardsetUrl(setName: string) {
       // Try the next supported file format.
     }
   }
-  throw new Error(`Failed to fetch cardset data. Tried: ${tried.join(", ")}`);
+  throw new Error(`Failed to fetch content data. Tried: ${tried.join(", ")}`);
 }
 
 async function fetchAndSeed(currentSet: string, db: IDBDatabase) {
-  const { response, url } = await resolveCardsetUrl(currentSet);
+  const { response, url } = await resolveContentUrl(currentSet);
   const text = url.endsWith(".gz")
     ? await decompressOrDecodeBuffer(await response.arrayBuffer())
     : await response.text();
   const data = parseCsvToJson(text);
 
   return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
-    const store = tx.objectStore(CARDSETS_STORE_NAME);
+    const tx = db.transaction(CONTENT_STORE_NAME, "readwrite");
+    const store = tx.objectStore(CONTENT_STORE_NAME);
 
     tx.onerror = () =>
       reject(tx.error || new Error("Transaction failed during seed."));
@@ -315,8 +315,8 @@ async function fetchAndSeed(currentSet: string, db: IDBDatabase) {
 export function getAllCardsForSet(currentSet: string): Promise<Card[]> {
   return openDatabase().then((db) => {
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
-      const store = tx.objectStore(CARDSETS_STORE_NAME);
+      const tx = db.transaction(CONTENT_STORE_NAME, "readonly");
+      const store = tx.objectStore(CONTENT_STORE_NAME);
       const cardsForSet: Card[] = [];
       const request = store.indexNames.contains("setName")
         ? store.index("setName").openCursor(IDBKeyRange.only(currentSet))
@@ -345,7 +345,7 @@ export function getAllCardsForSet(currentSet: string): Promise<Card[]> {
 }
 
 export function getDisplayNameForSet(setName: string) {
-  const defaultEntry = DEFAULT_CARDSETS.find((item) => item.key === setName);
+  const defaultEntry = DEFAULT_CONTENT.find((item) => item.key === setName);
   if (defaultEntry) return defaultEntry.label;
 
   return setName
@@ -353,61 +353,61 @@ export function getDisplayNameForSet(setName: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-async function getCardsetMetadata(setName: string): Promise<{
+async function getContentMetadata(setName: string): Promise<{
   setName: string;
   displayName?: string;
   importedAt?: number;
 } | null> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(CARDSET_METADATA_STORE_NAME, "readonly");
-    const store = tx.objectStore(CARDSET_METADATA_STORE_NAME);
+    const tx = db.transaction(CONTENT_METADATA_STORE_NAME, "readonly");
+    const store = tx.objectStore(CONTENT_METADATA_STORE_NAME);
     const request = store.get(setName);
 
     request.onerror = () =>
-      reject(request.error || new Error("Failed to read cardset metadata."));
+      reject(request.error || new Error("Failed to read content metadata."));
     request.onsuccess = () => resolve(request.result || null);
   });
 }
 
-export async function setCardsetMetadata(metadata: {
+export async function setContentMetadata(metadata: {
   setName: string;
   displayName: string;
   importedAt: number;
 }) {
   const db = await openDatabase();
   return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CARDSET_METADATA_STORE_NAME, "readwrite");
-    tx.objectStore(CARDSET_METADATA_STORE_NAME).put(metadata);
+    const tx = db.transaction(CONTENT_METADATA_STORE_NAME, "readwrite");
+    tx.objectStore(CONTENT_METADATA_STORE_NAME).put(metadata);
     tx.oncomplete = () => resolve();
     tx.onerror = () =>
-      reject(tx.error || new Error("Cardset metadata transaction failed."));
+      reject(tx.error || new Error("Content metadata transaction failed."));
   });
 }
 
-async function deleteCardsetMetadata(setName: string) {
+async function deleteContentMetadata(setName: string) {
   const db = await openDatabase();
   return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CARDSET_METADATA_STORE_NAME, "readwrite");
-    tx.objectStore(CARDSET_METADATA_STORE_NAME).delete(setName);
+    const tx = db.transaction(CONTENT_METADATA_STORE_NAME, "readwrite");
+    tx.objectStore(CONTENT_METADATA_STORE_NAME).delete(setName);
     tx.oncomplete = () => resolve();
     tx.onerror = () =>
       reject(
-        tx.error || new Error("Cardset metadata delete transaction failed."),
+        tx.error || new Error("Content metadata delete transaction failed."),
       );
   });
 }
 
-function deleteCardsetRecords(db: IDBDatabase, setName: string) {
+function deleteContentRecords(db: IDBDatabase, setName: string) {
   return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
-    const store = tx.objectStore(CARDSETS_STORE_NAME);
+    const tx = db.transaction(CONTENT_STORE_NAME, "readwrite");
+    const store = tx.objectStore(CONTENT_STORE_NAME);
     const request = store.indexNames.contains("setName")
       ? store.index("setName").openCursor(IDBKeyRange.only(setName))
       : store.openCursor();
 
     request.onerror = () =>
-      reject(request.error || new Error("Failed to delete cardset records."));
+      reject(request.error || new Error("Failed to delete content records."));
     request.onsuccess = (event) => {
       const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
       if (!cursor) {
@@ -426,26 +426,26 @@ function deleteCardsetRecords(db: IDBDatabase, setName: string) {
   });
 }
 
-export async function deleteCardset(setName: string) {
+export async function deleteContent(setName: string) {
   const db = await openDatabase();
-  await deleteCardsetRecords(db, setName);
-  await deleteCardsetMetadata(setName);
+  await deleteContentRecords(db, setName);
+  await deleteContentMetadata(setName);
   await deleteProgressFromDB(setName);
 }
 
-export async function getCardsetDisplayName(setName: string) {
-  const metadata = await getCardsetMetadata(setName);
+export async function getContentDisplayName(setName: string) {
+  const metadata = await getContentMetadata(setName);
   return metadata?.displayName || getDisplayNameForSet(setName);
 }
 
-export async function getUniqueCardsetNames() {
-  const names = new Set(DEFAULT_CARDSETS.map((item) => item.key));
+export async function getUniqueContentNames() {
+  const names = new Set(DEFAULT_CONTENT.map((item) => item.key));
   const db = await openDatabase();
   await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CARDSETS_STORE_NAME, "readonly");
-    const request = tx.objectStore(CARDSETS_STORE_NAME).openCursor();
+    const tx = db.transaction(CONTENT_STORE_NAME, "readonly");
+    const request = tx.objectStore(CONTENT_STORE_NAME).openCursor();
     request.onerror = () =>
-      reject(request.error || new Error("Failed to iterate cardsets."));
+      reject(request.error || new Error("Failed to iterate content."));
     request.onsuccess = (event) => {
       const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
       if (!cursor) {
@@ -463,20 +463,20 @@ export async function getUniqueCardsetNames() {
   return Array.from(names);
 }
 
-export async function getCardsetOptions() {
-  const storedNames = await getUniqueCardsetNames();
+export async function getContentOptions() {
+  const storedNames = await getUniqueContentNames();
   const optionSet = new Set<string>();
-  const options: CardsetOption[] = [];
+  const options: ContentOption[] = [];
 
-  for (const cardset of DEFAULT_CARDSETS) {
-    optionSet.add(cardset.key);
-    options.push(cardset);
+  for (const content of DEFAULT_CONTENT) {
+    optionSet.add(content.key);
+    options.push(content);
   }
 
   for (const setName of storedNames) {
     if (optionSet.has(setName)) continue;
     optionSet.add(setName);
-    const metadata = await getCardsetMetadata(setName);
+    const metadata = await getContentMetadata(setName);
     options.push({
       key: setName,
       label: metadata?.displayName || getDisplayNameForSet(setName),
@@ -486,15 +486,15 @@ export async function getCardsetOptions() {
   return options;
 }
 
-export async function importCardset(setName: string, cards: Card[]) {
+export async function importContent(setName: string, cards: Card[]) {
   const db = await openDatabase();
-  await deleteCardsetRecords(db, setName);
+  await deleteContentRecords(db, setName);
 
   return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CARDSETS_STORE_NAME, "readwrite");
-    const store = tx.objectStore(CARDSETS_STORE_NAME);
+    const tx = db.transaction(CONTENT_STORE_NAME, "readwrite");
+    const store = tx.objectStore(CONTENT_STORE_NAME);
     tx.onerror = () =>
-      reject(tx.error || new Error("Failed to import cardset."));
+      reject(tx.error || new Error("Failed to import content."));
     tx.oncomplete = () => resolve();
 
     try {
@@ -572,21 +572,21 @@ export function createCsvFromProgress(
   return rows.join("\r\n");
 }
 
-async function clearDefaultCardsets(db: IDBDatabase) {
+async function clearDefaultContent(db: IDBDatabase) {
   await Promise.all(
-    DEFAULT_CARDSETS.map((item) => deleteCardsetRecords(db, item.key)),
+    DEFAULT_CONTENT.map((item) => deleteContentRecords(db, item.key)),
   );
 }
 
-export async function initializeCardSet(currentSet: string) {
+export async function initializeContent(currentSet: string) {
   ensureStorageAvailable();
   const db = await openDatabase();
   const cachedVersion = await getCachedDataVersion();
   const setCount = await getStoreCountForSet(db, currentSet);
 
   if (cachedVersion !== LATEST_DATA_VERSION) {
-    await clearDefaultCardsets(db);
-    if (DEFAULT_CARDSETS.some((item) => item.key === currentSet)) {
+    await clearDefaultContent(db);
+    if (DEFAULT_CONTENT.some((item) => item.key === currentSet)) {
       await fetchAndSeed(currentSet, db);
     }
     return getAllCardsForSet(currentSet);

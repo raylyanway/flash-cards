@@ -40,7 +40,7 @@ export function ProgressSetupScreen() {
 
   const exportProgress = () => {
     if (!cards.length) {
-      alert("Nothing to export for this cardset.");
+      alert("Nothing to export for this content.");
       return;
     }
     downloadCsv(

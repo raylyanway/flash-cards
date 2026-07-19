@@ -1,9 +1,11 @@
 - [ ] check if it possible to send some data in google services
 - [ ] compress app if needed
-- [ ] think about redisign
+- [ ] think about redesign
 - [ ] auto detect from file name what progress I need to import so user don't need to pick card set for what progress is going on
 - [ ] add google metrics
 - [ ] show available storage size
 - [ ] allow import subtitles format
 - [ ] allow silent answering (text or select)
-- [ ] create tips component which can be shown at the begining
+- [ ] create tips component which can be shown at the beginning
+- [ ] recheck setNow() implementation
+- [ ] implement error screen with error interception
