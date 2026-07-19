@@ -86,15 +86,6 @@ export function HomeScreen() {
         <button className={s.bigBtn} onClick={() => setScreen("learn")}>
           ▶️ Continue Learning
         </button>
-
-        <div className={s.actionGrid}>
-          <button className="secondary" onClick={() => setScreen("cardSet")}>
-            📚 Change Set
-          </button>
-          <button className="secondary" onClick={() => setScreen("analytics")}>
-            📊 Analytics
-          </button>
-        </div>
       </div>
 
       {/* Motivational footer */}
