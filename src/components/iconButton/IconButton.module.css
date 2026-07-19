@@ -66,6 +66,7 @@
 
 .active {
   animation: pulse 1.6s infinite;
+  color: var(--primary);
 }
 
 @keyframes spin {

@@ -4,7 +4,7 @@ import s from "./IconButton.module.css";
 
 type Props = {
   icon: ReactNode;
-  ariaLabel: string;
+  ariaLabel?: string;
   loading?: boolean;
   active?: boolean;
   disabled?: boolean;
