@@ -3,6 +3,8 @@ declare const styles: {
   readonly "iconButton": string;
   readonly "iconButtonIcon": string;
   readonly "iconButtonSpinner": string;
+  readonly "pulse": string;
+  readonly "spin": string;
 };
 export = styles;
 
