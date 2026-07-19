@@ -16,7 +16,7 @@ function copyStaticAssets() {
           copyFile(path.resolve(file), path.join(outDir, file)),
         ),
       );
-      await cp(path.resolve("cardsets"), path.join(outDir, "cardsets"), {
+      await cp(path.resolve("content"), path.join(outDir, "content"), {
         recursive: true,
       });
     },

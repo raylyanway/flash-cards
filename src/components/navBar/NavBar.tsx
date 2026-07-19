@@ -20,9 +20,9 @@ export function NavBar() {
         onClick={() => handleClick("home")}
       />
       <IconButton
-        active={screen === "cardSet"}
+        active={screen === "content"}
         icon={<ContentIcon />}
-        onClick={() => handleClick("cardSet")}
+        onClick={() => handleClick("content")}
       />
       <IconButton
         active={screen === "analytics"}

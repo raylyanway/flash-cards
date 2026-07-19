@@ -1,6 +1,6 @@
 import { useAppStore } from "../store/useAppStore";
 import { AnalyticsScreen } from "./AnalyticsScreen";
-import { CardSetScreen } from "./CardSetScreen";
+import { ContentScreen } from "./ContentScreen";
 import { HomeScreen } from "./homeScreen";
 import { LearnScreen } from "./LearnScreen";
 import { ProgressSetupScreen } from "./ProgressSetupScreen";
@@ -22,8 +22,8 @@ export function ScreenSwitcher() {
     case "settings":
       return <SettingsScreen />;
 
-    case "cardSet":
-      return <CardSetScreen />;
+    case "content":
+      return <ContentScreen />;
 
     case "progressSetup":
       return <ProgressSetupScreen />;

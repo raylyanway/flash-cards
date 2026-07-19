@@ -7,9 +7,9 @@ declare const styles: {
   readonly "buttonGroup": string;
   readonly "card": string;
   readonly "cardList": string;
-  readonly "cardSetSelect": string;
   readonly "cardStatus": string;
   readonly "closeBtn": string;
+  readonly "contentSelect": string;
   readonly "correct": string;
   readonly "countdown": string;
   readonly "fadeIn": string;

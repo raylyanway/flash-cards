@@ -3,7 +3,7 @@ export type ThemePreference = "system" | "light" | "dark";
 export type Screen =
   | "home"
   | "learn"
-  | "cardSet"
+  | "content"
   | "analytics"
   | "settings"
   | "progressSetup";
@@ -23,7 +23,7 @@ export type ProgressEntry = {
 
 export type ProgressMap = Record<string, ProgressEntry>;
 
-export type CardsetOption = {
+export type ContentOption = {
   key: string;
   label: string;
 };
