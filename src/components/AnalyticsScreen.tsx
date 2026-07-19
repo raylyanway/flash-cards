@@ -37,11 +37,6 @@ export function AnalyticsScreen() {
 
   return (
     <section className="screen active">
-      <div className="top-bar">
-        <button onClick={() => setScreen("home")}>← Home</button>
-        <h2>Analytics</h2>
-      </div>
-
       <div className="card">
         <div className="stats-grid">
           <div className="stat">

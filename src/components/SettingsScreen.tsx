@@ -46,11 +46,6 @@ export function SettingsScreen() {
 
   return (
     <section className="screen active">
-      <div className="top-bar">
-        <button onClick={() => setScreen("home")}>← Home</button>
-        <h2>Settings</h2>
-      </div>
-
       <div className="card">
         <h3>App Theme</h3>
         <p className="help-text">

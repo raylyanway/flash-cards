@@ -146,9 +146,6 @@ export function CardSetScreen() {
   return (
     <section className="screen active">
       <div className="card">
-        <h2>Choose Card Set</h2>
-        <button onClick={() => setScreen("home")}>← Home</button>
-
         <select value={currentSet} onChange={handleSetChange}>
           {cardsetOptions.map((option) => (
             <option key={option.key} value={option.key}>

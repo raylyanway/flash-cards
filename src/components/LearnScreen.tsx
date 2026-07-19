@@ -43,7 +43,6 @@ export function LearnScreen() {
   return (
     <section className={`screen active ${currentCard ? "" : "waiting"}`}>
       <div className="top-bar">
-        <button onClick={goHome}>← Home</button>
         <div id="learnProgress">
           {stageCounts.learnedCount} / {cards.length} learned
         </div>
