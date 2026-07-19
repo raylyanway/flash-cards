@@ -12,17 +12,20 @@ declare const styles: {
   readonly "contentSelect": string;
   readonly "correct": string;
   readonly "countdown": string;
+  readonly "danger": string;
   readonly "fadeIn": string;
   readonly "helpText": string;
   readonly "learnCard": string;
   readonly "learnProgress": string;
   readonly "learnScreen": string;
+  readonly "listening": string;
   readonly "modal": string;
   readonly "modalBody": string;
   readonly "modalContent": string;
   readonly "modalFooter": string;
   readonly "modalHeader": string;
   readonly "nextReviewBox": string;
+  readonly "primary": string;
   readonly "progressBar": string;
   readonly "progressCardControls": string;
   readonly "progressCardInfo": string;
@@ -37,6 +40,7 @@ declare const styles: {
   readonly "root": string;
   readonly "screen": string;
   readonly "searchInput": string;
+  readonly "secondary": string;
   readonly "setupSection": string;
   readonly "slideIn": string;
   readonly "spin": string;
