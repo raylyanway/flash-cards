@@ -7,7 +7,7 @@ export function AppHeader() {
   return (
     <header>
       <div className={s.currentSet}>
-        <span className={s.setLabel}>Current set:</span>
+        <span className={s.setLabel}>Current set</span>
         <strong>{currentSet}</strong>
       </div>
     </header>
