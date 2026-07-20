@@ -65,26 +65,12 @@
 }
 
 .active {
-  animation: pulse 1.6s infinite;
+  box-shadow: 0 0 5px 5px rgba(69, 95, 152, 0.5);
   color: var(--primary);
 }
 
 @keyframes spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgb(37 99 235 /0.2);
-  }
-
-  70% {
-    box-shadow: 0 0 0 8px transparent;
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 transparent;
   }
 }
