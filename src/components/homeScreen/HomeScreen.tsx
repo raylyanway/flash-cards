@@ -89,13 +89,6 @@ export function HomeScreen() {
           ▶️ Continue Learning
         </button>
       </div>
-
-      {/* Motivational footer */}
-      {completePercent > 70 && (
-        <div className={s.motivation}>
-          You're doing amazing! Keep building that streak 🔥
-        </div>
-      )}
     </section>
   );
 }

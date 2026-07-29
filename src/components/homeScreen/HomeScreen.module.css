@@ -136,17 +136,6 @@
   gap: 12px;
 }
 
-.motivation {
-  margin-top: 24px;
-  text-align: center;
-  font-style: italic;
-  color: var(--success);
-  padding: 16px;
-  background: rgba(22, 163, 74, 0.08);
-  border-radius: 16px;
-  border: 1px solid rgba(22, 163, 74, 0.2);
-}
-
 /* Responsive tweaks */
 @media (max-width: 600px) {
   .statsRow {
