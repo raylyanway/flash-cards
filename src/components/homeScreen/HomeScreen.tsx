@@ -5,6 +5,7 @@ import {
   getCompletePercent,
   getNextReviewLabel,
 } from "../../utils/cardProgress";
+import { SelectedSet } from "../selectedSet";
 import s from "./HomeScreen.module.css";
 
 export function HomeScreen() {
@@ -38,6 +39,7 @@ export function HomeScreen() {
 
   return (
     <section className={clsx("screen", "active", s.homeScreen)}>
+      <SelectedSet />
       <div className={clsx("card", s.progressOverview)}>
         <div className={s.progressCircleContainer}>
           <div className={s.progressCircle}>
