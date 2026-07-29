@@ -1,4 +1,5 @@
 import { ChangeEvent, useRef } from "react";
+import { ContentIcon } from "../Icons";
 import {
   createCsvFromCards,
   DEFAULT_CONTENT,
@@ -13,15 +14,39 @@ import {
   parseCsvToJson,
   setContentMetadata,
   setSettingsToDB,
-} from "../cardData";
-import { useAppStore } from "../store/useAppStore";
-import { downloadCsv } from "../utils/downloadCsv";
+} from "../../cardData";
+import { useAppStore } from "../../store/useAppStore";
+import { downloadCsv } from "../../utils/downloadCsv";
+import s from "./ContentScreen.module.css";
+
+function ExportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 15v3a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-3" />
+    </svg>
+  );
+}
+
+function ImportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 21V10m0 0 4 4m-4-4-4 4M5 9V6a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3" />
+    </svg>
+  );
+}
+
+function DeleteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m-9 0 1 13h10l1-13" />
+    </svg>
+  );
+}
 
 export function ContentScreen() {
   const importContentInputRef = useRef<HTMLInputElement | null>(null);
 
   const theme = useAppStore((state) => state.theme);
-
   const contentOptions = useAppStore((state) => state.contentOptions);
   const currentSet = useAppStore((state) => state.currentSet);
   const setContentOptions = useAppStore((state) => state.setContentOptions);
@@ -32,6 +57,9 @@ export function ContentScreen() {
   );
 
   const isDefaultSet = DEFAULT_CONTENT.some((item) => item.key === currentSet);
+  const selectedLabel =
+    contentOptions.find((option) => option.key === currentSet)?.label ??
+    currentSet;
 
   const exportContent = async () => {
     try {
@@ -143,41 +171,92 @@ export function ContentScreen() {
   };
 
   return (
-    <section className="screen active">
-      <div className="card">
-        <select value={currentSet} onChange={handleSetChange}>
-          {contentOptions.map((option) => (
-            <option key={option.key} value={option.key}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <div className="button-group content-actions">
-          <button className="secondary" onClick={exportContent}>
-            📦 Export Content
-          </button>
-          <button
-            className="secondary"
-            onClick={() => importContentInputRef.current?.click()}
-          >
-            📤 Import Content
-          </button>
-          <button
-            className="danger"
-            disabled={isDefaultSet}
-            onClick={handleDeleteContent}
-          >
-            🗑 Delete Content
-          </button>
-          <input
-            ref={importContentInputRef}
-            type="file"
-            hidden
-            accept=".csv"
-            onChange={handleImportContent}
-          />
+    <section className={`screen active ${s.contentScreen}`}>
+      <div className={s.pageHeading}>
+        <div className={s.headingIcon}>
+          <ContentIcon />
+        </div>
+        <div>
+          <p className={s.eyebrow}>Content library</p>
+          <h1>Manage your learning sets</h1>
+          <p>Choose a collection, back it up, or bring in something new.</p>
         </div>
       </div>
+
+      <div className={`card ${s.selectorCard}`}>
+        <div className={s.selectorCopy}>
+          <span className={s.fieldLabel}>Active collection</span>
+          <strong>{selectedLabel}</strong>
+          <span>
+            {isDefaultSet ? "Built-in collection" : "Your imported collection"}
+          </span>
+        </div>
+        <label className={s.selectWrap}>
+          <span className={s.srOnly}>Select content collection</span>
+          <select value={currentSet} onChange={handleSetChange}>
+            {contentOptions.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className={s.actionGrid}>
+        <article className={s.actionCard}>
+          <div className={`${s.actionIcon} ${s.exportIcon}`}>
+            <ExportIcon />
+          </div>
+          <div className={s.actionContent}>
+            <h2>Export a backup</h2>
+            <p>Download this collection as a CSV file to keep it safe.</p>
+          </div>
+          <button className={s.actionButton} onClick={exportContent}>
+            Export CSV <ExportIcon />
+          </button>
+        </article>
+
+        <article className={s.actionCard}>
+          <div className={`${s.actionIcon} ${s.importIcon}`}>
+            <ImportIcon />
+          </div>
+          <div className={s.actionContent}>
+            <h2>Import a collection</h2>
+            <p>Add a CSV collection and continue learning from any device.</p>
+          </div>
+          <button
+            className={`${s.actionButton} ${s.importButton}`}
+            onClick={() => importContentInputRef.current?.click()}
+          >
+            Choose CSV <ImportIcon />
+          </button>
+        </article>
+      </div>
+
+      <div className={s.dangerZone}>
+        <div>
+          <span className={s.dangerLabel}>Danger zone</span>
+          <h2>Delete this collection</h2>
+          <p>Deletes the collection and all of its saved learning progress.</p>
+        </div>
+        <button
+          className={s.deleteButton}
+          disabled={isDefaultSet}
+          onClick={handleDeleteContent}
+        >
+          <DeleteIcon />
+          Delete collection
+        </button>
+      </div>
+
+      <input
+        ref={importContentInputRef}
+        type="file"
+        hidden
+        accept=".csv"
+        onChange={handleImportContent}
+      />
     </section>
   );
 }

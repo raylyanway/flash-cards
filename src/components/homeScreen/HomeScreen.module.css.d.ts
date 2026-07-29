@@ -5,7 +5,6 @@ declare const styles: {
   readonly "highlight": string;
   readonly "homeActions": string;
   readonly "homeScreen": string;
-  readonly "motivation": string;
   readonly "nextReview": string;
   readonly "progressBg": string;
   readonly "progressCenter": string;
