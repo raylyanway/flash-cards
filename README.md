@@ -9,3 +9,4 @@
 - [ ] create tips component which can be shown at the beginning
 - [ ] recheck setNow() implementation
 - [ ] implement error screen with error interception
+
