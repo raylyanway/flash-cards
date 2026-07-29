@@ -60,20 +60,16 @@
 }
 
 .primary {
-  --button-bg: linear-gradient(135deg, var(--primary), #4f46e5);
-  --button-fg: #fff;
-  --button-border: var(--primary);
-}
-
-.secondary {
-  --button-bg: color-mix(in srgb, var(--primary) 9%, var(--card));
+  --button-bg: transparent;
   --button-fg: var(--primary);
-  --button-border: color-mix(in srgb, var(--primary) 46%, var(--border));
+  --button-border: color-mix(in srgb, var(--primary) 50%, transparent);
   --button-shadow: none;
 }
 
-.secondary:hover:not(:disabled) {
-  --button-bg: color-mix(in srgb, var(--primary) 16%, var(--card));
+.primary:hover:not(:disabled) {
+  --button-bg: var(--primary);
+  --button-fg: #fff;
+  --button-border: var(--primary);
 }
 
 .danger {

@@ -8,7 +8,6 @@ declare const styles: {
   readonly "lg": string;
   readonly "loading": string;
   readonly "primary": string;
-  readonly "secondary": string;
   readonly "sm": string;
   readonly "spin": string;
   readonly "spinner": string;

@@ -1,6 +1,4 @@
 import { ChangeEvent, useRef, useState } from "react";
-import { ContentIcon } from "../Icons";
-import { Button } from "../button";
 import {
   createCsvFromCards,
   DEFAULT_CONTENT,
@@ -18,6 +16,8 @@ import {
 } from "../../cardData";
 import { useAppStore } from "../../store/useAppStore";
 import { downloadCsv } from "../../utils/downloadCsv";
+import { ContentIcon } from "../Icons";
+import { Button } from "../button";
 import s from "./ContentScreen.module.css";
 
 function ExportIcon() {
@@ -218,7 +218,6 @@ export function ContentScreen() {
             <p>Download this collection as a CSV file to keep it safe.</p>
           </div>
           <Button
-            className={s.actionButton}
             icon={<ExportIcon />}
             iconPosition="end"
             onClick={exportContent}
@@ -236,8 +235,6 @@ export function ContentScreen() {
             <p>Add a CSV collection and continue learning from any device.</p>
           </div>
           <Button
-            className={`${s.actionButton} ${s.importButton}`}
-            variant="secondary"
             icon={<ImportIcon />}
             iconPosition="end"
             onClick={() => importContentInputRef.current?.click()}
@@ -255,7 +252,6 @@ export function ContentScreen() {
         </div>
         <Button
           variant="danger"
-          className={s.deleteButton}
           disabled={isDefaultSet}
           loading={isDeleting}
           icon={<DeleteIcon />}
