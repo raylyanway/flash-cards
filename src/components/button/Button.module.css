@@ -1,0 +1,164 @@
+.button {
+  --button-bg: var(--primary);
+  --button-fg: #fff;
+  --button-border: var(--primary);
+  --button-shadow: 0 9px 18px
+    color-mix(in srgb, var(--primary) 24%, transparent);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: auto;
+  min-height: 42px;
+  margin: 0;
+  padding: 11px 15px;
+  color: var(--button-fg);
+  font-family: inherit;
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  border-radius: 11px;
+  box-shadow: var(--button-shadow);
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease;
+}
+
+.button:hover:not(:disabled) {
+  box-shadow: 0 12px 22px
+    color-mix(in srgb, var(--button-border) 30%, transparent);
+  transform: translateY(-2px);
+}
+
+.button:active:not(:disabled),
+.active:not(:disabled) {
+  box-shadow: none;
+  transform: translateY(0) scale(0.98);
+}
+
+.button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 34%, transparent);
+  outline-offset: 3px;
+}
+
+.button:disabled {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 9%, var(--card));
+  border-color: var(--border);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.72;
+  transform: none;
+}
+
+.primary {
+  --button-bg: linear-gradient(135deg, var(--primary), #4f46e5);
+  --button-fg: #fff;
+  --button-border: var(--primary);
+}
+
+.secondary {
+  --button-bg: color-mix(in srgb, var(--primary) 9%, var(--card));
+  --button-fg: var(--primary);
+  --button-border: color-mix(in srgb, var(--primary) 46%, var(--border));
+  --button-shadow: none;
+}
+
+.secondary:hover:not(:disabled) {
+  --button-bg: color-mix(in srgb, var(--primary) 16%, var(--card));
+}
+
+.danger {
+  --button-bg: transparent;
+  --button-fg: var(--danger);
+  --button-border: color-mix(in srgb, var(--danger) 50%, transparent);
+  --button-shadow: none;
+}
+
+.danger:hover:not(:disabled) {
+  --button-bg: var(--danger);
+  --button-fg: #fff;
+  --button-border: var(--danger);
+}
+
+.ghost {
+  --button-bg: transparent;
+  --button-fg: var(--text);
+  --button-border: transparent;
+  --button-shadow: none;
+}
+
+.ghost:hover:not(:disabled) {
+  --button-bg: color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.sm {
+  min-height: 36px;
+  padding: 8px 11px;
+  font-size: 0.84rem;
+  border-radius: 9px;
+}
+
+.lg {
+  min-height: 50px;
+  padding: 14px 19px;
+  font-size: 1rem;
+  border-radius: 13px;
+}
+
+.icon,
+.spinner {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+}
+
+.label {
+  display: inline-block;
+}
+
+.icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.spinner {
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+.loading {
+  cursor: wait;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+
+  .spinner {
+    animation-duration: 1.6s;
+  }
+}
