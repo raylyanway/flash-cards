@@ -1,6 +1,6 @@
 import { useAppStore } from "../store/useAppStore";
 import { AnalyticsScreen } from "./AnalyticsScreen";
-import { ContentScreen } from "./ContentScreen";
+import { ContentScreen } from "./contentScreen";
 import { HomeScreen } from "./homeScreen";
 import { LearnScreen } from "./LearnScreen";
 import { ProgressSetupScreen } from "./ProgressSetupScreen";

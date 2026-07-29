@@ -1,0 +1,341 @@
+.contentScreen {
+  padding-top: 36px;
+  padding-bottom: 44px;
+}
+
+.pageHeading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 0 4px 28px;
+}
+
+.headingIcon,
+.actionIcon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.headingIcon {
+  width: 52px;
+  height: 52px;
+  color: white;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  border-radius: 17px;
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.24);
+}
+
+.headingIcon svg {
+  width: 27px;
+  height: 27px;
+}
+
+.eyebrow,
+.pageHeading h1,
+.pageHeading p,
+.selectorCopy strong,
+.selectorCopy span,
+.actionCard h2,
+.actionCard p,
+.dangerZone h2,
+.dangerZone p {
+  margin: 0;
+}
+
+.eyebrow,
+.fieldLabel,
+.dangerLabel {
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  margin-bottom: 5px;
+  color: var(--primary);
+}
+
+.pageHeading h1 {
+  font-size: clamp(1.6rem, 4vw, 2.15rem);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.pageHeading > div:last-child > p:last-child {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.selectorCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.selectorCopy {
+  display: grid;
+  gap: 5px;
+}
+
+.fieldLabel {
+  color: var(--muted);
+}
+
+.selectorCopy strong {
+  font-size: 1.15rem;
+  letter-spacing: -0.015em;
+}
+
+.selectorCopy span:last-child {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.selectWrap {
+  position: relative;
+  min-width: min(100%, 280px);
+}
+
+.selectWrap::after {
+  position: absolute;
+  top: 50%;
+  right: 17px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  content: "";
+  pointer-events: none;
+  transform: translateY(-70%) rotate(45deg);
+}
+
+.selectWrap select {
+  appearance: none;
+  min-width: 100%;
+  padding: 13px 44px 13px 15px;
+  color: var(--text);
+  font-family: inherit;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--bg) 70%, var(--card));
+  cursor: pointer;
+}
+
+.selectWrap select:focus {
+  outline: 3px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  border-color: var(--primary);
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.actionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 254px;
+  padding: 24px;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.actionCard:hover {
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.09);
+  transform: translateY(-3px);
+}
+
+.actionIcon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 22px;
+  border-radius: 14px;
+}
+
+.actionIcon svg,
+.actionButton svg,
+.deleteButton svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.exportIcon {
+  color: #2563eb;
+  background: #dbeafe;
+}
+
+.importIcon {
+  color: #7c3aed;
+  background: #ede9fe;
+}
+
+.actionContent h2,
+.dangerZone h2 {
+  font-size: 1.05rem;
+  letter-spacing: -0.015em;
+}
+
+.actionContent p,
+.dangerZone p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.actionButton,
+.deleteButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: auto;
+  margin-top: auto;
+  padding: 11px 15px;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 11px;
+}
+
+.actionButton {
+  color: white;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  box-shadow: 0 8px 17px rgba(37, 99, 235, 0.23);
+}
+
+.actionButton:hover {
+  box-shadow: 0 11px 21px rgba(37, 99, 235, 0.31);
+  transform: translateY(-2px);
+}
+
+.actionButton svg {
+  width: 17px;
+  height: 17px;
+}
+
+.importButton {
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  box-shadow: 0 8px 17px rgba(124, 58, 237, 0.22);
+}
+
+.importButton:hover {
+  box-shadow: 0 11px 21px rgba(124, 58, 237, 0.3);
+}
+
+.dangerZone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 24px;
+  border: 1px solid color-mix(in srgb, var(--danger) 22%, var(--border));
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--danger) 4%, var(--card));
+}
+
+.dangerLabel {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--danger);
+}
+
+.deleteButton {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--danger);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--danger) 48%, transparent);
+}
+
+.deleteButton:hover:not(:disabled) {
+  color: white;
+  background: var(--danger);
+  border-color: var(--danger);
+  transform: translateY(-2px);
+}
+
+.deleteButton:disabled {
+  color: var(--muted);
+  background: transparent;
+  border-color: var(--border);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .contentScreen {
+    padding-top: 24px;
+  }
+
+  .pageHeading {
+    align-items: flex-start;
+    margin-bottom: 22px;
+  }
+
+  .headingIcon {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+  }
+
+  .selectorCard,
+  .dangerZone {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .selectWrap {
+    width: 100%;
+  }
+
+  .actionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionCard {
+    min-height: 230px;
+  }
+
+  .deleteButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .pageHeading {
+    gap: 13px;
+  }
+
+  .pageHeading h1 {
+    font-size: 1.48rem;
+  }
+}
