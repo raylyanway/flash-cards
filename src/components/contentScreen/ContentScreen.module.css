@@ -3,37 +3,12 @@
   padding-bottom: 44px;
 }
 
-.pageHeading {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin: 0 4px 28px;
-}
-
-.headingIcon,
 .actionIcon {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
 }
 
-.headingIcon {
-  width: 52px;
-  height: 52px;
-  color: white;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
-  border-radius: 17px;
-  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.24);
-}
-
-.headingIcon svg {
-  width: 27px;
-  height: 27px;
-}
-
-.eyebrow,
-.pageHeading h1,
-.pageHeading p,
 .selectorCopy strong,
 .selectorCopy span,
 .actionCard h2,
@@ -43,7 +18,6 @@
   margin: 0;
 }
 
-.eyebrow,
 .fieldLabel,
 .dangerLabel {
   font-size: 0.72rem;
@@ -52,20 +26,8 @@
   text-transform: uppercase;
 }
 
-.eyebrow {
-  margin-bottom: 5px;
-  color: var(--primary);
-}
-
-.pageHeading h1 {
-  font-size: clamp(1.6rem, 4vw, 2.15rem);
-  line-height: 1.15;
-  letter-spacing: -0.035em;
-}
-
-.pageHeading > div:last-child > p:last-child {
-  margin-top: 8px;
-  color: var(--muted);
+.exportButton {
+  margin-top: auto;
 }
 
 .selectorCard {
@@ -141,6 +103,7 @@
 .actionCard {
   display: flex;
   flex-direction: column;
+  gap: 12px;
   align-items: flex-start;
   min-height: 254px;
   padding: 24px;
@@ -164,13 +127,10 @@
 .actionIcon {
   width: 44px;
   height: 44px;
-  margin-bottom: 22px;
   border-radius: 14px;
 }
 
-.actionIcon svg,
-.actionButton svg,
-.deleteButton svg {
+.actionIcon svg {
   width: 20px;
   height: 20px;
   stroke: currentColor;
@@ -203,45 +163,6 @@
   line-height: 1.55;
 }
 
-.actionButton,
-.deleteButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  width: auto;
-  margin-top: auto;
-  padding: 11px 15px;
-  font-weight: 700;
-  line-height: 1;
-  border-radius: 11px;
-}
-
-.actionButton {
-  color: white;
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  box-shadow: 0 8px 17px rgba(37, 99, 235, 0.23);
-}
-
-.actionButton:hover {
-  box-shadow: 0 11px 21px rgba(37, 99, 235, 0.31);
-  transform: translateY(-2px);
-}
-
-.actionButton svg {
-  width: 17px;
-  height: 17px;
-}
-
-.importButton {
-  background: linear-gradient(135deg, #7c3aed, #6366f1);
-  box-shadow: 0 8px 17px rgba(124, 58, 237, 0.22);
-}
-
-.importButton:hover {
-  box-shadow: 0 11px 21px rgba(124, 58, 237, 0.3);
-}
-
 .dangerZone {
   display: flex;
   align-items: center;
@@ -257,27 +178,6 @@
   display: block;
   margin-bottom: 7px;
   color: var(--danger);
-}
-
-.deleteButton {
-  flex: 0 0 auto;
-  margin: 0;
-  color: var(--danger);
-  background: transparent;
-  border: 1px solid color-mix(in srgb, var(--danger) 48%, transparent);
-}
-
-.deleteButton:hover:not(:disabled) {
-  color: white;
-  background: var(--danger);
-  border-color: var(--danger);
-  transform: translateY(-2px);
-}
-
-.deleteButton:disabled {
-  color: var(--muted);
-  background: transparent;
-  border-color: var(--border);
 }
 
 .srOnly {
@@ -296,17 +196,6 @@
     padding-top: 24px;
   }
 
-  .pageHeading {
-    align-items: flex-start;
-    margin-bottom: 22px;
-  }
-
-  .headingIcon {
-    width: 46px;
-    height: 46px;
-    border-radius: 15px;
-  }
-
   .selectorCard,
   .dangerZone {
     align-items: stretch;
@@ -323,19 +212,5 @@
 
   .actionCard {
     min-height: 230px;
-  }
-
-  .deleteButton {
-    width: 100%;
-  }
-}
-
-@media (max-width: 420px) {
-  .pageHeading {
-    gap: 13px;
-  }
-
-  .pageHeading h1 {
-    font-size: 1.48rem;
   }
 }

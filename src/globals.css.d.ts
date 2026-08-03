@@ -5,7 +5,6 @@ declare const styles: {
   readonly "appLoader": string;
   readonly "appLoaderSpinner": string;
   readonly "buttonGroup": string;
-  readonly "card": string;
   readonly "cardList": string;
   readonly "cardStatus": string;
   readonly "closeBtn": string;

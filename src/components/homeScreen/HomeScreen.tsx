@@ -5,11 +5,15 @@ import {
   getCompletePercent,
   getNextReviewLabel,
 } from "../../utils/cardProgress";
-import { SelectedSet } from "../selectedSet";
+import { Button } from "../button";
+import { Card } from "../card";
+import { HomeIcon } from "../Icons";
+import { PageHeader } from "../pageHeader";
 import s from "./HomeScreen.module.css";
 
 export function HomeScreen() {
   const cards = useAppStore((state) => state.cards);
+  const currentSet = useAppStore((state) => state.currentSet);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
   const setScreen = useAppStore((state) => state.setScreen);
@@ -39,55 +43,77 @@ export function HomeScreen() {
 
   return (
     <section className={clsx("screen", "active", s.homeScreen)}>
-      <SelectedSet />
-      <div className={clsx("card", s.progressOverview)}>
-        <div className={s.progressCircleContainer}>
-          <div className={s.progressCircle}>
-            <svg viewBox="0 0 120 120" className={s.progressSvg}>
-              <circle className={s.progressBg} cx="60" cy="60" r="52" />
-              <circle
-                className={s.progressRing}
-                cx="60"
-                cy="60"
-                r="52"
-                strokeDasharray={`${completePercent * 3.27} 327`}
-                strokeDashoffset="0"
-              />
-            </svg>
-            <div className={s.progressCenter}>
-              <div className={s.progressNumber}>{completePercent}%</div>
-              <div className={s.progressLabel}>Mastered</div>
+      <PageHeader
+        icon={<HomeIcon />}
+        eyebrow="Study overview"
+        title="Keep your streak alive"
+        description="Review what’s due, track your progress, and jump straight back in."
+      />
+
+      <Card className={s.selectorCard}>
+        <div className={s.selectorCopy}>
+          <span className={s.fieldLabel}>Current set</span>
+          <strong>{currentSet}</strong>
+          <span>
+            {dueCount > 0
+              ? `${dueCount} cards due now`
+              : "Everything is neatly caught up"}
+          </span>
+        </div>
+      </Card>
+
+      <div className={s.metricsGrid}>
+        <Card className={s.overviewCard}>
+          <div className={s.progressCircleContainer}>
+            <div className={s.progressCircle}>
+              <svg viewBox="0 0 120 120" className={s.progressSvg}>
+                <circle className={s.progressBg} cx="60" cy="60" r="52" />
+                <circle
+                  className={s.progressRing}
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  strokeDasharray={`${completePercent * 3.27} 327`}
+                  strokeDashoffset="0"
+                />
+              </svg>
+              <div className={s.progressCenter}>
+                <div className={s.progressNumber}>{completePercent}%</div>
+                <div className={s.progressLabel}>Mastered</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className={s.statsRow}>
-          <div className={s.statItem}>
-            <div className={s.statValue}>{totalCards}</div>
-            <div className={s.statName}>Total Cards</div>
+          <div className={s.metricsRow}>
+            <div className={s.metricItem}>
+              <div className={s.metricValue}>{totalCards}</div>
+              <div className={s.metricName}>Cards</div>
+            </div>
+            <div className={s.metricItem}>
+              <div className={clsx(s.metricValue, s.highlight)}>
+                {learnedCount}
+              </div>
+              <div className={s.metricName}>Learned</div>
+            </div>
+            <div className={s.metricItem}>
+              <div className={clsx(s.metricValue, s.due)}>{dueCount}</div>
+              <div className={s.metricName}>Due now</div>
+            </div>
           </div>
-          <div className={s.statItem}>
-            <div className={clsx(s.statValue, "highlight")}>{learnedCount}</div>
-            <div className={s.statName}>Learned</div>
-          </div>
-          <div className={s.statItem}>
-            <div className={clsx(s.statValue, "due")}>{dueCount}</div>
-            <div className={s.statName}>Due Now</div>
-          </div>
-        </div>
+        </Card>
 
-        <div className={s.nextReview}>
-          <span>⏰</span>
-          <span>Next review: </span>
-          <strong>{nextReviewLabel}</strong>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className={clsx("actions", s.homeActions)}>
-        <button className={s.bigBtn} onClick={() => setScreen("learn")}>
-          ▶️ Continue Learning
-        </button>
+        <Card className={s.insightCard}>
+          <span className={s.cardLabel}>Next review</span>
+          <h2>{nextReviewLabel}</h2>
+          <p>
+            {dueCount > 0
+              ? "A few cards are ready for another pass. Keep the momentum going."
+              : "You are all caught up for now. A fresh review can still strengthen recall."}
+          </p>
+          <Button className={s.startButton} onClick={() => setScreen("learn")}>
+            Start reviewing
+          </Button>
+        </Card>
       </div>
     </section>
   );

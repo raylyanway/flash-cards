@@ -1,16 +1,76 @@
 .homeScreen {
-  padding-top: 20px;
+  padding-top: 36px;
+  padding-bottom: 44px;
 }
 
-/* Progress Circle */
-.progressOverview {
-  padding: 32px 24px;
+.selectorCopy strong,
+.selectorCopy span,
+.insightCard h2,
+.insightCard p {
+  margin: 0;
+}
+
+.fieldLabel,
+.cardLabel {
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.selectorCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.selectorCopy {
+  display: grid;
+  gap: 5px;
+}
+
+.fieldLabel,
+.cardLabel {
+  color: var(--muted);
+}
+
+.selectorCopy strong {
+  font-size: 1.15rem;
+  letter-spacing: -0.015em;
+}
+
+.selectorCopy span:last-child {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 0.9fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.overviewCard,
+.insightCard {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 260px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
 }
 
 .progressCircleContainer {
   display: flex;
   justify-content: center;
-  margin-bottom: 24px;
 }
 
 .progressCircle {
@@ -43,8 +103,7 @@
 
 .progressCenter {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  inset: 50% auto auto 50%;
   transform: translate(-50%, -50%);
   text-align: center;
 }
@@ -57,90 +116,91 @@
 }
 
 .progressLabel {
-  font-size: 0.9rem;
-  color: var(--muted);
   margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
-.statsRow {
+.metricsRow {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin: 24px 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.statItem {
+.metricItem {
+  padding: 14px 12px;
   text-align: center;
-  padding: 12px 8px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 16px;
+  background: rgba(148, 163, 184, 0.06);
   border: 1px solid var(--border);
+  border-radius: 14px;
 }
 
-.statValue {
-  font-size: 1.75rem;
+.metricValue {
+  font-size: 1.7rem;
   font-weight: 700;
   color: var(--text);
 }
 
-.statValue.highlight {
+.metricValue.highlight {
   color: var(--success);
 }
 
-.statValue.due {
+.metricValue.due {
   color: var(--warning);
 }
 
-.statName {
-  font-size: 0.8rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.metricName {
   margin-top: 4px;
-}
-
-.nextReview {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 16px;
-  font-size: 1.05rem;
   color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.nextReview strong {
-  color: var(--text);
+.insightCard {
+  justify-content: center;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 6%, var(--card)),
+    var(--card)
+  );
 }
 
-/* Action buttons */
-.homeActions {
-  margin-top: 32px;
-  gap: 16px;
+.cardLabel {
+  display: block;
 }
 
-.bigBtn {
-  padding: 18px 32px;
-  font-size: 1.25rem;
-  font-weight: 600;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15);
+.insightCard h2 {
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  letter-spacing: -0.04em;
+  line-height: 1.1;
 }
 
-.actionGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.insightCard p {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
 }
 
-/* Responsive tweaks */
-@media (max-width: 600px) {
-  .statsRow {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+.startButton {
+  margin-top: auto;
+}
+
+@media (max-width: 720px) {
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .selectorCard {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 420px) {
+  .homeScreen {
+    padding-top: 24px;
   }
 
   .progressCircle {

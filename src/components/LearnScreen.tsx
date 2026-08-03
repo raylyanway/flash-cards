@@ -12,7 +12,7 @@ export function LearnScreen() {
   const currentCard = useAppStore((state) => state.currentCard);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
-  const setScreen = useAppStore((state) => state.setScreen);
+  // const setScreen = useAppStore((state) => state.setScreen);
 
   const stageCounts = useMemo(() => countStages(progress), [progress]);
   const nextDueTimestamp = useMemo(
@@ -27,10 +27,10 @@ export function LearnScreen() {
     learning.startLearningSession();
   }, []);
 
-  const goHome = () => {
-    learning.stopListening();
-    setScreen("home");
-  };
+  // const goHome = () => {
+  //   learning.stopListening();
+  //   setScreen("home");
+  // };
 
   const waitingMessage =
     nextDueTimestamp === null

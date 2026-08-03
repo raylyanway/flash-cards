@@ -1,5 +1,4 @@
-import { ChangeEvent, useRef } from "react";
-import { ContentIcon } from "../Icons";
+import { ChangeEvent, useRef, useState } from "react";
 import {
   createCsvFromCards,
   DEFAULT_CONTENT,
@@ -17,6 +16,10 @@ import {
 } from "../../cardData";
 import { useAppStore } from "../../store/useAppStore";
 import { downloadCsv } from "../../utils/downloadCsv";
+import { ContentIcon } from "../Icons";
+import { Button } from "../button";
+import { Card } from "../card";
+import { PageHeader } from "../pageHeader";
 import s from "./ContentScreen.module.css";
 
 function ExportIcon() {
@@ -45,6 +48,7 @@ function DeleteIcon() {
 
 export function ContentScreen() {
   const importContentInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const theme = useAppStore((state) => state.theme);
   const contentOptions = useAppStore((state) => state.contentOptions);
@@ -149,6 +153,7 @@ export function ContentScreen() {
     }
 
     try {
+      setIsDeleting(true);
       await deleteContent(currentSet);
       const options = await getContentOptions();
       const nextSet = options[0]?.key || "body-parts";
@@ -160,6 +165,8 @@ export function ContentScreen() {
     } catch (error) {
       console.error("Failed to delete content:", error);
       alert("Unable to delete content. See console for details.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -172,18 +179,14 @@ export function ContentScreen() {
 
   return (
     <section className={`screen active ${s.contentScreen}`}>
-      <div className={s.pageHeading}>
-        <div className={s.headingIcon}>
-          <ContentIcon />
-        </div>
-        <div>
-          <p className={s.eyebrow}>Content library</p>
-          <h1>Manage your learning sets</h1>
-          <p>Choose a collection, back it up, or bring in something new.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={<ContentIcon />}
+        eyebrow="Content library"
+        title="Manage your learning sets"
+        description="Choose a collection, back it up, or bring in something new."
+      />
 
-      <div className={`card ${s.selectorCard}`}>
+      <Card className={s.selectorCard}>
         <div className={s.selectorCopy}>
           <span className={s.fieldLabel}>Active collection</span>
           <strong>{selectedLabel}</strong>
@@ -201,10 +204,10 @@ export function ContentScreen() {
             ))}
           </select>
         </label>
-      </div>
+      </Card>
 
       <div className={s.actionGrid}>
-        <article className={s.actionCard}>
+        <Card className={s.actionCard}>
           <div className={`${s.actionIcon} ${s.exportIcon}`}>
             <ExportIcon />
           </div>
@@ -212,12 +215,17 @@ export function ContentScreen() {
             <h2>Export a backup</h2>
             <p>Download this collection as a CSV file to keep it safe.</p>
           </div>
-          <button className={s.actionButton} onClick={exportContent}>
-            Export CSV <ExportIcon />
-          </button>
-        </article>
+          <Button
+            className={s.exportButton}
+            icon={<ExportIcon />}
+            iconPosition="end"
+            onClick={exportContent}
+          >
+            Export CSV
+          </Button>
+        </Card>
 
-        <article className={s.actionCard}>
+        <Card className={s.actionCard}>
           <div className={`${s.actionIcon} ${s.importIcon}`}>
             <ImportIcon />
           </div>
@@ -225,30 +233,33 @@ export function ContentScreen() {
             <h2>Import a collection</h2>
             <p>Add a CSV collection and continue learning from any device.</p>
           </div>
-          <button
-            className={`${s.actionButton} ${s.importButton}`}
+          <Button
+            className={s.exportButton}
+            icon={<ImportIcon />}
+            iconPosition="end"
             onClick={() => importContentInputRef.current?.click()}
           >
-            Choose CSV <ImportIcon />
-          </button>
-        </article>
+            Choose CSV
+          </Button>
+        </Card>
       </div>
 
-      <div className={s.dangerZone}>
+      <Card className={s.dangerZone}>
         <div>
           <span className={s.dangerLabel}>Danger zone</span>
           <h2>Delete this collection</h2>
           <p>Deletes the collection and all of its saved learning progress.</p>
         </div>
-        <button
-          className={s.deleteButton}
+        <Button
+          variant="danger"
           disabled={isDefaultSet}
+          loading={isDeleting}
+          icon={<DeleteIcon />}
           onClick={handleDeleteContent}
         >
-          <DeleteIcon />
           Delete collection
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       <input
         ref={importContentInputRef}
