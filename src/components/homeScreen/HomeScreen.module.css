@@ -216,7 +216,6 @@
 
 .cardLabel {
   display: block;
-  margin-bottom: 6px;
 }
 
 .insightCard h2 {
@@ -226,7 +225,6 @@
 }
 
 .insightCard p {
-  margin-top: 10px;
   color: var(--muted);
   font-size: 0.92rem;
   line-height: 1.55;
