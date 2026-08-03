@@ -14,7 +14,6 @@ declare const styles: {
   readonly "metricsRow": string;
   readonly "overviewCard": string;
   readonly "pageHeading": string;
-  readonly "primaryButton": string;
   readonly "progressBg": string;
   readonly "progressCenter": string;
   readonly "progressCircle": string;
@@ -23,7 +22,6 @@ declare const styles: {
   readonly "progressNumber": string;
   readonly "progressRing": string;
   readonly "progressSvg": string;
-  readonly "secondaryButton": string;
   readonly "selectorCard": string;
   readonly "selectorCopy": string;
 };

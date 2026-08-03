@@ -95,32 +95,6 @@
   color: var(--muted);
 }
 
-.primaryButton,
-.secondaryButton {
-  appearance: none;
-  border: none;
-  border-radius: 14px;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    filter 180ms ease;
-}
-
-.primaryButton {
-  padding: 12px 18px;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
-  color: white;
-  box-shadow: 0 12px 24px rgba(79, 70, 229, 0.25);
-}
-
-.primaryButton:hover,
-.secondaryButton:hover {
-  transform: translateY(-1px);
-}
-
 .metricsGrid {
   display: grid;
   grid-template-columns: 1.5fr 0.9fr;
@@ -258,15 +232,6 @@
   line-height: 1.55;
 }
 
-.secondaryButton {
-  width: fit-content;
-  margin-top: 6px;
-  padding: 12px 16px;
-  color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 10%, var(--card));
-  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border));
-}
-
 @media (max-width: 720px) {
   .metricsGrid {
     grid-template-columns: 1fr;
@@ -275,11 +240,6 @@
   .selectorCard {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .primaryButton,
-  .secondaryButton {
-    width: 100%;
   }
 }
 

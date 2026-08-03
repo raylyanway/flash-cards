@@ -5,6 +5,7 @@ import {
   getCompletePercent,
   getNextReviewLabel,
 } from "../../utils/cardProgress";
+import { Button } from "../button";
 import { HomeIcon } from "../Icons";
 import s from "./HomeScreen.module.css";
 
@@ -63,9 +64,6 @@ export function HomeScreen() {
               : "Everything is neatly caught up"}
           </span>
         </div>
-        <button className={s.primaryButton} onClick={() => setScreen("learn")}>
-          Continue learning
-        </button>
       </div>
 
       <div className={s.metricsGrid}>
@@ -116,12 +114,7 @@ export function HomeScreen() {
               ? "A few cards are ready for another pass. Keep the momentum going."
               : "You are all caught up for now. A fresh review can still strengthen recall."}
           </p>
-          <button
-            className={s.secondaryButton}
-            onClick={() => setScreen("learn")}
-          >
-            Review now
-          </button>
+          <Button onClick={() => setScreen("learn")}>Start reviewing</Button>
         </article>
       </div>
     </section>
