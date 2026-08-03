@@ -9,3 +9,5 @@
 - [ ] create tips component which can be shown at the beginning
 - [ ] recheck setNow() implementation
 - [ ] implement error screen with error interception
+- [ ] set second start button at the top part of the screen
+- [ ] check is it possible to hide browser's controls while see the app
