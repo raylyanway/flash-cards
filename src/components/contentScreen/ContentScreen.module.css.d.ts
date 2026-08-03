@@ -8,11 +8,8 @@ declare const styles: {
   readonly "dangerZone": string;
   readonly "exportButton": string;
   readonly "exportIcon": string;
-  readonly "eyebrow": string;
   readonly "fieldLabel": string;
-  readonly "headingIcon": string;
   readonly "importIcon": string;
-  readonly "pageHeading": string;
   readonly "selectWrap": string;
   readonly "selectorCard": string;
   readonly "selectorCopy": string;

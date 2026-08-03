@@ -8,6 +8,7 @@ import {
 import { Button } from "../button";
 import { Card } from "../card";
 import { HomeIcon } from "../Icons";
+import { PageHeader } from "../pageHeader";
 import s from "./HomeScreen.module.css";
 
 export function HomeScreen() {
@@ -42,18 +43,12 @@ export function HomeScreen() {
 
   return (
     <section className={clsx("screen", "active", s.homeScreen)}>
-      <div className={s.pageHeading}>
-        <div className={s.headingIcon}>
-          <HomeIcon />
-        </div>
-        <div>
-          <p className={s.eyebrow}>Study overview</p>
-          <h1>Keep your streak alive</h1>
-          <p>
-            Review what’s due, track your progress, and jump straight back in.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={<HomeIcon />}
+        eyebrow="Study overview"
+        title="Keep your streak alive"
+        description="Review what’s due, track your progress, and jump straight back in."
+      />
 
       <Card className={s.selectorCard}>
         <div className={s.selectorCopy}>

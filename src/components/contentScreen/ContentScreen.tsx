@@ -18,6 +18,7 @@ import { useAppStore } from "../../store/useAppStore";
 import { downloadCsv } from "../../utils/downloadCsv";
 import { ContentIcon } from "../Icons";
 import { Button } from "../button";
+import { PageHeader } from "../pageHeader";
 import s from "./ContentScreen.module.css";
 
 function ExportIcon() {
@@ -177,16 +178,12 @@ export function ContentScreen() {
 
   return (
     <section className={`screen active ${s.contentScreen}`}>
-      <div className={s.pageHeading}>
-        <div className={s.headingIcon}>
-          <ContentIcon />
-        </div>
-        <div>
-          <p className={s.eyebrow}>Content library</p>
-          <h1>Manage your learning sets</h1>
-          <p>Choose a collection, back it up, or bring in something new.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={<ContentIcon />}
+        eyebrow="Content library"
+        title="Manage your learning sets"
+        description="Choose a collection, back it up, or bring in something new."
+      />
 
       <div className={`card ${s.selectorCard}`}>
         <div className={s.selectorCopy}>

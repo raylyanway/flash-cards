@@ -3,36 +3,6 @@
   padding-bottom: 44px;
 }
 
-.pageHeading {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin: 0 4px 28px;
-}
-
-.headingIcon {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  color: white;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
-  border-radius: 17px;
-  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.24);
-}
-
-.headingIcon svg {
-  width: 27px;
-  height: 27px;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.eyebrow,
-.pageHeading h1,
-.pageHeading p,
 .selectorCopy strong,
 .selectorCopy span,
 .insightCard h2,
@@ -40,29 +10,12 @@
   margin: 0;
 }
 
-.eyebrow,
 .fieldLabel,
 .cardLabel {
   font-size: 0.72rem;
   font-weight: 750;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-}
-
-.eyebrow {
-  margin-bottom: 5px;
-  color: var(--primary);
-}
-
-.pageHeading h1 {
-  font-size: clamp(1.6rem, 4vw, 2.15rem);
-  line-height: 1.15;
-  letter-spacing: -0.035em;
-}
-
-.pageHeading > div:last-child > p:last-child {
-  margin-top: 8px;
-  color: var(--muted);
 }
 
 .selectorCard {
@@ -248,17 +201,6 @@
 @media (max-width: 420px) {
   .homeScreen {
     padding-top: 24px;
-  }
-
-  .pageHeading {
-    gap: 13px;
-    margin-bottom: 22px;
-  }
-
-  .headingIcon {
-    width: 46px;
-    height: 46px;
-    border-radius: 15px;
   }
 
   .progressCircle {
