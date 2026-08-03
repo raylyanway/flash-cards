@@ -166,14 +166,6 @@ header h1 {
   display: block;
 }
 
-.card {
-  background: var(--card);
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 20px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-}
-
 .learn-card {
   text-align: center;
   padding: 60px 20px;

@@ -6,6 +6,7 @@ import {
   getNextReviewLabel,
 } from "../../utils/cardProgress";
 import { Button } from "../button";
+import { Card } from "../card";
 import { HomeIcon } from "../Icons";
 import s from "./HomeScreen.module.css";
 
@@ -54,7 +55,7 @@ export function HomeScreen() {
         </div>
       </div>
 
-      <div className={`card ${s.selectorCard}`}>
+      <Card className={s.selectorCard}>
         <div className={s.selectorCopy}>
           <span className={s.fieldLabel}>Current set</span>
           <strong>{currentSet}</strong>
@@ -64,10 +65,10 @@ export function HomeScreen() {
               : "Everything is neatly caught up"}
           </span>
         </div>
-      </div>
+      </Card>
 
       <div className={s.metricsGrid}>
-        <article className={`card ${s.overviewCard}`}>
+        <Card className={s.overviewCard}>
           <div className={s.progressCircleContainer}>
             <div className={s.progressCircle}>
               <svg viewBox="0 0 120 120" className={s.progressSvg}>
@@ -104,9 +105,9 @@ export function HomeScreen() {
               <div className={s.metricName}>Due now</div>
             </div>
           </div>
-        </article>
+        </Card>
 
-        <article className={`card ${s.insightCard}`}>
+        <Card className={s.insightCard}>
           <span className={s.cardLabel}>Next review</span>
           <h2>{nextReviewLabel}</h2>
           <p>
@@ -117,7 +118,7 @@ export function HomeScreen() {
           <Button className={s.startButton} onClick={() => setScreen("learn")}>
             Start reviewing
           </Button>
-        </article>
+        </Card>
       </div>
     </section>
   );
