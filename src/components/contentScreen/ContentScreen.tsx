@@ -18,6 +18,7 @@ import { useAppStore } from "../../store/useAppStore";
 import { downloadCsv } from "../../utils/downloadCsv";
 import { ContentIcon } from "../Icons";
 import { Button } from "../button";
+import { Card } from "../card";
 import { PageHeader } from "../pageHeader";
 import s from "./ContentScreen.module.css";
 
@@ -185,7 +186,7 @@ export function ContentScreen() {
         description="Choose a collection, back it up, or bring in something new."
       />
 
-      <div className={`card ${s.selectorCard}`}>
+      <Card className={s.selectorCard}>
         <div className={s.selectorCopy}>
           <span className={s.fieldLabel}>Active collection</span>
           <strong>{selectedLabel}</strong>
@@ -203,10 +204,10 @@ export function ContentScreen() {
             ))}
           </select>
         </label>
-      </div>
+      </Card>
 
       <div className={s.actionGrid}>
-        <article className={s.actionCard}>
+        <Card className={s.actionCard}>
           <div className={`${s.actionIcon} ${s.exportIcon}`}>
             <ExportIcon />
           </div>
@@ -222,9 +223,9 @@ export function ContentScreen() {
           >
             Export CSV
           </Button>
-        </article>
+        </Card>
 
-        <article className={s.actionCard}>
+        <Card className={s.actionCard}>
           <div className={`${s.actionIcon} ${s.importIcon}`}>
             <ImportIcon />
           </div>
@@ -240,10 +241,10 @@ export function ContentScreen() {
           >
             Choose CSV
           </Button>
-        </article>
+        </Card>
       </div>
 
-      <div className={s.dangerZone}>
+      <Card className={s.dangerZone}>
         <div>
           <span className={s.dangerLabel}>Danger zone</span>
           <h2>Delete this collection</h2>
@@ -258,7 +259,7 @@ export function ContentScreen() {
         >
           Delete collection
         </Button>
-      </div>
+      </Card>
 
       <input
         ref={importContentInputRef}
