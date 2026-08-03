@@ -230,6 +230,10 @@
   line-height: 1.55;
 }
 
+.startButton {
+  margin-top: auto;
+}
+
 @media (max-width: 720px) {
   .metricsGrid {
     grid-template-columns: 1fr;

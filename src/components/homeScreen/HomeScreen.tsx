@@ -109,12 +109,14 @@ export function HomeScreen() {
         <article className={`card ${s.insightCard}`}>
           <span className={s.cardLabel}>Next review</span>
           <h2>{nextReviewLabel}</h2>
-          <p className={s.insight}>
+          <p>
             {dueCount > 0
               ? "A few cards are ready for another pass. Keep the momentum going."
               : "You are all caught up for now. A fresh review can still strengthen recall."}
           </p>
-          <Button onClick={() => setScreen("learn")}>Start reviewing</Button>
+          <Button className={s.startButton} onClick={() => setScreen("learn")}>
+            Start reviewing
+          </Button>
         </article>
       </div>
     </section>

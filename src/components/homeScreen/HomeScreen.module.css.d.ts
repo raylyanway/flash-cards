@@ -24,6 +24,7 @@ declare const styles: {
   readonly "progressSvg": string;
   readonly "selectorCard": string;
   readonly "selectorCopy": string;
+  readonly "startButton": string;
 };
 export = styles;
 
