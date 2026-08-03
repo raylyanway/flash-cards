@@ -218,6 +218,7 @@ export function ContentScreen() {
             <p>Download this collection as a CSV file to keep it safe.</p>
           </div>
           <Button
+            className={s.exportButton}
             icon={<ExportIcon />}
             iconPosition="end"
             onClick={exportContent}
@@ -235,6 +236,7 @@ export function ContentScreen() {
             <p>Add a CSV collection and continue learning from any device.</p>
           </div>
           <Button
+            className={s.exportButton}
             icon={<ImportIcon />}
             iconPosition="end"
             onClick={() => importContentInputRef.current?.click()}

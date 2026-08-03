@@ -6,6 +6,7 @@ declare const styles: {
   readonly "contentScreen": string;
   readonly "dangerLabel": string;
   readonly "dangerZone": string;
+  readonly "exportButton": string;
   readonly "exportIcon": string;
   readonly "eyebrow": string;
   readonly "fieldLabel": string;
