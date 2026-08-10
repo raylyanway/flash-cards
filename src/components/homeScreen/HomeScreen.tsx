@@ -55,9 +55,7 @@ export function HomeScreen() {
           <span className={s.fieldLabel}>Current set</span>
           <strong>{currentSet}</strong>
           <span>
-            {dueCount > 0
-              ? `${dueCount} cards due now`
-              : "Everything is neatly caught up"}
+            {currentSet ? "Learning collection" : "No collection selected"}
           </span>
         </div>
       </Card>

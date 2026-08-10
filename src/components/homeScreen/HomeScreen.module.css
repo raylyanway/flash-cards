@@ -68,6 +68,14 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
 }
 
+.overviewCard {
+  min-height: 260px;
+}
+
+.insightCard {
+  min-height: 260px;
+}
+
 .progressCircleContainer {
   display: flex;
   justify-content: center;
@@ -159,7 +167,7 @@
 }
 
 .insightCard {
-  justify-content: center;
+  justify-content: flex-start;
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--primary) 6%, var(--card)),
@@ -185,16 +193,57 @@
 
 .startButton {
   margin-top: auto;
+  width: 100%;
 }
 
 @media (max-width: 720px) {
+  .homeScreen {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
   .metricsGrid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .selectorCard {
     align-items: stretch;
     flex-direction: column;
+    padding: 18px;
+  }
+
+  .overviewCard,
+  .insightCard {
+    min-height: auto;
+    padding: 18px;
+    gap: 14px;
+  }
+
+  .progressCircle {
+    width: 136px;
+    height: 136px;
+  }
+
+  .progressNumber {
+    font-size: 2rem;
+  }
+
+  .metricsRow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .metricItem {
+    padding: 10px 8px;
+  }
+
+  .metricValue {
+    font-size: 1.45rem;
+  }
+
+  .startButton {
+    min-height: 48px;
+    margin-top: 4px;
   }
 }
 
@@ -203,12 +252,27 @@
     padding-top: 24px;
   }
 
+  .pageHeading {
+    gap: 13px;
+    margin-bottom: 22px;
+  }
+
+  .headingIcon {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+  }
+
   .progressCircle {
-    width: 140px;
-    height: 140px;
+    width: 126px;
+    height: 126px;
   }
 
   .progressNumber {
-    font-size: 2.4rem;
+    font-size: 1.98rem;
+  }
+
+  .metricName {
+    font-size: 0.66rem;
   }
 }
