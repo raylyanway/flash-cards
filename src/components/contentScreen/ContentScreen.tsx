@@ -182,7 +182,7 @@ export function ContentScreen() {
       <PageHeader
         icon={<ContentIcon />}
         eyebrow="Content library"
-        title="Manage your learning sets"
+        // title="Manage your learning sets"
         description="Choose a collection, back it up, or bring in something new."
       />
 

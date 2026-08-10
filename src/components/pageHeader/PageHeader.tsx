@@ -5,7 +5,7 @@ import s from "./PageHeader.module.css";
 type Props = {
   icon?: ReactNode;
   eyebrow?: string;
-  title: string;
+  title?: string;
   description?: string;
   className?: string;
 };
@@ -22,7 +22,7 @@ export function PageHeader({
       {icon ? <div className={s.headingIcon}>{icon}</div> : null}
       <div>
         {eyebrow ? <p className={s.eyebrow}>{eyebrow}</p> : null}
-        <h1>{title}</h1>
+        {title ? <h1>{title}</h1> : null}
         {description ? <p>{description}</p> : null}
       </div>
     </div>

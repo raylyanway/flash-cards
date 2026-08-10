@@ -46,7 +46,7 @@ export function HomeScreen() {
       <PageHeader
         icon={<HomeIcon />}
         eyebrow="Study overview"
-        title="Keep your streak alive"
+        // title="Keep your streak alive"
         description="Review what’s due, track your progress, and jump straight back in."
       />
 
