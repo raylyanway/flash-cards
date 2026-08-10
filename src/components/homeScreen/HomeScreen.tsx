@@ -9,6 +9,7 @@ import { Button } from "../button";
 import { Card } from "../card";
 import { HomeIcon } from "../Icons";
 import { PageHeader } from "../pageHeader";
+import { Typography } from "../typography";
 import s from "./HomeScreen.module.css";
 
 export function HomeScreen() {
@@ -46,17 +47,21 @@ export function HomeScreen() {
       <PageHeader
         icon={<HomeIcon />}
         eyebrow="Study overview"
-        // title="Keep your streak alive"
+        title="Keep your streak alive"
         description="Review what’s due, track your progress, and jump straight back in."
       />
 
       <Card className={s.selectorCard}>
         <div className={s.selectorCopy}>
-          <span className={s.fieldLabel}>Current set</span>
-          <strong>{currentSet}</strong>
-          <span>
+          <Typography as="span" variant="label" className={s.fieldLabel}>
+            Current set
+          </Typography>
+          <Typography as="strong" variant="title">
+            {currentSet}
+          </Typography>
+          <Typography as="span" variant="caption">
             {currentSet ? "Learning collection" : "No collection selected"}
-          </span>
+          </Typography>
         </div>
       </Card>
 
@@ -101,13 +106,17 @@ export function HomeScreen() {
         </Card>
 
         <Card className={s.insightCard}>
-          <span className={s.cardLabel}>Next review</span>
-          <h2>{nextReviewLabel}</h2>
-          <p>
+          <Typography as="span" variant="label" className={s.cardLabel}>
+            Next review
+          </Typography>
+          <Typography as="h2" variant="h2">
+            {nextReviewLabel}
+          </Typography>
+          <Typography as="p" variant="subtitle">
             {dueCount > 0
               ? "A few cards are ready for another pass. Keep the momentum going."
               : "You are all caught up for now. A fresh review can still strengthen recall."}
-          </p>
+          </Typography>
           <Button className={s.startButton} onClick={() => setScreen("learn")}>
             Start reviewing
           </Button>

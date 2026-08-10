@@ -18,6 +18,9 @@ export default defineConfig([
     plugins: { js },
     extends: ["js/recommended"],
     languageOptions: { globals: globals.browser },
+    rules: {
+      "no-undef": "error",
+    },
   },
   tseslint.configs.recommended,
   eslintPluginPrettierRecommended,
