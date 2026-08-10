@@ -46,7 +46,7 @@ export function HomeScreen() {
       <PageHeader
         icon={<HomeIcon />}
         eyebrow="Study overview"
-        title="Keep your streak alive"
+        // title="Keep your streak alive"
         description="Review what’s due, track your progress, and jump straight back in."
       />
 
@@ -55,9 +55,7 @@ export function HomeScreen() {
           <span className={s.fieldLabel}>Current set</span>
           <strong>{currentSet}</strong>
           <span>
-            {dueCount > 0
-              ? `${dueCount} cards due now`
-              : "Everything is neatly caught up"}
+            {currentSet ? "Learning collection" : "No collection selected"}
           </span>
         </div>
       </Card>
