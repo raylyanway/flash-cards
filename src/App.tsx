@@ -1,5 +1,5 @@
 import { AppInitializer } from "./components/AppInitializer";
-import { AppContent } from "./components/AppContent";
+import { AppContent } from "./components/appContent/AppContent";
 
 export default function App() {
   return (

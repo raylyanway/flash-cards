@@ -21,8 +21,8 @@ body {
   font-family: Inter, Arial, sans-serif;
   min-height: 100vh;
   transition:
-    background 0.25s ease,
-    color 0.25s ease;
+    background 1.25s ease,
+    color 1.25s ease;
 }
 
 body.theme-light {
