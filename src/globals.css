@@ -1,11 +1,5 @@
 * {
   box-sizing: border-box;
-  transition:
-    background-color 1s ease,
-    box-shadow 1s ease,
-    border-color 1s ease,
-    color 1s ease,
-    transform 1s ease;
 }
 
 :root {
