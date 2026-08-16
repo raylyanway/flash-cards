@@ -20,6 +20,7 @@ import { ContentIcon } from "../Icons";
 import { Button } from "../button";
 import { Card } from "../card";
 import { PageHeader } from "../pageHeader";
+import { Typography } from "../typography";
 import s from "./ContentScreen.module.css";
 
 function ExportIcon() {
@@ -178,7 +179,7 @@ export function ContentScreen() {
   };
 
   return (
-    <section className={`screen active ${s.contentScreen}`}>
+    <section className={`${s.contentScreen}`}>
       <PageHeader
         icon={<ContentIcon />}
         eyebrow="Content library"
@@ -188,11 +189,15 @@ export function ContentScreen() {
 
       <Card className={s.selectorCard}>
         <div className={s.selectorCopy}>
-          <span className={s.fieldLabel}>Active collection</span>
-          <strong>{selectedLabel}</strong>
-          <span>
+          <Typography as="span" variant="label" className={s.fieldLabel}>
+            Active collection
+          </Typography>
+          <Typography as="strong" variant="title">
+            {selectedLabel}
+          </Typography>
+          <Typography as="span" variant="caption">
             {isDefaultSet ? "Built-in collection" : "Your imported collection"}
-          </span>
+          </Typography>
         </div>
         <label className={s.selectWrap}>
           <span className={s.srOnly}>Select content collection</span>

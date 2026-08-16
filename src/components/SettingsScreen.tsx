@@ -44,7 +44,7 @@ export function SettingsScreen() {
   };
 
   return (
-    <section className="screen active">
+    <section>
       <div className="card">
         <h3>App Theme</h3>
         <p className="help-text">

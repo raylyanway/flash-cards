@@ -125,7 +125,7 @@ export function ProgressSetupScreen() {
   };
 
   return (
-    <section className="screen active">
+    <section>
       <div className="top-bar">
         <button onClick={closeProgressSetup}>← Back</button>
         <h2>Setup Progress</h2>
