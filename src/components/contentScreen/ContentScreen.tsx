@@ -20,7 +20,7 @@ import { ContentIcon } from "../Icons";
 import { Button } from "../button";
 import { Card } from "../card";
 import { PageHeader } from "../pageHeader";
-// import { Typography } from "../typography";
+import { Typography } from "../typography";
 import s from "./ContentScreen.module.css";
 
 function ExportIcon() {
