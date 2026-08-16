@@ -24,12 +24,6 @@
   border-radius: 11px;
   box-shadow: var(--button-shadow);
   cursor: pointer;
-  transition:
-    transform 160ms ease,
-    background 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    color 160ms ease;
 }
 
 .button:hover:not(:disabled) {

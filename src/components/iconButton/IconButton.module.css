@@ -12,11 +12,6 @@
   background: transparent;
   color: var(--text);
   cursor: pointer;
-
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    color 0.2s ease;
 }
 
 .iconButton:hover:not(:disabled) {
