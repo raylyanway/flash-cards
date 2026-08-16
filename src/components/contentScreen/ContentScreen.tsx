@@ -179,7 +179,7 @@ export function ContentScreen() {
   };
 
   return (
-    <section className={`screen active ${s.contentScreen}`}>
+    <section className={`${s.contentScreen}`}>
       <PageHeader
         icon={<ContentIcon />}
         eyebrow="Content library"

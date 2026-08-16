@@ -36,7 +36,7 @@ export function AnalyticsScreen() {
   };
 
   return (
-    <section className="screen active">
+    <section>
       <div className="card">
         <div className="stats-grid">
           <div className="stat">
