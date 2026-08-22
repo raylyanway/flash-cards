@@ -2,9 +2,7 @@ declare const styles: {
   readonly "cardLabel": string;
   readonly "due": string;
   readonly "fieldLabel": string;
-  readonly "headingIcon": string;
   readonly "highlight": string;
-  readonly "homeScreen": string;
   readonly "insightCard": string;
   readonly "metricItem": string;
   readonly "metricName": string;
@@ -12,7 +10,6 @@ declare const styles: {
   readonly "metricsGrid": string;
   readonly "metricsRow": string;
   readonly "overviewCard": string;
-  readonly "pageHeading": string;
   readonly "progressBg": string;
   readonly "progressCenter": string;
   readonly "progressCircle": string;

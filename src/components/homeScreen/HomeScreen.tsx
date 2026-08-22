@@ -43,7 +43,7 @@ export function HomeScreen() {
   }, [progress, now]);
 
   return (
-    <section className={clsx("active", s.homeScreen)}>
+    <>
       <PageHeader
         icon={<HomeIcon />}
         eyebrow="Study overview"
@@ -122,6 +122,6 @@ export function HomeScreen() {
           </Button>
         </Card>
       </div>
-    </section>
+    </>
   );
 }
