@@ -2,7 +2,7 @@ import { NavBar } from "../navBar";
 import { ScreenSwitcher } from "../ScreenSwitcher";
 import s from "./AppContent.module.css";
 
-export function AppContent() {
+export function App() {
   return (
     <>
       <NavBar />
