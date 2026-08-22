@@ -107,7 +107,6 @@ export function HomeScreen() {
             </div>
           </div>
         </Card>
-
         <Card>
           <Typography as="span" variant="label" className={s.cardLabel}>
             Next review
