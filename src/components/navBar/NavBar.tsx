@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { screen: "content" as const, label: "Content" },
   { screen: "analytics" as const, label: "Analytics" },
   { screen: "settings" as const, label: "Settings" },
+  { screen: "library" as const, label: "Library" },
 ];
 
 export function NavBar() {

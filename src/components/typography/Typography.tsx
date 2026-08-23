@@ -3,17 +3,13 @@ import type { ElementType, HTMLAttributes } from "react";
 import s from "./Typography.module.css";
 
 type TypographyVariant =
-  | "display"
-  | "h1"
-  | "h2"
   | "title"
   | "subtitle"
   | "body"
   | "bodyStrong"
   | "caption"
   | "label"
-  | "nav"
-  | "metric";
+  | "nav";
 
 type Props = HTMLAttributes<HTMLElement> & {
   as?: ElementType;

@@ -161,15 +161,6 @@
   text-transform: uppercase;
 }
 
-/* .insightCard {
-  justify-content: flex-start;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 6%, var(--card)),
-    var(--card)
-  );
-} */
-
 .cardLabel {
   display: block;
 }

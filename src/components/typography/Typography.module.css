@@ -1,27 +1,7 @@
 .typography {
   margin: 0;
   color: var(--text);
-}
-
-.display {
-  font-size: clamp(1.6rem, 4vw, 2.15rem);
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.035em;
-}
-
-.h1 {
-  font-size: clamp(1.6rem, 4vw, 2.15rem);
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.035em;
-}
-
-.h2 {
-  font-size: clamp(1.5rem, 3vw, 2.2rem);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.04em;
+  font-family: "Noto Sans", Inter, Arial, sans-serif;
 }
 
 .title {
@@ -67,11 +47,4 @@
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-}
-
-.metric {
-  font-size: 1.7rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--text);
 }
