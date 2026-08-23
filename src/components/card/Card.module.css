@@ -2,7 +2,7 @@
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 4.5%, transparent);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--primary) 20%, var(--card)),
