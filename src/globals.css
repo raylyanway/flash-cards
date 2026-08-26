@@ -19,6 +19,7 @@ body {
   background-color: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  font-family: "Noto Sans", Inter, Arial, sans-serif;
 }
 
 body.theme-dark {

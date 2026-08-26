@@ -112,9 +112,7 @@ export function HomeScreen() {
           <Typography as="span" variant="label" className={s.cardLabel}>
             Next review
           </Typography>
-          <Typography as="h2" variant="h2">
-            {nextReviewLabel}
-          </Typography>
+          <h2>{nextReviewLabel}</h2>
           <Typography as="p" variant="subtitle">
             {dueCount > 0
               ? "A few cards are ready for another pass. Keep the momentum going."

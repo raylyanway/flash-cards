@@ -2,19 +2,29 @@ import { Button } from "../button";
 import { Card } from "../card";
 import { HomeIcon } from "../Icons";
 import { PageHeader } from "../pageHeader";
-import { Typography } from "../typography";
+import { Caption, Label, Subtitle, Title } from "../typography";
 import s from "./LibraryScreen.module.css";
 
 export function LibraryScreen() {
   return (
     <div className={s.libraryScreen}>
-      <Typography variant="body">Typography Body</Typography>
-      <Typography variant="bodyStrong">Typography Body Strong</Typography>
-      <Typography variant="caption">Typography Caption</Typography>
-      <Typography variant="label">Typography Label</Typography>
-      <Typography variant="nav">Typography Nav</Typography>
-      <Typography variant="subtitle">Typography Subtitle</Typography>
-      <Typography variant="title">Typography Title</Typography>
+      <Title>Typography Title</Title>
+      <Subtitle>Typography Subtitle</Subtitle>
+      <span>
+        Text with <strong>strong</strong> and <em>emphasized</em> elements.
+      </span>
+      <small>Small text</small>
+      <strong>
+        <small>Small bold text</small>
+      </strong>
+      <Caption>Typography Caption</Caption>
+      <small>
+        <Caption>Typography small Caption</Caption>
+      </small>
+      <Label>Typography Label</Label>
+      <small>
+        <Label>Typography small Label</Label>
+      </small>
       <Button>Start reviewing</Button>
       <PageHeader
         icon={<HomeIcon />}
