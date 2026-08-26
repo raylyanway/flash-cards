@@ -67,9 +67,9 @@
   min-height: 260px;
 }
 
-.insightCard {
+/* .insightCard {
   min-height: 260px;
-}
+} */
 
 .progressCircleContainer {
   display: flex;
@@ -159,15 +159,6 @@
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.insightCard {
-  justify-content: flex-start;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 6%, var(--card)),
-    var(--card)
-  );
 }
 
 .cardLabel {

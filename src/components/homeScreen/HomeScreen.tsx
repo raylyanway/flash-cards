@@ -63,6 +63,9 @@ export function HomeScreen() {
             {currentSet ? "Learning collection" : "No collection selected"}
           </Typography>
         </div>
+        <Button className={s.startButton} onClick={() => setScreen("learn")}>
+          Start reviewing
+        </Button>
       </Card>
 
       <div className={s.metricsGrid}>
@@ -105,13 +108,11 @@ export function HomeScreen() {
           </div>
         </Card>
 
-        <Card className={s.insightCard}>
+        <Card>
           <Typography as="span" variant="label" className={s.cardLabel}>
             Next review
           </Typography>
-          <Typography as="h2" variant="h2">
-            {nextReviewLabel}
-          </Typography>
+          <h2>{nextReviewLabel}</h2>
           <Typography as="p" variant="subtitle">
             {dueCount > 0
               ? "A few cards are ready for another pass. Keep the momentum going."

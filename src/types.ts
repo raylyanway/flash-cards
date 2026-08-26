@@ -6,6 +6,7 @@ export type Screen =
   | "content"
   | "analytics"
   | "settings"
+  | "library"
   | "progressSetup";
 
 export type Card = {

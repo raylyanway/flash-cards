@@ -18,8 +18,8 @@ body {
   margin: 0;
   background-color: var(--bg);
   color: var(--text);
-  font-family: Inter, Arial, sans-serif;
   min-height: 100vh;
+  font-family: "Noto Sans", Inter, Arial, sans-serif;
 }
 
 body.theme-dark {
