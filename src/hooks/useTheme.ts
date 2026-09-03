@@ -1,17 +1,15 @@
 import { useEffect } from "react";
 import { useAppStore } from "../store/useAppStore";
-import { ThemePreference } from "../types";
+import type { ThemePreference } from "../types";
 
 export function useTheme() {
   const theme = useAppStore((state) => state.theme);
 
   useEffect(() => {
     const activeTheme = theme === "system" ? getSystemTheme() : theme;
-
     applyTheme(activeTheme);
   }, [theme]);
 
-  // Listen to system theme changes in real-time if set to 'system'
   useEffect(() => {
     if (theme !== "system") return;
 
@@ -25,13 +23,14 @@ export function useTheme() {
   }, [theme]);
 }
 
-function getSystemTheme() {
+function getSystemTheme(): Exclude<ThemePreference, "system"> {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 }
 
-function applyTheme(theme: ThemePreference) {
-  document.body.classList.remove("theme-system", "theme-light", "theme-dark");
+function applyTheme(theme: Exclude<ThemePreference, "system">) {
+  document.body.classList.remove("theme-light", "theme-dark");
   document.body.classList.add(`theme-${theme}`);
+  document.documentElement.style.colorScheme = theme;
 }

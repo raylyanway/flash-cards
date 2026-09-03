@@ -1,12 +1,31 @@
+import {
+  AnalyticsRounded,
+  SettingsSuggestRounded,
+  SyncRounded,
+} from "@mui/icons-material";
+import {
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import { useMemo } from "react";
 import { useAppStore } from "../store/useAppStore";
 import {
   countStages,
   getAnswerText,
-  getStageClass,
   getStageName,
   initializeMissingProgress,
 } from "../utils/cardProgress";
+import { PageHeader } from "./ui/PageHeader";
 
 export function AnalyticsScreen() {
   const cards = useAppStore((state) => state.cards);
@@ -36,62 +55,110 @@ export function AnalyticsScreen() {
   };
 
   return (
-    <section>
-      <div className="card">
-        <div className="stats-grid">
-          <div className="stat">
-            <div>{stageCounts.learnedCount}</div>
-            <span>Learned</span>
-          </div>
-          <div className="stat">
-            <div>{stageCounts.review2Count}</div>
-            <span>Repeat x2</span>
-          </div>
-          <div className="stat">
-            <div>{stageCounts.review1Count}</div>
-            <span>Repeat x1</span>
-          </div>
-          <div className="stat">
-            <div>{stageCounts.newCount}</div>
-            <span>New</span>
-          </div>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        icon={<AnalyticsRounded />}
+        title="Analytics"
+        description="A quick view of your current progress and the cards in this set."
+      />
 
-      <div className="card">
-        <table>
-          <thead>
-            <tr>
-              <th>Text</th>
-              <th>Status</th>
-              <th>Correct Answer</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedCards.map((card) => {
-              const cardProgress = progress[card.text] || { stage: 0 };
-              return (
-                <tr key={card.text}>
-                  <td>{card.text}</td>
-                  <td className={getStageClass(cardProgress.stage)}>
-                    {getStageName(cardProgress.stage)}
-                  </td>
-                  <td>{getAnswerText(card)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <Stack spacing={3}>
+        <Grid container spacing={2}>
+          {[
+            {
+              label: "Learned",
+              value: stageCounts.learnedCount,
+              color: "primary",
+            },
+            {
+              label: "Repeat x2",
+              value: stageCounts.review2Count,
+              color: "secondary",
+            },
+            {
+              label: "Repeat x1",
+              value: stageCounts.review1Count,
+              color: "warning",
+            },
+            { label: "New", value: stageCounts.newCount, color: "success" },
+          ].map((item) => (
+            <Grid size={{ xs: 6, md: 3 }} key={item.label}>
+              <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
+                <CardContent sx={{ textAlign: "center", py: 3 }}>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontWeight: 800, color: `${item.color}.main` }}
+                  >
+                    {item.value}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {item.label}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
 
-      <div className="actions">
-        <button className="danger" onClick={resetProgress}>
-          🔄 Reset Progress
-        </button>
-        <button className="secondary" onClick={openProgressSetup}>
-          ⚙️ Setup Progress
-        </button>
-      </div>
-    </section>
+        <Card elevation={0} sx={{ borderRadius: 4 }}>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Text</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Correct answer</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sortedCards.map((card) => {
+                  const cardProgress = progress[card.text] || { stage: 0 };
+                  return (
+                    <TableRow key={card.text} hover>
+                      <TableCell>{card.text}</TableCell>
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            color:
+                              cardProgress.stage === 3
+                                ? "success.main"
+                                : cardProgress.stage === 0
+                                  ? "text.secondary"
+                                  : "warning.main",
+                          }}
+                        >
+                          {getStageName(cardProgress.stage)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{getAnswerText(card)}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
+
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<SyncRounded />}
+            onClick={resetProgress}
+          >
+            Reset progress
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<SettingsSuggestRounded />}
+            onClick={openProgressSetup}
+          >
+            Setup progress
+          </Button>
+        </Stack>
+      </Stack>
+    </>
   );
 }
