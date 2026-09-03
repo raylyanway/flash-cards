@@ -1,7 +1,6 @@
 declare const styles: {
-  readonly "eyebrow": string;
-  readonly "headingIcon": string;
-  readonly "pageHeading": string;
+  readonly "icon": string;
+  readonly "wrapper": string;
 };
 export = styles;
 

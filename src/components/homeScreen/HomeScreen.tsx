@@ -9,7 +9,6 @@ import { Button } from "../button";
 import { Card } from "../card";
 import { HomeIcon } from "../Icons";
 import { PageHeader } from "../pageHeader";
-import { Typography } from "../typography";
 import s from "./HomeScreen.module.css";
 
 export function HomeScreen() {
@@ -46,22 +45,15 @@ export function HomeScreen() {
     <>
       <PageHeader
         icon={<HomeIcon />}
-        eyebrow="Study overview"
-        title="Keep your streak alive"
+        title="Study overview"
         description="Review what’s due, track your progress, and jump straight back in."
       />
 
       <Card className={s.selectorCard}>
         <div className={s.selectorCopy}>
-          <Typography as="span" variant="label" className={s.fieldLabel}>
-            Current set
-          </Typography>
-          <Typography as="strong" variant="title">
-            {currentSet}
-          </Typography>
-          <Typography as="span" variant="caption">
-            {currentSet ? "Learning collection" : "No collection selected"}
-          </Typography>
+          Current set
+          {currentSet}
+          {currentSet ? "Learning collection" : "No collection selected"}
         </div>
         <Button className={s.startButton} onClick={() => setScreen("learn")}>
           Start reviewing
@@ -109,15 +101,11 @@ export function HomeScreen() {
         </Card>
 
         <Card>
-          <Typography as="span" variant="label" className={s.cardLabel}>
-            Next review
-          </Typography>
+          Next review
           <h2>{nextReviewLabel}</h2>
-          <Typography as="p" variant="subtitle">
-            {dueCount > 0
-              ? "A few cards are ready for another pass. Keep the momentum going."
-              : "You are all caught up for now. A fresh review can still strengthen recall."}
-          </Typography>
+          {dueCount > 0
+            ? "A few cards are ready for another pass. Keep the momentum going."
+            : "You are all caught up for now. A fresh review can still strengthen recall."}
           <Button className={s.startButton} onClick={() => setScreen("learn")}>
             Start reviewing
           </Button>

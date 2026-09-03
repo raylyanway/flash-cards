@@ -48,6 +48,7 @@
   },
   "homepage": "https://github.com/raylyanway/flash-cards#readme",
   "dependencies": {
+    "@mui/material": "^9.4.0",
     "clsx": "^2.1.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
