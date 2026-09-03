@@ -1,27 +1,17 @@
-import clsx from "clsx";
 import type { ReactNode } from "react";
 import s from "./PageHeader.module.css";
 
 type Props = {
-  icon?: ReactNode;
-  eyebrow?: string;
-  title?: string;
-  description?: string;
-  className?: string;
+  icon: ReactNode;
+  title: string;
+  description: string;
 };
 
-export function PageHeader({
-  icon,
-  eyebrow,
-  title,
-  description,
-  className,
-}: Props) {
+export function PageHeader({ icon, title, description }: Props) {
   return (
-    <div className={clsx(s.pageHeading, className)}>
-      {icon ? <div className={s.headingIcon}>{icon}</div> : null}
+    <div className={s.wrapper}>
+      <div className={s.icon}>{icon}</div>
       <div>
-        {eyebrow ? <p className={s.eyebrow}>{eyebrow}</p> : null}
         {title ? <h1>{title}</h1> : null}
         {description ? <p>{description}</p> : null}
       </div>

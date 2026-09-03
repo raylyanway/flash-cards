@@ -1,4 +1,24 @@
-import { ChangeEvent, useRef, useState } from "react";
+import {
+  DeleteRounded,
+  DownloadRounded,
+  FileUploadRounded,
+  LibraryBooksRounded,
+} from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { type ChangeEvent, useRef, useState } from "react";
 import {
   createCsvFromCards,
   DEFAULT_CONTENT,
@@ -16,36 +36,7 @@ import {
 } from "../../cardData";
 import { useAppStore } from "../../store/useAppStore";
 import { downloadCsv } from "../../utils/downloadCsv";
-import { ContentIcon } from "../Icons";
-import { Button } from "../button";
-import { Card } from "../card";
-import { PageHeader } from "../pageHeader";
-import { Typography } from "../typography";
-import s from "./ContentScreen.module.css";
-
-function ExportIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 15v3a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-3" />
-    </svg>
-  );
-}
-
-function ImportIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 21V10m0 0 4 4m-4-4-4 4M5 9V6a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3" />
-    </svg>
-  );
-}
-
-function DeleteIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m-9 0 1 13h10l1-13" />
-    </svg>
-  );
-}
+import { PageHeader } from "../ui/PageHeader";
 
 export function ContentScreen() {
   const importContentInputRef = useRef<HTMLInputElement | null>(null);
@@ -179,100 +170,192 @@ export function ContentScreen() {
   };
 
   return (
-    <section className={`${s.contentScreen}`}>
+    <>
       <PageHeader
-        icon={<ContentIcon />}
-        eyebrow="Content library"
-        // title="Manage your learning sets"
-        description="Choose a collection, back it up, or bring in something new."
+        icon={<LibraryBooksRounded />}
+        title="Content library"
+        description="Manage your collections, import new decks, and back up your progress."
       />
 
-      <Card className={s.selectorCard}>
-        <div className={s.selectorCopy}>
-          <Typography as="span" variant="label" className={s.fieldLabel}>
-            Active collection
-          </Typography>
-          <Typography as="strong" variant="title">
-            {selectedLabel}
-          </Typography>
-          <Typography as="span" variant="caption">
-            {isDefaultSet ? "Built-in collection" : "Your imported collection"}
-          </Typography>
-        </div>
-        <label className={s.selectWrap}>
-          <span className={s.srOnly}>Select content collection</span>
-          <select value={currentSet} onChange={handleSetChange}>
-            {contentOptions.map((option) => (
-              <option key={option.key} value={option.key}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </Card>
-
-      <div className={s.actionGrid}>
-        <Card className={s.actionCard}>
-          <div className={`${s.actionIcon} ${s.exportIcon}`}>
-            <ExportIcon />
-          </div>
-          <div className={s.actionContent}>
-            <h2>Export a backup</h2>
-            <p>Download this collection as a CSV file to keep it safe.</p>
-          </div>
-          <Button
-            className={s.exportButton}
-            icon={<ExportIcon />}
-            iconPosition="end"
-            onClick={exportContent}
-          >
-            Export CSV
-          </Button>
+      <Stack spacing={3}>
+        <Card elevation={0} sx={{ borderRadius: 4 }}>
+          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              justifyContent="space-between"
+              alignItems={{ xs: "flex-start", sm: "center" }}
+            >
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Active collection
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  {selectedLabel}
+                </Typography>
+              </Box>
+              <FormControl sx={{ minWidth: 220 }} size="small">
+                <InputLabel id="content-set-select">Collection</InputLabel>
+                <Select
+                  labelId="content-set-select"
+                  label="Collection"
+                  value={currentSet}
+                  onChange={handleSetChange}
+                >
+                  {contentOptions.map((option) => (
+                    <MenuItem key={option.key} value={option.key}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+            <Chip
+              label={
+                isDefaultSet ? "Built-in collection" : "Imported collection"
+              }
+              color={isDefaultSet ? "primary" : "success"}
+              sx={{ mt: 2 }}
+            />
+          </CardContent>
         </Card>
 
-        <Card className={s.actionCard}>
-          <div className={`${s.actionIcon} ${s.importIcon}`}>
-            <ImportIcon />
-          </div>
-          <div className={s.actionContent}>
-            <h2>Import a collection</h2>
-            <p>Add a CSV collection and continue learning from any device.</p>
-          </div>
-          <Button
-            className={s.exportButton}
-            icon={<ImportIcon />}
-            iconPosition="end"
-            onClick={() => importContentInputRef.current?.click()}
-          >
-            Choose CSV
-          </Button>
-        </Card>
-      </div>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
+              <CardContent
+                sx={{
+                  p: { xs: 2, md: 3 },
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Stack spacing={2} sx={{ flex: 1 }}>
+                  <Box
+                    sx={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 3,
+                      display: "grid",
+                      placeItems: "center",
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                    }}
+                  >
+                    <DownloadRounded />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      Export a backup
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Download this collection as a CSV file and keep an offline
+                      copy.
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    startIcon={<DownloadRounded />}
+                    onClick={exportContent}
+                    sx={{ mt: "auto" }}
+                  >
+                    Export CSV
+                  </Button>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
 
-      <Card className={s.dangerZone}>
-        <div>
-          <span className={s.dangerLabel}>Danger zone</span>
-          <h2>Delete this collection</h2>
-          <p>Deletes the collection and all of its saved learning progress.</p>
-        </div>
-        <Button
-          variant="danger"
-          disabled={isDefaultSet}
-          loading={isDeleting}
-          icon={<DeleteIcon />}
-          onClick={handleDeleteContent}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
+              <CardContent
+                sx={{
+                  p: { xs: 2, md: 3 },
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Stack spacing={2} sx={{ flex: 1 }}>
+                  <Box
+                    sx={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 3,
+                      display: "grid",
+                      placeItems: "center",
+                      bgcolor: "secondary.main",
+                      color: "common.white",
+                    }}
+                  >
+                    <FileUploadRounded />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      Import a collection
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Add a CSV collection and continue studying from any
+                      device.
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    startIcon={<FileUploadRounded />}
+                    onClick={() => importContentInputRef.current?.click()}
+                    sx={{ mt: "auto" }}
+                  >
+                    Choose CSV
+                  </Button>
+                  <input
+                    ref={importContentInputRef}
+                    type="file"
+                    hidden
+                    accept=".csv"
+                    onChange={handleImportContent}
+                  />
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        <Card
+          elevation={0}
+          sx={{ borderRadius: 4, borderColor: "rgba(239,68,68,0.22)" }}
         >
-          Delete collection
-        </Button>
-      </Card>
-
-      <input
-        ref={importContentInputRef}
-        type="file"
-        hidden
-        accept=".csv"
-        onChange={handleImportContent}
-      />
-    </section>
+          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              justifyContent="space-between"
+              alignItems={{ xs: "flex-start", sm: "center" }}
+            >
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Danger zone
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Delete this collection
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Deletes the collection and all of its saved learning progress.
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<DeleteRounded />}
+                disabled={isDefaultSet || isDeleting}
+                onClick={handleDeleteContent}
+              >
+                {isDeleting ? "Deleting..." : "Delete collection"}
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Stack>
+    </>
   );
 }

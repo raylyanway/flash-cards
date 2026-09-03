@@ -1,3 +1,15 @@
+import { SettingsRounded } from "@mui/icons-material";
+import {
+  Button,
+  Card,
+  CardContent,
+  FormControl,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  Stack,
+  Typography,
+} from "@mui/material";
 import {
   deleteAppDatabase,
   setCachedDataVersion,
@@ -5,13 +17,14 @@ import {
 } from "../cardData";
 import { useAppStore } from "../store/useAppStore";
 import type { ThemePreference } from "../types";
+import { PageHeader } from "./ui/PageHeader";
 
 const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
 
 function getThemeDescription(option: ThemePreference) {
   if (option === "system") return "Follow your device theme preference.";
-  if (option === "light") return "Soft pastel light mode with strong contrast.";
-  return "High-contrast dark mode for low vision support.";
+  if (option === "light") return "Soft, bright, and easy on the eyes.";
+  return "High-contrast dark mode for focused study sessions.";
 }
 
 export function SettingsScreen() {
@@ -44,45 +57,74 @@ export function SettingsScreen() {
   };
 
   return (
-    <section>
-      <div className="card">
-        <h3>App Theme</h3>
-        <p className="help-text">
-          Choose a high-contrast theme or let the app follow your system
-          preference.
-        </p>
+    <>
+      <PageHeader
+        icon={<SettingsRounded />}
+        title="Settings"
+        description="Adjust the experience to fit your device and your study habits."
+      />
 
-        <div className="theme-options">
-          {THEME_OPTIONS.map((option) => (
-            <label className="theme-option" key={option}>
-              <input
-                type="radio"
-                name="themeOption"
-                value={option}
-                checked={theme === option}
-                onChange={() => handleThemeChange(option)}
-              />
-              <div>
-                <strong>{option[0].toUpperCase() + option.slice(1)}</strong>
-                <div>{getThemeDescription(option)}</div>
-              </div>
-            </label>
-          ))}
-        </div>
+      <Stack spacing={3}>
+        <Card elevation={0} sx={{ borderRadius: 4 }}>
+          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+              App theme
+            </Typography>
+            <FormControl>
+              <RadioGroup
+                value={theme}
+                onChange={(event) =>
+                  handleThemeChange(event.target.value as ThemePreference)
+                }
+              >
+                {THEME_OPTIONS.map((option) => (
+                  <FormControlLabel
+                    key={option}
+                    value={option}
+                    control={<Radio />}
+                    label={
+                      <Stack spacing={0.2}>
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ textTransform: "capitalize" }}
+                        >
+                          {option}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {getThemeDescription(option)}
+                        </Typography>
+                      </Stack>
+                    }
+                    sx={{ py: 0.75, px: 1, borderRadius: 2 }}
+                  />
+                ))}
+              </RadioGroup>
+            </FormControl>
+          </CardContent>
+        </Card>
 
-        <div className="setup-section">
-          <h3>Database</h3>
-          <p className="help-text">
-            Delete the saved app database and reset indexed data. This does not
-            remove your content files.
-          </p>
-          <div className="button-group">
-            <button className="danger" onClick={handleDeleteDatabase}>
-              Delete Database
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
+        <Card
+          elevation={0}
+          sx={{ borderRadius: 4, borderColor: "rgba(239,68,68,0.22)" }}
+        >
+          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+              Database
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Delete the saved app database and reset IndexedDB data. This does
+              not remove your content files.
+            </Typography>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleDeleteDatabase}
+            >
+              Delete database
+            </Button>
+          </CardContent>
+        </Card>
+      </Stack>
+    </>
   );
 }

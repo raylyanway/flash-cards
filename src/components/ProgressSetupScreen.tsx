@@ -1,7 +1,25 @@
-import { ChangeEvent, useRef } from "react";
+import {
+  ArrowBackRounded,
+  DownloadRounded,
+  UploadRounded,
+} from "@mui/icons-material";
+import {
+  Button,
+  Card,
+  CardContent,
+  Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { type ChangeEvent, useRef } from "react";
 import { createCsvFromProgress, parseCsvToJson } from "../cardData";
 import { useAppStore } from "../store/useAppStore";
-import type { Card, ProgressMap } from "../types";
+import type { ProgressMap } from "../types";
 import { getStageName, initializeMissingProgress } from "../utils/cardProgress";
 import { downloadCsv } from "../utils/downloadCsv";
 
@@ -125,99 +143,156 @@ export function ProgressSetupScreen() {
   };
 
   return (
-    <section>
-      <div className="top-bar">
-        <button onClick={closeProgressSetup}>← Back</button>
-        <h2>Setup Progress</h2>
-      </div>
+    <Stack spacing={3}>
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <Button
+          variant="text"
+          startIcon={<ArrowBackRounded />}
+          onClick={closeProgressSetup}
+        >
+          Back
+        </Button>
+        <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          Setup progress
+        </Typography>
+      </Stack>
 
-      <div className="card">
-        <div className="setup-section">
-          <h3>Bulk Operations</h3>
-          <div className="button-group">
-            <button className="secondary" onClick={() => setAllStages(0)}>
-              Mark All as New
-            </button>
-            <button className="secondary" onClick={() => setAllStages(1)}>
-              Mark All as Learning
-            </button>
-            <button className="secondary" onClick={() => setAllStages(3)}>
-              Mark All as Learned
-            </button>
-          </div>
-        </div>
+      <Card elevation={0} sx={{ borderRadius: 4 }}>
+        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+          <Stack spacing={3}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                Bulk operations
+              </Typography>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+                {[0, 1, 3].map((stage) => (
+                  <Button
+                    key={stage}
+                    variant="outlined"
+                    onClick={() => setAllStages(stage)}
+                  >
+                    {stage === 0
+                      ? "New"
+                      : stage === 1
+                        ? "Learning x1"
+                        : "Learned"}
+                  </Button>
+                ))}
+              </Stack>
+            </Box>
 
-        <div className="setup-section">
-          <h3>Individual Card Progress</h3>
-          <input
-            type="text"
-            placeholder="Search cards..."
-            className="search-input"
-            value={progressSearch}
-            onChange={(event) => setProgressSearch(event.target.value)}
-          />
-          <div className="card-list">
-            {filteredCards.map((card) => {
-              const cardProgress = progress[card.text] || {
-                stage: 0,
-                correctCount: 0,
-              };
-              return (
-                <div className="progress-card-item" key={card.text}>
-                  <div className="progress-card-info">
-                    <div className="progress-card-text">{card.text}</div>
-                    <div className="progress-card-status">
-                      {getStageName(cardProgress.stage)} -{" "}
-                      {cardProgress.correctCount || 0} correct
-                    </div>
-                  </div>
-                  <div className="progress-card-controls">
-                    <select
-                      value={cardProgress.stage}
-                      onChange={(event) =>
-                        setCardStage(card, Number(event.target.value))
-                      }
+            <Divider />
+
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                Individual card progress
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Search cards..."
+                value={progressSearch}
+                onChange={(event) => setProgressSearch(event.target.value)}
+              />
+
+              <Stack spacing={1.5} sx={{ mt: 2 }}>
+                {filteredCards.map((card) => {
+                  const cardProgress = progress[card.text] || {
+                    stage: 0,
+                    correctCount: 0,
+                  };
+                  return (
+                    <Card
+                      key={card.text}
+                      variant="outlined"
+                      sx={{ borderRadius: 3 }}
                     >
-                      <option value={0}>New</option>
-                      <option value={1}>Learning x1</option>
-                      <option value={2}>Learning x2</option>
-                      <option value={3}>Learned</option>
-                    </select>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                      <CardContent
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 2,
+                          py: 1.5,
+                          px: 2,
+                        }}
+                      >
+                        <Box>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {card.text}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {getStageName(cardProgress.stage)} ·{" "}
+                            {cardProgress.correctCount || 0} correct
+                          </Typography>
+                        </Box>
+                        <FormControl size="small" sx={{ minWidth: 170 }}>
+                          <InputLabel id={`stage-${card.text}`}>
+                            Stage
+                          </InputLabel>
+                          <Select
+                            labelId={`stage-${card.text}`}
+                            value={cardProgress.stage}
+                            label="Stage"
+                            onChange={(event) =>
+                              setCardStage(card, Number(event.target.value))
+                            }
+                          >
+                            <MenuItem value={0}>New</MenuItem>
+                            <MenuItem value={1}>Learning x1</MenuItem>
+                            <MenuItem value={2}>Learning x2</MenuItem>
+                            <MenuItem value={3}>Learned</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </Stack>
+            </Box>
 
-        <div className="setup-section">
-          <h3>Import / Export Progress</h3>
-          <div className="button-group">
-            <button className="secondary" onClick={exportProgress}>
-              📥 Export Progress
-            </button>
-            <button
-              className="secondary"
-              onClick={() => importProgressInputRef.current?.click()}
-            >
-              📤 Import Progress
-            </button>
-            <input
-              ref={importProgressInputRef}
-              type="file"
-              hidden
-              accept=".csv"
-              onChange={handleImportProgress}
-            />
-          </div>
-        </div>
+            <Divider />
 
-        <div className="modal-footer">
-          <button className="primary" onClick={doneProgressSetup}>
-            Done
-          </button>
-        </div>
-      </div>
-    </section>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                Import and export
+              </Typography>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+                <Button
+                  variant="outlined"
+                  startIcon={<DownloadRounded />}
+                  onClick={exportProgress}
+                >
+                  Export progress
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<UploadRounded />}
+                  onClick={() => importProgressInputRef.current?.click()}
+                >
+                  Import progress
+                </Button>
+                <input
+                  ref={importProgressInputRef}
+                  type="file"
+                  hidden
+                  accept=".csv"
+                  onChange={handleImportProgress}
+                />
+              </Stack>
+            </Box>
+
+            <Stack direction="row" justifyContent="flex-end">
+              <Button variant="contained" onClick={doneProgressSetup}>
+                Done
+              </Button>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Stack>
   );
 }
