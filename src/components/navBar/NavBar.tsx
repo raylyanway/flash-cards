@@ -79,7 +79,10 @@ export function NavBar() {
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid",
         borderColor: "divider",
-        backgroundColor: "rgba(15, 23, 42, 0.02)",
+        backgroundColor: (theme) =>
+          theme.palette.mode === "light"
+            ? "rgba(246, 247, 242, 0.78)"
+            : "rgba(16, 28, 33, 0.82)",
       }}
     >
       <Toolbar
@@ -96,13 +99,47 @@ export function NavBar() {
           sx={{ width: "100%" }}
         >
           <Box>
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{ fontWeight: 800, letterSpacing: -0.05 }}
-            >
-              Flash Cards
-            </Typography>
+            <Stack direction="row" spacing={1.25} alignItems="center">
+              <Box
+                sx={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "9px 9px 9px 3px",
+                  bgcolor: "primary.main",
+                  color: "primary.contrastText",
+                  display: "grid",
+                  placeItems: "center",
+                  fontSize: 15,
+                  fontWeight: 900,
+                  transform: "rotate(-8deg)",
+                }}
+              >
+                f
+              </Box>
+              <Box>
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    fontWeight: 800,
+                    lineHeight: 1,
+                    letterSpacing: "-0.03em",
+                  }}
+                >
+                  Flash Cards
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Learn deliberately
+                </Typography>
+              </Box>
+            </Stack>
           </Box>
 
           {mobile ? (

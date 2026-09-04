@@ -1,60 +1,81 @@
 import { createTheme } from "@mui/material/styles";
 
 export function createAppTheme(mode: "light" | "dark") {
+  const isLight = mode === "light";
+
   return createTheme({
     palette: {
       mode,
       primary: {
-        main: "#4f46e5",
-        light: "#818cf8",
-        dark: "#312e81",
+        main: isLight ? "#087f8c" : "#48c6c8",
+        light: isLight ? "#36aeb4" : "#8ce2de",
+        dark: isLight ? "#075e68" : "#1a8d94",
       },
       secondary: {
-        main: "#0f172a",
+        main: isLight ? "#ef8354" : "#ff9d73",
       },
       background: {
-        default: mode === "light" ? "#f5f7fb" : "#0b1020",
-        paper: mode === "light" ? "#ffffff" : "#121a2b",
+        default: isLight ? "#f6f7f2" : "#101c21",
+        paper: isLight ? "#fffefa" : "#17282d",
       },
       success: {
-        main: "#16a34a",
+        main: isLight ? "#23856b" : "#62c99e",
       },
       warning: {
-        main: "#f59e0b",
+        main: isLight ? "#c87827" : "#f3b45d",
       },
       error: {
-        main: "#ef4444",
+        main: isLight ? "#c65348" : "#f08378",
       },
       text: {
-        primary: mode === "light" ? "#0f172a" : "#e2e8f0",
-        secondary: mode === "light" ? "#475569" : "#94a3b8",
+        primary: isLight ? "#18343a" : "#eff8f5",
+        secondary: isLight ? "#607477" : "#adc4c2",
       },
     },
     shape: {
-      borderRadius: 18,
+      borderRadius: 14,
     },
     typography: {
-      fontFamily: '"Inter", "Noto Sans", sans-serif',
-      h1: { fontWeight: 700, letterSpacing: -0.04 },
-      h2: { fontWeight: 700, letterSpacing: -0.03 },
-      h3: { fontWeight: 700, letterSpacing: -0.02 },
-      button: { textTransform: "none", fontWeight: 600 },
+      fontFamily: '"DM Sans", "Noto Sans", sans-serif',
+      h1: { fontWeight: 800, letterSpacing: "-0.04em" },
+      h2: { fontWeight: 800, letterSpacing: "-0.035em" },
+      h3: { fontWeight: 800, letterSpacing: "-0.03em" },
+      h4: { fontWeight: 800, letterSpacing: "-0.025em" },
+      h5: { fontWeight: 750, letterSpacing: "-0.02em" },
+      h6: { fontWeight: 750, letterSpacing: "-0.015em" },
+      button: {
+        textTransform: "none",
+        fontWeight: 750,
+        letterSpacing: "0.01em",
+      },
     },
     components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          "*, *::before, *::after": {
+            borderColor: isLight ? "#dce6e2" : "#2c4649",
+          },
+        },
+      },
       MuiButton: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
+            borderRadius: 10,
             boxShadow: "none",
-            paddingInline: 18,
-            minHeight: 44,
+            paddingInline: 17,
+            minHeight: 46,
+            "&:hover": { boxShadow: "none" },
+          },
+          containedPrimary: {
+            color: "#fffefa",
+            "&:hover": { backgroundColor: isLight ? "#075e68" : "#2dabb0" },
           },
         },
       },
       MuiPaper: {
         styleOverrides: {
           root: {
-            border: "1px solid rgba(148, 163, 184, 0.18)",
+            border: isLight ? "1px solid #dce6e2" : "1px solid #2c4649",
             backgroundImage: "none",
           },
         },
@@ -62,11 +83,18 @@ export function createAppTheme(mode: "light" | "dark") {
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 18,
-            border: "1px solid rgba(148, 163, 184, 0.18)",
+            borderRadius: 14,
+            border: isLight ? "1px solid #dce6e2" : "1px solid #2c4649",
             backgroundImage: "none",
-            boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
+            boxShadow: isLight
+              ? "0 12px 32px rgba(24, 52, 58, 0.055)"
+              : "0 16px 36px rgba(0, 0, 0, 0.16)",
           },
+        },
+      },
+      MuiChip: {
+        styleOverrides: {
+          root: { borderRadius: 8, fontWeight: 750 },
         },
       },
     },

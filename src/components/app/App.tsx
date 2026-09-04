@@ -28,15 +28,17 @@ export function App() {
           minHeight: "100vh",
           bgcolor: "background.default",
           color: "text.primary",
+          backgroundImage:
+            "linear-gradient(180deg, rgba(8,127,140,0.055) 0, transparent 250px)",
         }}
       >
         <NavBar />
         <Box
           component="main"
           sx={{
-            width: "min(1200px, calc(100% - 32px))",
+            width: "min(1160px, calc(100% - 40px))",
             mx: "auto",
-            py: { xs: 2, md: 4 },
+            py: { xs: 3, md: 5 },
             px: { xs: 0, sm: 0 },
           }}
         >
