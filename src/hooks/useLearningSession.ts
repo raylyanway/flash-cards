@@ -3,7 +3,7 @@ import {
   createSpeechRecognition,
   speakWord,
   type SpeechRecognitionInstance,
-} from "../speech";
+} from "../utils/speech";
 import { useAppStore } from "../store/useAppStore";
 import type { Card, ProgressEntry } from "../types";
 import {

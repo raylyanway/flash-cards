@@ -1,11 +1,11 @@
 import { useAppStore } from "../store/useAppStore";
-import { AnalyticsScreen } from "./AnalyticsScreen";
-import { ContentScreen } from "./contentScreen";
-import { HomeScreen } from "./homeScreen";
-import { LearnScreen } from "./LearnScreen";
-import { ProgressSetupScreen } from "./ProgressSetupScreen";
-import { SettingsScreen } from "./SettingsScreen";
-import { LibraryScreen } from "./libraryScreen";
+import { AnalyticsScreen } from "../screens/AnalyticsScreen";
+import { ContentScreen } from "../screens/ContentScreen";
+import { HomeScreen } from "../screens/HomeScreen";
+import { LearnScreen } from "../screens/LearnScreen";
+import { ProgressSetupScreen } from "../screens/ProgressSetupScreen";
+import { SettingsScreen } from "../screens/SettingsScreen";
+import { LibraryScreen } from "../screens/LibraryScreen";
 
 export function ScreenSwitcher() {
   const screen = useAppStore((state) => state.screen);

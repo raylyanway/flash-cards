@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { AppInitializer } from "./components/AppInitializer";
-import { App } from "./components/app/App";
+import { AppInitializer } from "./app/AppInitializer";
+import { App } from "./app/App";
 
 import "./globals.css";
 

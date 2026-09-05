@@ -6,7 +6,6 @@ import {
 import {
   Button,
   Card,
-  CardContent,
   Grid,
   Stack,
   Table,
@@ -25,7 +24,21 @@ import {
   getStageName,
   initializeMissingProgress,
 } from "../utils/cardProgress";
-import { PageHeader } from "./ui/PageHeader";
+import { MetricCard } from "../components/MetricCard";
+import { PageHeader } from "../components/PageHeader";
+
+type StageAccent = "primary" | "secondary" | "warning" | "success";
+
+const STAGE_METRICS: Array<{
+  label: string;
+  key: "learnedCount" | "review2Count" | "review1Count" | "newCount";
+  accent: StageAccent;
+}> = [
+  { label: "Learned", key: "learnedCount", accent: "primary" },
+  { label: "Repeat x2", key: "review2Count", accent: "secondary" },
+  { label: "Repeat x1", key: "review1Count", accent: "warning" },
+  { label: "New", key: "newCount", accent: "success" },
+];
 
 export function AnalyticsScreen() {
   const cards = useAppStore((state) => state.cards);
@@ -64,38 +77,13 @@ export function AnalyticsScreen() {
 
       <Stack spacing={3}>
         <Grid container spacing={2}>
-          {[
-            {
-              label: "Learned",
-              value: stageCounts.learnedCount,
-              color: "primary",
-            },
-            {
-              label: "Repeat x2",
-              value: stageCounts.review2Count,
-              color: "secondary",
-            },
-            {
-              label: "Repeat x1",
-              value: stageCounts.review1Count,
-              color: "warning",
-            },
-            { label: "New", value: stageCounts.newCount, color: "success" },
-          ].map((item) => (
+          {STAGE_METRICS.map((item) => (
             <Grid size={{ xs: 6, md: 3 }} key={item.label}>
-              <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
-                <CardContent sx={{ textAlign: "center", py: 3 }}>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 800, color: `${item.color}.main` }}
-                  >
-                    {item.value}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {item.label}
-                  </Typography>
-                </CardContent>
-              </Card>
+              <MetricCard
+                accent={item.accent}
+                value={stageCounts[item.key]}
+                label={item.label}
+              />
             </Grid>
           ))}
         </Grid>

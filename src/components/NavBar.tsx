@@ -22,8 +22,8 @@ import {
   useTheme,
 } from "@mui/material";
 import { useState } from "react";
-import { useAppStore } from "../../store/useAppStore";
-import type { Screen } from "../../types";
+import { useAppStore } from "../store/useAppStore";
+import type { Screen } from "../types";
 
 const NAV_ITEMS: Array<{
   screen: Screen;

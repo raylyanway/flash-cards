@@ -1,6 +1,6 @@
 import { BookRounded } from "@mui/icons-material";
 import { Card, CardContent, Grid, Stack, Typography } from "@mui/material";
-import { PageHeader } from "../ui/PageHeader";
+import { PageHeader } from "../components/PageHeader";
 
 const libraryItems = [
   {

@@ -4,6 +4,7 @@ import {
   UploadRounded,
 } from "@mui/icons-material";
 import {
+  Box,
   Button,
   Card,
   CardContent,
@@ -19,7 +20,7 @@ import {
 import { type ChangeEvent, useRef } from "react";
 import { createCsvFromProgress, parseCsvToJson } from "../cardData";
 import { useAppStore } from "../store/useAppStore";
-import type { ProgressMap } from "../types";
+import type { Card as CardModel, ProgressMap } from "../types";
 import { getStageName, initializeMissingProgress } from "../utils/cardProgress";
 import { downloadCsv } from "../utils/downloadCsv";
 
@@ -127,7 +128,7 @@ export function ProgressSetupScreen() {
     setProgress(nextProgress);
   };
 
-  const setCardStage = (card: Card, stage: number) => {
+  const setCardStage = (card: CardModel, stage: number) => {
     setProgress({
       ...progress,
       [card.text]: {

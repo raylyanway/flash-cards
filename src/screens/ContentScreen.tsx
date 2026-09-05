@@ -33,10 +33,12 @@ import {
   parseCsvToJson,
   setContentMetadata,
   setSettingsToDB,
-} from "../../cardData";
-import { useAppStore } from "../../store/useAppStore";
-import { downloadCsv } from "../../utils/downloadCsv";
-import { PageHeader } from "../ui/PageHeader";
+} from "../cardData";
+import { useAppStore } from "../store/useAppStore";
+import { downloadCsv } from "../utils/downloadCsv";
+import { FeatureActionCard } from "../components/FeatureActionCard";
+import { PageHeader } from "../components/PageHeader";
+import { SectionCard } from "../components/SectionCard";
 
 export function ContentScreen() {
   const importContentInputRef = useRef<HTMLInputElement | null>(null);
@@ -222,139 +224,52 @@ export function ContentScreen() {
 
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
-              <CardContent
-                sx={{
-                  p: { xs: 2, md: 3 },
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <Stack spacing={2} sx={{ flex: 1 }}>
-                  <Box
-                    sx={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 3,
-                      display: "grid",
-                      placeItems: "center",
-                      bgcolor: "primary.main",
-                      color: "primary.contrastText",
-                    }}
-                  >
-                    <DownloadRounded />
-                  </Box>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                      Export a backup
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Download this collection as a CSV file and keep an offline
-                      copy.
-                    </Typography>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    startIcon={<DownloadRounded />}
-                    onClick={exportContent}
-                    sx={{ mt: "auto" }}
-                  >
-                    Export CSV
-                  </Button>
-                </Stack>
-              </CardContent>
-            </Card>
+            <FeatureActionCard
+              icon={<DownloadRounded />}
+              accent="primary"
+              title="Export a backup"
+              description="Download this collection as a CSV file and keep an offline copy."
+              actionLabel="Export CSV"
+              onAction={exportContent}
+            />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
-              <CardContent
-                sx={{
-                  p: { xs: 2, md: 3 },
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <Stack spacing={2} sx={{ flex: 1 }}>
-                  <Box
-                    sx={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 3,
-                      display: "grid",
-                      placeItems: "center",
-                      bgcolor: "secondary.main",
-                      color: "common.white",
-                    }}
-                  >
-                    <FileUploadRounded />
-                  </Box>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                      Import a collection
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Add a CSV collection and continue studying from any
-                      device.
-                    </Typography>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    startIcon={<FileUploadRounded />}
-                    onClick={() => importContentInputRef.current?.click()}
-                    sx={{ mt: "auto" }}
-                  >
-                    Choose CSV
-                  </Button>
-                  <input
-                    ref={importContentInputRef}
-                    type="file"
-                    hidden
-                    accept=".csv"
-                    onChange={handleImportContent}
-                  />
-                </Stack>
-              </CardContent>
-            </Card>
+            <FeatureActionCard
+              icon={<FileUploadRounded />}
+              accent="secondary"
+              title="Import a collection"
+              description="Add a CSV collection and continue studying from any device."
+              actionLabel="Choose CSV"
+              onAction={() => importContentInputRef.current?.click()}
+              extra={
+                <input
+                  ref={importContentInputRef}
+                  type="file"
+                  hidden
+                  accept=".csv"
+                  onChange={handleImportContent}
+                />
+              }
+            />
           </Grid>
         </Grid>
 
-        <Card
-          elevation={0}
-          sx={{ borderRadius: 4, borderColor: "rgba(239,68,68,0.22)" }}
+        <SectionCard
+          title="Delete this collection"
+          subtitle="Deletes the collection and all of its saved learning progress."
+          sx={{ borderColor: "rgba(239,68,68,0.22)" }}
         >
-          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={2}
-              justifyContent="space-between"
-              alignItems={{ xs: "flex-start", sm: "center" }}
-            >
-              <Box>
-                <Typography variant="overline" color="text.secondary">
-                  Danger zone
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  Delete this collection
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Deletes the collection and all of its saved learning progress.
-                </Typography>
-              </Box>
-              <Button
-                variant="contained"
-                color="error"
-                startIcon={<DeleteRounded />}
-                disabled={isDefaultSet || isDeleting}
-                onClick={handleDeleteContent}
-              >
-                {isDeleting ? "Deleting..." : "Delete collection"}
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<DeleteRounded />}
+            disabled={isDefaultSet || isDeleting}
+            onClick={handleDeleteContent}
+          >
+            {isDeleting ? "Deleting..." : "Delete collection"}
+          </Button>
+        </SectionCard>
       </Stack>
     </>
   );
