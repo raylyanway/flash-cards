@@ -75,7 +75,7 @@ export function createAppTheme(mode: "light" | "dark") {
       MuiPaper: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
+            // borderRadius: 12,
             border: isLight ? "1px solid #dce6e2" : "1px solid #2c4649",
             backgroundImage: "none",
           },

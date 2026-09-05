@@ -25,6 +25,8 @@ export function App() {
       <CssBaseline />
       <Box
         sx={{
+          width: "min(1160px, calc(100% - 40px))",
+          mx: "auto",
           minHeight: "100vh",
           bgcolor: "background.default",
           color: "text.primary",
@@ -36,8 +38,6 @@ export function App() {
         <Box
           component="main"
           sx={{
-            width: "min(1160px, calc(100% - 40px))",
-            mx: "auto",
             py: { xs: 3, md: 5 },
             px: { xs: 0, sm: 0 },
           }}
