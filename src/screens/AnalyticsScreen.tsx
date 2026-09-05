@@ -17,6 +17,8 @@ import {
   Typography,
 } from "@mui/material";
 import { useMemo } from "react";
+import { MetricCard } from "../components/MetricCard";
+import { PageHeader } from "../components/PageHeader";
 import { useAppStore } from "../store/useAppStore";
 import {
   countStages,
@@ -24,8 +26,6 @@ import {
   getStageName,
   initializeMissingProgress,
 } from "../utils/cardProgress";
-import { MetricCard } from "../components/MetricCard";
-import { PageHeader } from "../components/PageHeader";
 
 type StageAccent = "primary" | "secondary" | "warning" | "success";
 
@@ -88,7 +88,7 @@ export function AnalyticsScreen() {
           ))}
         </Grid>
 
-        <Card elevation={0} sx={{ borderRadius: 4 }}>
+        <Card elevation={0} sx={{ borderRadius: 2 }}>
           <TableContainer>
             <Table>
               <TableHead>

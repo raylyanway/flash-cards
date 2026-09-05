@@ -1,8 +1,8 @@
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { useMemo } from "react";
+import { NavBar } from "../components/NavBar";
 import { useAppStore } from "../store/useAppStore";
 import { createAppTheme } from "../theme";
-import { NavBar } from "../components/NavBar";
 import { ScreenSwitcher } from "./ScreenSwitcher";
 
 export function App() {
@@ -29,7 +29,7 @@ export function App() {
           bgcolor: "background.default",
           color: "text.primary",
           backgroundImage:
-            "linear-gradient(180deg, rgba(8,127,140,0.055) 0, transparent 250px)",
+            "radial-gradient(circle at top, rgba(8,127,140,0.06), transparent 34%), linear-gradient(180deg, rgba(8,127,140,0.02) 0, transparent 260px)",
         }}
       >
         <NavBar />

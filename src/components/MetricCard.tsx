@@ -23,14 +23,16 @@ export function MetricCard({
     <Card
       elevation={0}
       sx={{
-        borderRadius: compact ? 3 : 4,
+        borderRadius: compact ? 2 : 3,
         height: "100%",
         bgcolor: compact
           ? (theme) => alpha(theme.palette[accent].main, 0.08)
           : undefined,
       }}
     >
-      <CardContent sx={{ py: compact ? 1.5 : 3, textAlign: compact ? "left" : "center" }}>
+      <CardContent
+        sx={{ py: compact ? 1.5 : 3, textAlign: compact ? "left" : "center" }}
+      >
         <Stack spacing={compact ? 0 : 1}>
           <Typography
             variant={compact ? "h6" : "h4"}

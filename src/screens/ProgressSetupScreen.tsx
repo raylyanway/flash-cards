@@ -158,7 +158,7 @@ export function ProgressSetupScreen() {
         </Typography>
       </Stack>
 
-      <Card elevation={0} sx={{ borderRadius: 4 }}>
+      <Card elevation={0} sx={{ borderRadius: 2 }}>
         <CardContent sx={{ p: { xs: 2, md: 3 } }}>
           <Stack spacing={3}>
             <Box>

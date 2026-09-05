@@ -21,13 +21,13 @@ export function PageHeader({ icon, title, description }: PageHeaderProps) {
         sx={{
           width: { xs: 44, sm: 52 },
           height: { xs: 44, sm: 52 },
-          borderRadius: "14px 14px 14px 4px",
+          borderRadius: 2,
           display: "grid",
           placeItems: "center",
           bgcolor: "primary.main",
           color: "primary.contrastText",
           flexShrink: 0,
-          boxShadow: "4px 4px 0 rgba(239, 131, 84, 0.28)",
+          boxShadow: "0 10px 20px rgba(8, 127, 140, 0.18)",
         }}
       >
         {icon}
