@@ -33,7 +33,7 @@ export function createAppTheme(mode: "light" | "dark") {
       },
     },
     shape: {
-      borderRadius: 14,
+      borderRadius: 10,
     },
     typography: {
       fontFamily: '"DM Sans", "Noto Sans", sans-serif',
@@ -60,10 +60,10 @@ export function createAppTheme(mode: "light" | "dark") {
       MuiButton: {
         styleOverrides: {
           root: {
-            borderRadius: 10,
+            borderRadius: 8,
             boxShadow: "none",
             paddingInline: 17,
-            minHeight: 46,
+            minHeight: 42,
             "&:hover": { boxShadow: "none" },
           },
           containedPrimary: {
@@ -75,6 +75,7 @@ export function createAppTheme(mode: "light" | "dark") {
       MuiPaper: {
         styleOverrides: {
           root: {
+            borderRadius: 12,
             border: isLight ? "1px solid #dce6e2" : "1px solid #2c4649",
             backgroundImage: "none",
           },
@@ -83,12 +84,12 @@ export function createAppTheme(mode: "light" | "dark") {
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 14,
+            borderRadius: 12,
             border: isLight ? "1px solid #dce6e2" : "1px solid #2c4649",
             backgroundImage: "none",
             boxShadow: isLight
-              ? "0 12px 32px rgba(24, 52, 58, 0.055)"
-              : "0 16px 36px rgba(0, 0, 0, 0.16)",
+              ? "0 8px 24px rgba(24, 52, 58, 0.05)"
+              : "0 12px 30px rgba(0, 0, 0, 0.14)",
           },
         },
       },

@@ -29,7 +29,7 @@ export function LibraryScreen() {
       <Grid container spacing={3}>
         {libraryItems.map((item) => (
           <Grid size={{ xs: 12, md: 4 }} key={item.title}>
-            <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
+            <Card elevation={0} sx={{ borderRadius: 2, height: "100%" }}>
               <CardContent sx={{ p: { xs: 2, md: 3 }, height: "100%" }}>
                 <Stack spacing={1.5} sx={{ height: "100%" }}>
                   <Typography variant="overline" color="text.secondary">

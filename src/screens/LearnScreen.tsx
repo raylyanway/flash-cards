@@ -53,7 +53,7 @@ export function LearnScreen() {
       <Card
         elevation={0}
         sx={{
-          borderRadius: 5,
+          borderRadius: 3,
           p: { xs: 3, md: 4 },
           minHeight: { xs: 200, sm: 240, md: 260 },
           display: "flex",

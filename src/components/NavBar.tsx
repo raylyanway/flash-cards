@@ -58,7 +58,7 @@ export function NavBar() {
         startIcon={<Icon fontSize="small" />}
         onClick={() => handleClick(itemScreen)}
         sx={{
-          borderRadius: 999,
+          borderRadius: 1,
           px: 2,
           py: 0.75,
           minWidth: 0,
@@ -104,7 +104,7 @@ export function NavBar() {
                 sx={{
                   width: 30,
                   height: 30,
-                  borderRadius: "9px 9px 9px 3px",
+                  borderRadius: 2,
                   bgcolor: "primary.main",
                   color: "primary.contrastText",
                   display: "grid",

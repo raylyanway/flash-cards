@@ -11,13 +11,10 @@ import {
   Typography,
 } from "@mui/material";
 import { useMemo } from "react";
-import { useAppStore } from "../store/useAppStore";
-import {
-  getCompletePercent,
-  getNextReviewLabel,
-} from "../utils/cardProgress";
 import { MetricCard } from "../components/MetricCard";
 import { PageHeader } from "../components/PageHeader";
+import { useAppStore } from "../store/useAppStore";
+import { getCompletePercent, getNextReviewLabel } from "../utils/cardProgress";
 
 export function HomeScreen() {
   const cards = useAppStore((state) => state.cards);
@@ -57,7 +54,7 @@ export function HomeScreen() {
         description="Review what’s due, track your progress, and jump back in with a clean daily rhythm."
       />
 
-      <Card elevation={0} sx={{ borderRadius: 4, mb: 3 }}>
+      <Card elevation={0} sx={{ borderRadius: 2, mb: 3 }}>
         <CardContent sx={{ p: { xs: 2, md: 3 } }}>
           <Stack
             direction={{ xs: "column", sm: "row" }}

@@ -34,11 +34,11 @@ import {
   setContentMetadata,
   setSettingsToDB,
 } from "../cardData";
-import { useAppStore } from "../store/useAppStore";
-import { downloadCsv } from "../utils/downloadCsv";
 import { FeatureActionCard } from "../components/FeatureActionCard";
 import { PageHeader } from "../components/PageHeader";
 import { SectionCard } from "../components/SectionCard";
+import { useAppStore } from "../store/useAppStore";
+import { downloadCsv } from "../utils/downloadCsv";
 
 export function ContentScreen() {
   const importContentInputRef = useRef<HTMLInputElement | null>(null);
@@ -180,7 +180,7 @@ export function ContentScreen() {
       />
 
       <Stack spacing={3}>
-        <Card elevation={0} sx={{ borderRadius: 4 }}>
+        <Card elevation={0} sx={{ borderRadius: 2 }}>
           <CardContent sx={{ p: { xs: 2, md: 3 } }}>
             <Stack
               direction={{ xs: "column", sm: "row" }}

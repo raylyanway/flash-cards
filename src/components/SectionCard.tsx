@@ -24,7 +24,7 @@ export function SectionCard({
   sx,
 }: SectionCardProps) {
   return (
-    <Card elevation={0} sx={{ borderRadius: 4, ...sx }}>
+    <Card elevation={0} sx={{ borderRadius: 2, ...sx }}>
       {(title || subtitle || action) && (
         <>
           <CardContent sx={{ p: { xs: 2, md: 3 }, pb: 1.5 }}>

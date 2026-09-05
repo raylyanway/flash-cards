@@ -1,4 +1,11 @@
-import { Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Stack,
+  Typography,
+} from "@mui/material";
 import type { ReactNode } from "react";
 
 type FeatureActionCardProps = {
@@ -23,7 +30,7 @@ export function FeatureActionCard({
   extra,
 }: FeatureActionCardProps) {
   return (
-    <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
+    <Card elevation={0} sx={{ borderRadius: 2, height: "100%" }}>
       <CardContent
         sx={{
           p: { xs: 2, md: 3 },
@@ -37,11 +44,12 @@ export function FeatureActionCard({
             sx={{
               width: 52,
               height: 52,
-              borderRadius: 3,
+              borderRadius: 2,
               display: "grid",
               placeItems: "center",
               bgcolor: `${accent}.main`,
-              color: accent === "primary" ? "primary.contrastText" : "common.white",
+              color:
+                accent === "primary" ? "primary.contrastText" : "common.white",
             }}
           >
             {icon}
