@@ -55,7 +55,7 @@ export function LearnScreen() {
         sx={{
           borderRadius: 5,
           p: { xs: 3, md: 4 },
-          minHeight: 260,
+          minHeight: { xs: 200, sm: 240, md: 260 },
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -70,8 +70,16 @@ export function LearnScreen() {
               : "No cards are due"}
           </Typography>
           <Typography
-            variant="h2"
-            sx={{ fontWeight: 800, letterSpacing: -0.06 }}
+            component="h2"
+            sx={{
+              fontWeight: 800,
+              letterSpacing: -0.06,
+              // Card sets range from single words to full sentences, so the
+              // prompt scales down on small screens instead of overflowing.
+              fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3.25rem" },
+              lineHeight: 1.15,
+              wordBreak: "break-word",
+            }}
           >
             {currentCard?.text || "🎉 Great job!"}
           </Typography>

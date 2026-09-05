@@ -11,12 +11,13 @@ import {
   Typography,
 } from "@mui/material";
 import { useMemo } from "react";
-import { useAppStore } from "../../store/useAppStore";
+import { useAppStore } from "../store/useAppStore";
 import {
   getCompletePercent,
   getNextReviewLabel,
-} from "../../utils/cardProgress";
-import { PageHeader } from "../ui/PageHeader";
+} from "../utils/cardProgress";
+import { MetricCard } from "../components/MetricCard";
+import { PageHeader } from "../components/PageHeader";
 
 export function HomeScreen() {
   const cards = useAppStore((state) => state.cards);
@@ -158,67 +159,28 @@ export function HomeScreen() {
 
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 4 }}>
-                      <Card
-                        elevation={0}
-                        sx={{
-                          borderRadius: 3,
-                          bgcolor: "rgba(99,102,241,0.08)",
-                        }}
-                      >
-                        <CardContent sx={{ py: 1.5 }}>
-                          <Typography
-                            variant="h6"
-                            sx={{ fontWeight: 700, color: "primary.main" }}
-                          >
-                            {totalCards}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Cards
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                      <MetricCard
+                        size="sm"
+                        accent="primary"
+                        value={totalCards}
+                        label="Cards"
+                      />
                     </Grid>
                     <Grid size={{ xs: 4 }}>
-                      <Card
-                        elevation={0}
-                        sx={{
-                          borderRadius: 3,
-                          bgcolor: "rgba(34,197,94,0.08)",
-                        }}
-                      >
-                        <CardContent sx={{ py: 1.5 }}>
-                          <Typography
-                            variant="h6"
-                            sx={{ fontWeight: 700, color: "success.main" }}
-                          >
-                            {learnedCount}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Learned
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                      <MetricCard
+                        size="sm"
+                        accent="success"
+                        value={learnedCount}
+                        label="Learned"
+                      />
                     </Grid>
                     <Grid size={{ xs: 4 }}>
-                      <Card
-                        elevation={0}
-                        sx={{
-                          borderRadius: 3,
-                          bgcolor: "rgba(245,158,11,0.08)",
-                        }}
-                      >
-                        <CardContent sx={{ py: 1.5 }}>
-                          <Typography
-                            variant="h6"
-                            sx={{ fontWeight: 700, color: "warning.main" }}
-                          >
-                            {dueCount}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Due now
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                      <MetricCard
+                        size="sm"
+                        accent="warning"
+                        value={dueCount}
+                        label="Due now"
+                      />
                     </Grid>
                   </Grid>
                 </Stack>

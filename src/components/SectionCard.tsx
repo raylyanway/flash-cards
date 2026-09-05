@@ -27,7 +27,7 @@ export function SectionCard({
     <Card elevation={0} sx={{ borderRadius: 4, ...sx }}>
       {(title || subtitle || action) && (
         <>
-          <CardContent sx={{ pb: 1.5 }}>
+          <CardContent sx={{ p: { xs: 2, md: 3 }, pb: 1.5 }}>
             <Stack
               direction="row"
               justifyContent="space-between"
@@ -52,7 +52,7 @@ export function SectionCard({
           <Divider />
         </>
       )}
-      <CardContent>{children}</CardContent>
+      <CardContent sx={{ p: { xs: 2, md: 3 } }}>{children}</CardContent>
     </Card>
   );
 }

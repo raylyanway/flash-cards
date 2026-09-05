@@ -1,9 +1,9 @@
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { useMemo } from "react";
-import { useAppStore } from "../../store/useAppStore";
-import { createAppTheme } from "../../theme";
-import { NavBar } from "../navBar";
-import { ScreenSwitcher } from "../ScreenSwitcher";
+import { useAppStore } from "../store/useAppStore";
+import { createAppTheme } from "../theme";
+import { NavBar } from "../components/NavBar";
+import { ScreenSwitcher } from "./ScreenSwitcher";
 
 export function App() {
   const themePreference = useAppStore((state) => state.theme);

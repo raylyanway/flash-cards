@@ -30,7 +30,7 @@ function getSystemTheme(): Exclude<ThemePreference, "system"> {
 }
 
 function applyTheme(theme: Exclude<ThemePreference, "system">) {
-  document.body.classList.remove("theme-light", "theme-dark");
-  document.body.classList.add(`theme-${theme}`);
+  // Keeps native browser UI (scrollbars, form controls) in sync with the
+  // MUI theme mode, which is applied separately via ThemeProvider in App.tsx.
   document.documentElement.style.colorScheme = theme;
 }
