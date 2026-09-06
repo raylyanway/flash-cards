@@ -4,6 +4,10 @@ export function createAppTheme(mode: "light" | "dark") {
   const isLight = mode === "light";
 
   return createTheme({
+    colorSchemes: { light: true, dark: true },
+    cssVariables: {
+      colorSchemeSelector: "data",
+    },
     palette: {
       mode,
       primary: {
