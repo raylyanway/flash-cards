@@ -22,7 +22,7 @@ export function App() {
 
   return (
     <ThemeProvider theme={appTheme}>
-      <CssBaseline />
+      <CssBaseline enableColorScheme />
       <Box
         sx={{
           width: "min(1160px, calc(100% - 40px))",
