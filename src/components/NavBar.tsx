@@ -45,7 +45,7 @@ export function NavBar() {
         boxShadow: 0,
         bgcolor: "transparent",
         backgroundImage: "none",
-        mt: "calc(var(--template-frame-height, 0px) + 28px)",
+        mt: "1.5rem",
       }}
     >
       <Container maxWidth="lg">
