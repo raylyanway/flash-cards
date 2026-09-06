@@ -8,6 +8,7 @@ import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
+import MenuList from "@mui/material/MenuList";
 import { alpha, styled } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -138,24 +139,25 @@ export function NavBar() {
                     <CloseRoundedIcon />
                   </IconButton>
                 </Box>
-
-                <MenuItem>Features</MenuItem>
-                <MenuItem>Testimonials</MenuItem>
-                <MenuItem>Highlights</MenuItem>
-                <MenuItem>Pricing</MenuItem>
-                <MenuItem>FAQ</MenuItem>
-                <MenuItem>Blog</MenuItem>
-                <Divider sx={{ my: 3 }} />
-                <MenuItem>
-                  <Button color="primary" variant="contained" fullWidth>
-                    Sign up
-                  </Button>
-                </MenuItem>
-                <MenuItem>
-                  <Button color="primary" variant="outlined" fullWidth>
-                    Sign in
-                  </Button>
-                </MenuItem>
+                <MenuList>
+                  <MenuItem>Features</MenuItem>
+                  <MenuItem>Testimonials</MenuItem>
+                  <MenuItem>Highlights</MenuItem>
+                  <MenuItem>Pricing</MenuItem>
+                  <MenuItem>FAQ</MenuItem>
+                  <MenuItem>Blog</MenuItem>
+                  <Divider sx={{ my: 3 }} />
+                  <MenuItem>
+                    <Button color="primary" variant="contained" fullWidth>
+                      Sign up
+                    </Button>
+                  </MenuItem>
+                  <MenuItem>
+                    <Button color="primary" variant="outlined" fullWidth>
+                      Sign in
+                    </Button>
+                  </MenuItem>
+                </MenuList>
               </Box>
             </Drawer>
           </Box>
