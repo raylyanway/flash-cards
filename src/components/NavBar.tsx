@@ -40,7 +40,6 @@ export function NavBar() {
 
   return (
     <AppBar
-      position="fixed"
       enableColorOnDark
       sx={{
         boxShadow: 0,
