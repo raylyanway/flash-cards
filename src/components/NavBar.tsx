@@ -1,231 +1,166 @@
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MenuIcon from "@mui/icons-material/Menu";
-import {
-  AppBar,
-  Box,
-  Button,
-  Drawer,
-  IconButton,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
-import { useState } from "react";
+import Drawer from "@mui/material/Drawer";
+import IconButton from "@mui/material/IconButton";
+import MenuItem from "@mui/material/MenuItem";
+import { alpha, styled } from "@mui/material/styles";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
+import * as React from "react";
+import ColorModeIconDropdown from "./ColorModeIconDropdown";
 
-// const NAV_ITEMS: Array<{
-//   screen: Screen;
-//   label: string;
-//   icon: typeof HomeRounded;
-// }> = [
-//   { screen: "home", label: "Home", icon: HomeRounded },
-//   { screen: "content", label: "Content", icon: StorageRounded },
-//   { screen: "analytics", label: "Analytics", icon: AnalyticsRounded },
-//   { screen: "settings", label: "Settings", icon: SettingsRounded },
-//   { screen: "library", label: "Library", icon: BookRounded },
-// ];
-
-const drawerWidth = 240;
-const navItems = ["Home", "About", "Contact"];
+const StyledToolbar = styled(Toolbar)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  flexShrink: 0,
+  borderRadius: `calc(${theme.shape.borderRadius}px + 8px)`,
+  backdropFilter: "blur(24px)",
+  border: "1px solid",
+  borderColor: (theme.vars || theme).palette.divider,
+  backgroundColor: theme.vars
+    ? `rgba(${theme.vars.palette.background.defaultChannel} / 0.4)`
+    : alpha(theme.palette.background.default, 0.4),
+  boxShadow: (theme.vars || theme).shadows[1],
+  padding: "8px 12px",
+}));
 
 export function NavBar() {
-  // const screen = useAppStore((state) => state.screen);
-  // const setScreen = useAppStore((state) => state.setScreen);
-  // const [isOpen, setIsOpen] = useState(false);
-  // const theme = useTheme();
+  const [open, setOpen] = React.useState(false);
 
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const handleDrawerToggle = () => {
-    setMobileOpen((prevState) => !prevState);
+  const toggleDrawer = (newOpen: boolean) => () => {
+    setOpen(newOpen);
   };
 
-  const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
-      <Typography variant="h6" sx={{ my: 2 }}>
-        MUI
-      </Typography>
-      <Divider />
-      <List>
-        {navItems.map((item) => (
-          <ListItem key={item} disablePadding>
-            <ListItemButton sx={{ textAlign: "center" }}>
-              <ListItemText primary={item} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </Box>
-  );
-  // const mobile = useMediaQuery(theme.breakpoints.down("md"));
-
-  // const handleClick = (nextScreen: Screen) => {
-  //   setScreen(nextScreen);
-  //   setIsOpen(false);
-  // };
-
-  // const navButtons = NAV_ITEMS.map(
-  //   ({ screen: itemScreen, label, icon: Icon }) => (
-  //     <Button
-  //       key={itemScreen}
-  //       color={screen === itemScreen ? "primary" : "inherit"}
-  //       variant={screen === itemScreen ? "contained" : "text"}
-  //       startIcon={<Icon fontSize="small" />}
-  //       onClick={() => handleClick(itemScreen)}
-  //       sx={{
-  //         borderRadius: 1,
-  //         px: 2,
-  //         py: 0.75,
-  //         minWidth: 0,
-  //         fontWeight: 600,
-  //       }}
-  //     >
-  //       {label}
-  //     </Button>
-  //   ),
-  // );
-
   return (
-    <Box sx={{ display: "flex" }}>
-      <AppBar component="nav">
-        <Toolbar sx={{ justifyContent: "end" }}>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            MUI
-          </Typography>
-          <Box sx={{ display: { xs: "none", sm: "block" } }}>
-            {navItems.map((item) => (
-              <Button key={item} sx={{ color: "#fff" }}>
-                {item}
-              </Button>
-            ))}
-          </Box>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerToggle}
-            sx={{ display: { sm: "none" } }}
+    <AppBar
+      position="fixed"
+      enableColorOnDark
+      sx={{
+        boxShadow: 0,
+        bgcolor: "transparent",
+        backgroundImage: "none",
+        mt: "calc(var(--template-frame-height, 0px) + 28px)",
+      }}
+    >
+      <Container maxWidth="lg">
+        <StyledToolbar variant="dense" disableGutters>
+          <Box
+            sx={{ flexGrow: 1, display: "flex", alignItems: "center", px: 0 }}
           >
-            <MenuIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <nav>
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
-          sx={{
-            display: { xs: "block", sm: "none" },
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: drawerWidth,
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-      </nav>
-      <Box component="main" sx={{ p: 3 }}>
-        <Toolbar />
-      </Box>
-    </Box>
-    // <AppBar component="nav">
-    //   <Toolbar
-    //     sx={{
-    //       width: "min(1200px, calc(100% - 32px))",
-    //       mx: "auto",
-    //       minHeight: 72,
-    //     }}
-    //   >
-    //     <Stack component="nav" direction="row" sx={{ width: "100%" }}>
-    //       <Box>
-    //         <Stack direction="row" spacing={1.25} alignItems="center">
-    //           <Box
-    //             sx={{
-    //               width: 30,
-    //               height: 30,
-    //               borderRadius: 2,
-    //               bgcolor: "primary.main",
-    //               color: "primary.contrastText",
-    //               display: "grid",
-    //               placeItems: "center",
-    //               fontSize: 15,
-    //               fontWeight: 900,
-    //               transform: "rotate(-8deg)",
-    //             }}
-    //           >
-    //             f
-    //           </Box>
-    //           <Box>
-    //             <Typography
-    //               variant="h6"
-    //               component="div"
-    //               sx={{
-    //                 fontWeight: 800,
-    //                 lineHeight: 1,
-    //                 letterSpacing: "-0.03em",
-    //               }}
-    //             >
-    //               Flash Cards
-    //             </Typography>
-    //             <Typography
-    //               variant="caption"
-    //               sx={{
-    //                 color: "text.secondary",
-    //                 letterSpacing: "0.08em",
-    //                 textTransform: "uppercase",
-    //               }}
-    //             >
-    //               Learn deliberately
-    //             </Typography>
-    //           </Box>
-    //         </Stack>
-    //       </Box>
+            <Typography
+              variant="h1"
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                alignItems: "center",
+                fontSize: "clamp(1rem, 10vw, 1.5rem)",
+              }}
+            >
+              Flash&nbsp;Cards
+            </Typography>
+            <Box sx={{ display: { xs: "none", md: "flex" } }}>
+              <Button variant="text" color="info" size="small">
+                Features
+              </Button>
+              <Button variant="text" color="info" size="small">
+                Testimonials
+              </Button>
+              <Button variant="text" color="info" size="small">
+                Highlights
+              </Button>
+              <Button variant="text" color="info" size="small">
+                Pricing
+              </Button>
+              <Button
+                variant="text"
+                color="info"
+                size="small"
+                sx={{ minWidth: 0 }}
+              >
+                FAQ
+              </Button>
+              <Button
+                variant="text"
+                color="info"
+                size="small"
+                sx={{ minWidth: 0 }}
+              >
+                Blog
+              </Button>
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              display: { xs: "none", md: "flex" },
+              gap: 1,
+              alignItems: "center",
+            }}
+          >
+            <Button color="primary" variant="text" size="small">
+              Sign in
+            </Button>
+            <Button color="primary" variant="contained" size="small">
+              Sign up
+            </Button>
+            <ColorModeIconDropdown />
+          </Box>
+          <Box sx={{ display: { xs: "flex", md: "none" }, gap: 1 }}>
+            <ColorModeIconDropdown size="medium" />
+            <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
+              <MenuIcon />
+            </IconButton>
+            <Drawer
+              anchor="top"
+              open={open}
+              onClose={toggleDrawer(false)}
+              slotProps={{
+                paper: {
+                  sx: {
+                    top: "var(--template-frame-height, 0px)",
+                  },
+                },
+              }}
+            >
+              <Box sx={{ p: 2, backgroundColor: "background.default" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <IconButton onClick={toggleDrawer(false)}>
+                    <CloseRoundedIcon />
+                  </IconButton>
+                </Box>
 
-    //       {mobile ? (
-    //         <>
-    //           <IconButton
-    //             color="inherit"
-    //             aria-label={isOpen ? "Close navigation" : "Open navigation"}
-    //             aria-expanded={isOpen}
-    //             onClick={() => setIsOpen((current) => !current)}
-    //             sx={{ border: "1px solid", borderColor: "divider" }}
-    //           >
-    //             <MenuRounded />
-    //           </IconButton>
-    //           <Drawer
-    //             anchor="top"
-    //             open={isOpen}
-    //             onClose={() => setIsOpen(false)}
-    //           >
-    //             <List sx={{ px: 1, py: 2 }}>
-    //               {NAV_ITEMS.map(
-    //                 ({ screen: itemScreen, label, icon: Icon }) => (
-    //                   <ListItemButton
-    //                     key={itemScreen}
-    //                     selected={screen === itemScreen}
-    //                     onClick={() => handleClick(itemScreen)}
-    //                   >
-    //                     <Box component={Icon} sx={{ mr: 1.5 }} />
-    //                     <ListItemText primary={label} />
-    //                   </ListItemButton>
-    //                 ),
-    //               )}
-    //             </List>
-    //           </Drawer>
-    //         </>
-    //       ) : (
-    //         <Stack direction="row" spacing={1}>
-    //           {navButtons}
-    //         </Stack>
-    //       )}
-    //     </Stack>
-    //   </Toolbar>
-    // </AppBar>
+                <MenuItem>Features</MenuItem>
+                <MenuItem>Testimonials</MenuItem>
+                <MenuItem>Highlights</MenuItem>
+                <MenuItem>Pricing</MenuItem>
+                <MenuItem>FAQ</MenuItem>
+                <MenuItem>Blog</MenuItem>
+                <Divider sx={{ my: 3 }} />
+                <MenuItem>
+                  <Button color="primary" variant="contained" fullWidth>
+                    Sign up
+                  </Button>
+                </MenuItem>
+                <MenuItem>
+                  <Button color="primary" variant="outlined" fullWidth>
+                    Sign in
+                  </Button>
+                </MenuItem>
+              </Box>
+            </Drawer>
+          </Box>
+        </StyledToolbar>
+      </Container>
+    </AppBar>
   );
 }
