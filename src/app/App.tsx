@@ -1,4 +1,5 @@
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
+import Container from "@mui/material/Container";
 import { useMemo } from "react";
 import { NavBar } from "../components/NavBar";
 import { useAppStore } from "../store/useAppStore";
@@ -23,28 +24,18 @@ export function App() {
   return (
     <ThemeProvider theme={appTheme}>
       <CssBaseline enableColorScheme />
-      <Box
-        sx={{
-          width: "min(1160px, calc(100% - 40px))",
-          mx: "auto",
-          minHeight: "100vh",
-          bgcolor: "background.default",
-          color: "text.primary",
-          backgroundImage:
-            "radial-gradient(circle at top, rgba(8,127,140,0.06), transparent 34%), linear-gradient(180deg, rgba(8,127,140,0.02) 0, transparent 260px)",
-        }}
-      >
-        <NavBar />
+      <NavBar />
+      <Container maxWidth="lg">
         <Box
           component="main"
           sx={{
-            py: { xs: 3, md: 5 },
-            px: { xs: 0, sm: 0 },
+            pt: { xs: 14, sm: 20 },
+            pb: { xs: 8, sm: 12 },
           }}
         >
           <ScreenSwitcher />
         </Box>
-      </Box>
+      </Container>
     </ThemeProvider>
   );
 }
