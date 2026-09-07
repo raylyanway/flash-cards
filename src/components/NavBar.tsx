@@ -1,5 +1,6 @@
 import {
   AnalyticsRounded,
+  BookRounded,
   HomeRounded,
   SettingsRounded,
   StorageRounded,
@@ -47,7 +48,7 @@ const NAV_ITEMS: Array<{
   { screen: "content", label: "Content", icon: StorageRounded },
   { screen: "analytics", label: "Analytics", icon: AnalyticsRounded },
   { screen: "settings", label: "Settings", icon: SettingsRounded },
-  // { screen: "library", label: "Library", icon: BookRounded },
+  { screen: "library", label: "Library", icon: BookRounded },
 ];
 
 export function NavBar() {
