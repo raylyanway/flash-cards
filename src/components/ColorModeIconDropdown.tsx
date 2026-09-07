@@ -1,6 +1,5 @@
 import DarkModeIcon from "@mui/icons-material/DarkModeRounded";
 import LightModeIcon from "@mui/icons-material/LightModeRounded";
-import Box from "@mui/material/Box";
 import IconButton, { IconButtonOwnProps } from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -11,33 +10,19 @@ export default function ColorModeIconDropdown(props: IconButtonOwnProps) {
   const { mode, systemMode, setMode } = useColorScheme();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
   const handleClose = () => {
     setAnchorEl(null);
   };
+
   const handleMode = (targetMode: "system" | "light" | "dark") => () => {
     setMode(targetMode);
     handleClose();
   };
-
-  if (!mode) {
-    return (
-      <Box
-        data-screenshot="toggle-mode"
-        sx={(theme) => ({
-          verticalAlign: "bottom",
-          display: "inline-flex",
-          width: "2.25rem",
-          height: "2.25rem",
-          borderRadius: (theme.vars || theme).shape.borderRadius,
-          border: "1px solid",
-          borderColor: (theme.vars || theme).palette.divider,
-        })}
-      />
-    );
-  }
 
   const resolvedMode = (systemMode || mode) as "light" | "dark";
   const icon = {
