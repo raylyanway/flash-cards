@@ -1,3 +1,9 @@
+import {
+  AnalyticsRounded,
+  HomeRounded,
+  SettingsRounded,
+  StorageRounded,
+} from "@mui/icons-material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MenuIcon from "@mui/icons-material/Menu";
 import AppBar from "@mui/material/AppBar";
@@ -12,6 +18,8 @@ import { alpha, styled } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
+import { useAppStore } from "../store/useAppStore";
+import type { Screen } from "../types";
 import ColorModeIconDropdown from "./ColorModeIconDropdown";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
@@ -30,11 +38,31 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   padding: "8px 12px",
 }));
 
+const NAV_ITEMS: Array<{
+  screen: Screen;
+  label: string;
+  icon: typeof HomeRounded;
+}> = [
+  { screen: "home", label: "Home", icon: HomeRounded },
+  { screen: "content", label: "Content", icon: StorageRounded },
+  { screen: "analytics", label: "Analytics", icon: AnalyticsRounded },
+  { screen: "settings", label: "Settings", icon: SettingsRounded },
+  // { screen: "library", label: "Library", icon: BookRounded },
+];
+
 export function NavBar() {
+  const screen = useAppStore((state) => state.screen);
+  const setScreen = useAppStore((state) => state.setScreen);
+
   const [open, setOpen] = React.useState(false);
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
+  };
+
+  const handleClick = (screen: Screen) => () => {
+    setScreen(screen);
+    setOpen(false);
   };
 
   return (
@@ -51,40 +79,27 @@ export function NavBar() {
       <Container maxWidth="lg">
         <StyledToolbar variant="dense" disableGutters>
           <Box
-            sx={{ flexGrow: 1, display: "flex", alignItems: "center", px: 0 }}
+            sx={{
+              flexGrow: 1,
+              display: "flex",
+              alignItems: "center",
+              columnGap: 5,
+            }}
           >
             <Typography variant="h6" component="div">
               Flash&nbsp;Cards
             </Typography>
-            <Box sx={{ display: { xs: "none", md: "flex" } }}>
-              <Button variant="text" color="info" size="small">
-                Features
-              </Button>
-              <Button variant="text" color="info" size="small">
-                Testimonials
-              </Button>
-              <Button variant="text" color="info" size="small">
-                Highlights
-              </Button>
-              <Button variant="text" color="info" size="small">
-                Pricing
-              </Button>
-              <Button
-                variant="text"
-                color="info"
-                size="small"
-                sx={{ minWidth: 0 }}
-              >
-                FAQ
-              </Button>
-              <Button
-                variant="text"
-                color="info"
-                size="small"
-                sx={{ minWidth: 0 }}
-              >
-                Blog
-              </Button>
+            <Box sx={{ display: { xs: "none", md: "block" } }}>
+              {NAV_ITEMS.map(({ label, screen: itemScreen }) => (
+                <Button
+                  key={label}
+                  color={screen === itemScreen ? "primary" : "inherit"}
+                  variant={screen === itemScreen ? "contained" : "text"}
+                  onClick={handleClick(itemScreen)}
+                >
+                  {label}
+                </Button>
+              ))}
             </Box>
           </Box>
           <ColorModeIconDropdown
