@@ -180,14 +180,9 @@ export function ContentScreen() {
       />
 
       <Stack spacing={3}>
-        <Card elevation={0} sx={{ borderRadius: 2 }}>
+        <Card>
           <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={2}
-              justifyContent="space-between"
-              alignItems={{ xs: "flex-start", sm: "center" }}
-            >
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <Box>
                 <Typography variant="overline" color="text.secondary">
                   Active collection

@@ -30,7 +30,7 @@ export function FeatureActionCard({
   extra,
 }: FeatureActionCardProps) {
   return (
-    <Card elevation={0} sx={{ borderRadius: 2, height: "100%" }}>
+    <Card>
       <CardContent
         sx={{
           p: { xs: 2, md: 3 },
