@@ -21,10 +21,7 @@ export function MetricCard({
 
   return (
     <Card
-      elevation={0}
       sx={{
-        borderRadius: compact ? 2 : 3,
-        height: "100%",
         bgcolor: compact
           ? (theme) => alpha(theme.palette[accent].main, 0.08)
           : undefined,
