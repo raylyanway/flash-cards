@@ -6,13 +6,13 @@ import {
 } from "@mui/icons-material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MenuIcon from "@mui/icons-material/Menu";
+import { MenuItem } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
-import MenuItem from "@mui/material/MenuItem";
 import MenuList from "@mui/material/MenuList";
 import { alpha, styled } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
@@ -105,7 +105,7 @@ export function NavBar() {
           <ColorModeIconDropdown
             sx={{ display: { xs: "none", md: "block" } }}
           />
-          <Box sx={{ display: { xs: "flex", md: "none" }, gap: 1 }}>
+          <Box sx={{ display: { xs: "flex", md: "none" }, columnGap: 1 }}>
             <ColorModeIconDropdown size="medium" />
             <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
               <MenuIcon />
@@ -134,12 +134,15 @@ export function NavBar() {
                   </IconButton>
                 </Box>
                 <MenuList>
-                  <MenuItem>Features</MenuItem>
-                  <MenuItem>Testimonials</MenuItem>
-                  <MenuItem>Highlights</MenuItem>
-                  <MenuItem>Pricing</MenuItem>
-                  <MenuItem>FAQ</MenuItem>
-                  <MenuItem>Blog</MenuItem>
+                  {NAV_ITEMS.map(({ label, screen: itemScreen }) => (
+                    <MenuItem
+                      key={label}
+                      selected={screen === itemScreen}
+                      onClick={handleClick(itemScreen)}
+                    >
+                      {label}
+                    </MenuItem>
+                  ))}
                 </MenuList>
               </Box>
             </Drawer>
