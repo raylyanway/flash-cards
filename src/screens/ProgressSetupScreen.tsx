@@ -18,7 +18,7 @@ import {
   Typography,
 } from "@mui/material";
 import { type ChangeEvent, useRef } from "react";
-import { createCsvFromProgress, parseCsvToJson } from "../cardData";
+import { createCsvFromProgress, parseCsvToJson } from "../DB";
 import { useAppStore } from "../store/useAppStore";
 import type { Card as CardModel, ProgressMap } from "../types";
 import { getStageName, initializeMissingProgress } from "../utils/cardProgress";

@@ -33,7 +33,7 @@ import {
   parseCsvToJson,
   setContentMetadata,
   setSettingsToDB,
-} from "../cardData";
+} from "../DB";
 import { FeatureActionCard } from "../components/FeatureActionCard";
 import { PageHeader } from "../components/PageHeader";
 import { SectionCard } from "../components/SectionCard";

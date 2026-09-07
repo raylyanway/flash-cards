@@ -5,11 +5,18 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { useColorScheme } from "@mui/material/styles";
 import * as React from "react";
+import { setSettingsToDB } from "../DB";
+import { useAppStore } from "../store/useAppStore";
+import { ThemePreference } from "../types";
 
 export default function ColorModeIconDropdown(props: IconButtonOwnProps) {
   const { mode, systemMode, setMode } = useColorScheme();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+  const currentSet = useAppStore((state) => state.currentSet);
+
   const open = Boolean(anchorEl);
+  const resolvedMode = systemMode || mode;
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -19,12 +26,12 @@ export default function ColorModeIconDropdown(props: IconButtonOwnProps) {
     setAnchorEl(null);
   };
 
-  const handleMode = (targetMode: "system" | "light" | "dark") => () => {
+  const handleMode = (targetMode: ThemePreference) => async () => {
     setMode(targetMode);
+    await setSettingsToDB({ currentSet, theme: targetMode });
     handleClose();
   };
 
-  const resolvedMode = (systemMode || mode) as "light" | "dark";
   const icon = {
     light: <LightModeIcon />,
     dark: <DarkModeIcon />,

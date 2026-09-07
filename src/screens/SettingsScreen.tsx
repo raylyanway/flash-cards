@@ -1,35 +1,21 @@
 import { SettingsRounded } from "@mui/icons-material";
-import {
-  Button,
-  FormControl,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  Stack,
-  Typography,
-} from "@mui/material";
-import {
-  deleteAppDatabase,
-  setCachedDataVersion,
-  setSettingsToDB,
-} from "../cardData";
-import { useAppStore } from "../store/useAppStore";
-import type { ThemePreference } from "../types";
+import { Button, Stack } from "@mui/material";
 import { PageHeader } from "../components/PageHeader";
 import { SectionCard } from "../components/SectionCard";
+import { deleteAppDatabase, setCachedDataVersion } from "../DB";
 
-const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
+// const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
 
-function getThemeDescription(option: ThemePreference) {
-  if (option === "system") return "Follow your device theme preference.";
-  if (option === "light") return "Soft, bright, and easy on the eyes.";
-  return "High-contrast dark mode for focused study sessions.";
-}
+// function getThemeDescription(option: ThemePreference) {
+//   if (option === "system") return "Follow your device theme preference.";
+//   if (option === "light") return "Soft, bright, and easy on the eyes.";
+//   return "High-contrast dark mode for focused study sessions.";
+// }
 
 export function SettingsScreen() {
-  const theme = useAppStore((state) => state.theme);
-  const currentSet = useAppStore((state) => state.currentSet);
-  const setTheme = useAppStore((state) => state.setTheme);
+  // const theme = useAppStore((state) => state.theme);
+  // const currentSet = useAppStore((state) => state.currentSet);
+  // const setTheme = useAppStore((state) => state.setTheme);
 
   const handleDeleteDatabase = async () => {
     const confirmed = confirm(
@@ -50,10 +36,10 @@ export function SettingsScreen() {
     }
   };
 
-  const handleThemeChange = async (nextTheme: ThemePreference) => {
-    setTheme(nextTheme);
-    await setSettingsToDB({ currentSet, theme: nextTheme });
-  };
+  // const handleThemeChange = async (nextTheme: ThemePreference) => {
+  //   setTheme(nextTheme);
+  //   await setSettingsToDB({ currentSet, theme: nextTheme });
+  // };
 
   return (
     <>
@@ -64,7 +50,7 @@ export function SettingsScreen() {
       />
 
       <Stack spacing={3}>
-        <SectionCard title="App theme">
+        {/* <SectionCard title="App theme">
           <FormControl>
             <RadioGroup
               value={theme}
@@ -95,7 +81,7 @@ export function SettingsScreen() {
               ))}
             </RadioGroup>
           </FormControl>
-        </SectionCard>
+        </SectionCard> */}
 
         <SectionCard
           title="Database"

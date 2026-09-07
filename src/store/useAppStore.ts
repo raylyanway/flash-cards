@@ -6,7 +6,7 @@ import {
   getSettingsFromDB,
   initializeContent,
   setProgressToDB,
-} from "../cardData";
+} from "../DB";
 import type {
   Card,
   ContentOption,
