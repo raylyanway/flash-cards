@@ -4,7 +4,6 @@ import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
@@ -43,6 +42,7 @@ export function NavBar() {
       enableColorOnDark
       sx={{
         boxShadow: 0,
+        color: "text.primary",
         bgcolor: "transparent",
         backgroundImage: "none",
         mt: "1.5rem",
@@ -53,15 +53,7 @@ export function NavBar() {
           <Box
             sx={{ flexGrow: 1, display: "flex", alignItems: "center", px: 0 }}
           >
-            <Typography
-              variant="h1"
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                alignItems: "center",
-                fontSize: "clamp(1rem, 10vw, 1.5rem)",
-              }}
-            >
+            <Typography variant="h6" component="div">
               Flash&nbsp;Cards
             </Typography>
             <Box sx={{ display: { xs: "none", md: "flex" } }}>
@@ -95,21 +87,9 @@ export function NavBar() {
               </Button>
             </Box>
           </Box>
-          <Box
-            sx={{
-              display: { xs: "none", md: "flex" },
-              gap: 1,
-              alignItems: "center",
-            }}
-          >
-            <Button color="primary" variant="text" size="small">
-              Sign in
-            </Button>
-            <Button color="primary" variant="contained" size="small">
-              Sign up
-            </Button>
-            <ColorModeIconDropdown />
-          </Box>
+          <ColorModeIconDropdown
+            sx={{ display: { xs: "none", md: "block" } }}
+          />
           <Box sx={{ display: { xs: "flex", md: "none" }, gap: 1 }}>
             <ColorModeIconDropdown size="medium" />
             <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
@@ -145,17 +125,6 @@ export function NavBar() {
                   <MenuItem>Pricing</MenuItem>
                   <MenuItem>FAQ</MenuItem>
                   <MenuItem>Blog</MenuItem>
-                  <Divider sx={{ my: 3 }} />
-                  <MenuItem>
-                    <Button color="primary" variant="contained" fullWidth>
-                      Sign up
-                    </Button>
-                  </MenuItem>
-                  <MenuItem>
-                    <Button color="primary" variant="outlined" fullWidth>
-                      Sign in
-                    </Button>
-                  </MenuItem>
                 </MenuList>
               </Box>
             </Drawer>
