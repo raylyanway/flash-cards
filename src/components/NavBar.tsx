@@ -89,12 +89,16 @@ export function NavBar() {
             <Typography variant="h6" component="div">
               Flash&nbsp;Cards
             </Typography>
-            <Box sx={{ display: { xs: "none", md: "block" } }}>
+            <Box sx={{ display: { xs: "none", md: "flex", columnGap: 16 } }}>
               {NAV_ITEMS.map(({ label, screen: itemScreen }) => (
                 <Button
                   key={label}
+                  sx={{
+                    borderBottom: screen === itemScreen ? 1 : 0,
+                    borderColor: "primary.main",
+                  }}
                   color={screen === itemScreen ? "primary" : "inherit"}
-                  variant={screen === itemScreen ? "contained" : "text"}
+                  variant="text"
                   onClick={handleClick(itemScreen)}
                 >
                   {label}
