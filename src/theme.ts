@@ -4,6 +4,10 @@ export function createAppTheme(mode: "light" | "dark") {
   const isLight = mode === "light";
 
   return createTheme({
+    colorSchemes: { light: true, dark: true },
+    cssVariables: {
+      colorSchemeSelector: "data",
+    },
     palette: {
       mode,
       primary: {
@@ -69,15 +73,6 @@ export function createAppTheme(mode: "light" | "dark") {
           containedPrimary: {
             color: "#fffefa",
             "&:hover": { backgroundColor: isLight ? "#075e68" : "#2dabb0" },
-          },
-        },
-      },
-      MuiPaper: {
-        styleOverrides: {
-          root: {
-            borderRadius: 12,
-            border: isLight ? "1px solid #dce6e2" : "1px solid #2c4649",
-            backgroundImage: "none",
           },
         },
       },
