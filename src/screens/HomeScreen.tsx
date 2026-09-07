@@ -1,5 +1,6 @@
 import { HomeRounded, PlayArrowRounded } from "@mui/icons-material";
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -8,6 +9,7 @@ import {
   Grid,
   LinearProgress,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import { useMemo } from "react";
@@ -19,9 +21,15 @@ import { getCompletePercent, getNextReviewLabel } from "../utils/cardProgress";
 export function HomeScreen() {
   const cards = useAppStore((state) => state.cards);
   const currentSet = useAppStore((state) => state.currentSet);
+  const contentOptions = useAppStore((state) => state.contentOptions);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
   const setScreen = useAppStore((state) => state.setScreen);
+
+  const options = useMemo(
+    () => contentOptions.map((option) => option.key),
+    [contentOptions],
+  );
 
   const completePercent = useMemo(
     () => getCompletePercent(cards, progress),
@@ -56,20 +64,21 @@ export function HomeScreen() {
 
       <Card elevation={0} sx={{ borderRadius: 2, mb: 3 }}>
         <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            justifyContent="space-between"
-            alignItems={{ xs: "flex-start", sm: "center" }}
-          >
-            <Box>
-              <Typography variant="overline" color="text.secondary">
-                Current set
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                {currentSet}
-              </Typography>
-            </Box>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <Autocomplete
+              sx={{ flexGrow: 1 }}
+              options={options}
+              value={currentSet}
+              onChange={(event, newValue) => {
+                if (newValue) {
+                  useAppStore.setState({ currentSet: newValue });
+                }
+              }}
+              size="small"
+              renderInput={(params) => (
+                <TextField {...params} label="current set" variant="standard" />
+              )}
+            />
             <Button
               variant="contained"
               startIcon={<PlayArrowRounded />}
@@ -86,11 +95,7 @@ export function HomeScreen() {
         <Grid size={{ xs: 12, md: 7 }}>
           <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={3}
-                alignItems="center"
-              >
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
                 <Box sx={{ width: { xs: 170, sm: 190 }, mx: "auto" }}>
                   <Box
                     sx={{
@@ -120,7 +125,7 @@ export function HomeScreen() {
                         borderColor: "divider",
                       }}
                     >
-                      <Box textAlign="center">
+                      <Box>
                         <Typography
                           variant="h4"
                           sx={{ fontWeight: 800, lineHeight: 1 }}
