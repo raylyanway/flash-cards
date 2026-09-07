@@ -50,39 +50,6 @@ export function SettingsScreen() {
       />
 
       <Stack spacing={3}>
-        {/* <SectionCard title="App theme">
-          <FormControl>
-            <RadioGroup
-              value={theme}
-              onChange={(event) =>
-                handleThemeChange(event.target.value as ThemePreference)
-              }
-            >
-              {THEME_OPTIONS.map((option) => (
-                <FormControlLabel
-                  key={option}
-                  value={option}
-                  control={<Radio />}
-                  label={
-                    <Stack spacing={0.2}>
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ textTransform: "capitalize" }}
-                      >
-                        {option}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {getThemeDescription(option)}
-                      </Typography>
-                    </Stack>
-                  }
-                  sx={{ py: 0.75, px: 1, borderRadius: 2 }}
-                />
-              ))}
-            </RadioGroup>
-          </FormControl>
-        </SectionCard> */}
-
         <SectionCard
           title="Database"
           subtitle="Delete the saved app database and reset IndexedDB data. This does not remove your content files."
