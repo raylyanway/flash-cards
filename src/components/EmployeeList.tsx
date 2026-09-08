@@ -157,18 +157,18 @@ export default function EmployeeList() {
 
   const handleRowClick = React.useCallback<GridEventListener<"rowClick">>(
     ({ row }) => {
-      navigate(`/employees/${row.id}`);
+      navigate(`/library/employees/${row.id}`);
     },
     [navigate],
   );
 
   const handleCreateClick = React.useCallback(() => {
-    navigate("/employees/new");
+    navigate("/library/employees/new");
   }, [navigate]);
 
   const handleRowEdit = React.useCallback(
     (employee: Employee) => () => {
-      navigate(`/employees/${employee.id}/edit`);
+      navigate(`/library/employees/${employee.id}/edit`);
     },
     [navigate],
   );

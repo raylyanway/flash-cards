@@ -98,7 +98,7 @@ function EmployeeEditForm({
         autoHideDuration: 3000,
       });
 
-      navigate("/employees");
+      navigate("/library/employees");
     } catch (editError) {
       notifications.show(
         `Failed to edit employee. Reason: ${(editError as Error).message}`,

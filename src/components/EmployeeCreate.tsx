@@ -92,7 +92,7 @@ export default function EmployeeCreate() {
         autoHideDuration: 3000,
       });
 
-      navigate("/employees");
+      navigate("/library/employees");
     } catch (createError) {
       notifications.show(
         `Failed to create employee. Reason: ${(createError as Error).message}`,
