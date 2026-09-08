@@ -18,6 +18,7 @@ import {
   Typography,
 } from "@mui/material";
 import { type ChangeEvent, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { createCsvFromProgress, parseCsvToJson } from "../DB";
 import { useAppStore } from "../store/useAppStore";
 import type { Card as CardModel, ProgressMap } from "../types";
@@ -36,8 +37,8 @@ export function ProgressSetupScreen() {
   const saveProgress = useAppStore((state) => state.saveProgress);
   const setProgress = useAppStore((state) => state.setProgress);
   const setProgressSearch = useAppStore((state) => state.setProgressSearch);
-  const setScreen = useAppStore((state) => state.setScreen);
   const setSetupBackup = useAppStore((state) => state.setSetupBackup);
+  const navigate = useNavigate();
 
   const filteredCards = cards.filter((card) =>
     card.text.toLowerCase().includes(progressSearch.toLowerCase()),
@@ -48,13 +49,13 @@ export function ProgressSetupScreen() {
       setProgress(setupBackup);
       setSetupBackup(null);
     }
-    setScreen("analytics");
+    navigate("/analytics");
   };
 
   const doneProgressSetup = async () => {
     await saveProgress(progress);
     setSetupBackup(null);
-    setScreen("analytics");
+    navigate("/analytics");
   };
 
   const exportProgress = () => {

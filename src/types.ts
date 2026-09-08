@@ -1,14 +1,5 @@
 export type ThemePreference = "system" | "light" | "dark";
 
-export type Screen =
-  | "home"
-  | "learn"
-  | "content"
-  | "analytics"
-  | "settings"
-  | "library"
-  | "progressSetup";
-
 export type Card = {
   text: string;
   answers?: string[];

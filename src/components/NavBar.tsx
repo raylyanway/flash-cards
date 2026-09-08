@@ -20,8 +20,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAppStore } from "../store/useAppStore";
-import type { Screen } from "../types";
 import ColorModeIconDropdown from "./ColorModeIconDropdown";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
@@ -41,74 +39,46 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 }));
 
 const NAV_ITEMS: Array<{
-  screen: Screen;
   label: string;
   icon: typeof HomeRounded;
   path: string;
 }> = [
-  { screen: "home", label: "Home", icon: HomeRounded, path: "/" },
-  {
-    screen: "content",
-    label: "Content",
-    icon: StorageRounded,
-    path: "/content",
-  },
-  {
-    screen: "analytics",
-    label: "Analytics",
-    icon: AnalyticsRounded,
-    path: "/analytics",
-  },
-  {
-    screen: "settings",
-    label: "Settings",
-    icon: SettingsRounded,
-    path: "/settings",
-  },
-  { screen: "library", label: "Library", icon: BookRounded, path: "/library" },
+  { label: "Home", icon: HomeRounded, path: "/" },
+  { label: "Content", icon: StorageRounded, path: "/content" },
+  { label: "Analytics", icon: AnalyticsRounded, path: "/analytics" },
+  { label: "Settings", icon: SettingsRounded, path: "/settings" },
+  { label: "Library", icon: BookRounded, path: "/library" },
 ];
 
-const getScreenFromPath = (pathname: string): Screen => {
-  if (pathname === "/") {
-    return "home";
+const isNavItemSelected = (pathname: string, targetPath: string) => {
+  if (targetPath === "/") {
+    return pathname === "/";
   }
 
-  if (pathname.startsWith("/library")) {
-    return "library";
+  if (targetPath === "/library") {
+    return pathname === "/library" || pathname.startsWith("/library/");
   }
 
-  if (pathname.startsWith("/progress-setup")) {
-    return "progressSetup";
+  if (targetPath === "/progress-setup") {
+    return (
+      pathname === "/progress-setup" || pathname.startsWith("/progress-setup/")
+    );
   }
 
-  const pathScreenMap: Record<string, Screen> = {
-    "/learn": "learn",
-    "/analytics": "analytics",
-    "/settings": "settings",
-    "/content": "content",
-  };
-
-  return pathScreenMap[pathname] ?? "home";
+  return pathname === targetPath;
 };
 
 export function NavBar() {
-  const screen = useAppStore((state) => state.screen);
-  const setScreen = useAppStore((state) => state.setScreen);
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
   const [open, setOpen] = React.useState(false);
 
-  React.useEffect(() => {
-    setScreen(getScreenFromPath(pathname));
-  }, [pathname, setScreen]);
-
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
   };
 
-  const handleClick = (screen: Screen, path: string) => () => {
-    setScreen(screen);
+  const handleClick = (path: string) => () => {
     navigate(path);
     setOpen(false);
   };
@@ -138,8 +108,8 @@ export function NavBar() {
               Flash&nbsp;Cards
             </Typography>
             <Box sx={{ display: { xs: "none", md: "flex", columnGap: 16 } }}>
-              {NAV_ITEMS.map(({ label, screen: itemScreen, path }) => {
-                const isSelected = getScreenFromPath(pathname) === itemScreen;
+              {NAV_ITEMS.map(({ label, path }) => {
+                const isSelected = isNavItemSelected(pathname, path);
 
                 return (
                   <Button
@@ -150,7 +120,7 @@ export function NavBar() {
                     }}
                     color={isSelected ? "primary" : "inherit"}
                     variant="text"
-                    onClick={handleClick(itemScreen, path)}
+                    onClick={handleClick(path)}
                   >
                     {label}
                   </Button>
@@ -190,11 +160,11 @@ export function NavBar() {
                   </IconButton>
                 </Box>
                 <MenuList>
-                  {NAV_ITEMS.map(({ label, screen: itemScreen, path }) => (
+                  {NAV_ITEMS.map(({ label, path }) => (
                     <MenuItem
                       key={label}
-                      selected={getScreenFromPath(pathname) === itemScreen}
-                      onClick={handleClick(itemScreen, path)}
+                      selected={isNavItemSelected(pathname, path)}
+                      onClick={handleClick(path)}
                     >
                       {label}
                     </MenuItem>

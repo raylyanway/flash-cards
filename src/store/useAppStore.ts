@@ -11,7 +11,6 @@ import type {
   Card,
   ContentOption,
   ProgressMap,
-  Screen,
   ThemePreference,
 } from "../types";
 import { initializeMissingProgress } from "../utils/cardProgress";
@@ -32,7 +31,6 @@ type AppState = {
   recognizedText: string;
   result: string;
   resultClass: string;
-  screen: Screen;
   setupBackup: ProgressMap | null;
   skipEnabled: boolean;
   speechSupported: boolean;
@@ -56,7 +54,6 @@ type AppActions = {
   setRecognizedText: (text: string) => void;
   setResult: (result: string) => void;
   setResultClass: (resultClass: string) => void;
-  setScreen: (screen: Screen) => void;
   setSetupBackup: (progress: ProgressMap | null) => void;
   setSkipEnabled: (enabled: boolean) => void;
   setSpeechSupported: (supported: boolean) => void;
@@ -79,7 +76,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
   recognizedText: "Press Start Listening",
   result: "",
   resultClass: "",
-  screen: "home",
   setupBackup: null,
   skipEnabled: true,
   speechSupported: false,
@@ -140,7 +136,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setRecognizedText: (recognizedText) => set({ recognizedText }),
   setResult: (result) => set({ result }),
   setResultClass: (resultClass) => set({ resultClass }),
-  setScreen: (screen) => set({ screen }),
   setSetupBackup: (setupBackup) => set({ setupBackup }),
   setSkipEnabled: (skipEnabled) => set({ skipEnabled }),
   setSpeechSupported: (speechSupported) => set({ speechSupported }),

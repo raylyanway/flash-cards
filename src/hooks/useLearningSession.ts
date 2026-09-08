@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import {
-  createSpeechRecognition,
-  speakWord,
-  type SpeechRecognitionInstance,
-} from "../utils/speech";
+import { useLocation } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import type { Card, ProgressEntry } from "../types";
 import {
@@ -14,6 +10,11 @@ import {
   REVIEW_1_DELAY,
   REVIEW_2_DELAY,
 } from "../utils/cardProgress";
+import {
+  createSpeechRecognition,
+  speakWord,
+  type SpeechRecognitionInstance,
+} from "../utils/speech";
 
 type UseLearningSessionParams = {
   nextDueTimestamp: number | null;
@@ -30,7 +31,6 @@ export function useLearningSession({
   const recognizedText = useAppStore((state) => state.recognizedText);
   const result = useAppStore((state) => state.result);
   const resultClass = useAppStore((state) => state.resultClass);
-  const screen = useAppStore((state) => state.screen);
   const skipEnabled = useAppStore((state) => state.skipEnabled);
   const speechSupported = useAppStore((state) => state.speechSupported);
   const wrongAttempts = useAppStore((state) => state.wrongAttempts);
@@ -43,6 +43,9 @@ export function useLearningSession({
   const setSkipEnabled = useAppStore((state) => state.setSkipEnabled);
   const setSpeechSupported = useAppStore((state) => state.setSpeechSupported);
   const setWrongAttempts = useAppStore((state) => state.setWrongAttempts);
+
+  const { pathname } = useLocation();
+  const isLearnRoute = pathname === "/learn";
 
   const skippedCardsRef = useRef(new Set<string>());
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
@@ -256,11 +259,11 @@ export function useLearningSession({
   }, []);
 
   useEffect(() => {
-    if (screen !== "learn" || currentCard) return;
+    if (!isLearnRoute || currentCard) return;
     if (nextDueTimestamp !== null && nextDueTimestamp <= now) {
       selectNextCard();
     }
-  }, [currentCard, nextDueTimestamp, now, screen, selectNextCard]);
+  }, [currentCard, isLearnRoute, nextDueTimestamp, now, selectNextCard]);
 
   const startLearningSession = () => {
     setResult("");

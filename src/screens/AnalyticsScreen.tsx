@@ -17,6 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { MetricCard } from "../components/MetricCard";
 import { PageHeader } from "../components/PageHeader";
 import { useAppStore } from "../store/useAppStore";
@@ -46,8 +47,8 @@ export function AnalyticsScreen() {
   const progress = useAppStore((state) => state.progress);
   const saveProgress = useAppStore((state) => state.saveProgress);
   const setProgressSearch = useAppStore((state) => state.setProgressSearch);
-  const setScreen = useAppStore((state) => state.setScreen);
   const setSetupBackup = useAppStore((state) => state.setSetupBackup);
+  const navigate = useNavigate();
 
   const stageCounts = useMemo(() => countStages(progress), [progress]);
   const sortedCards = useMemo(
@@ -64,7 +65,7 @@ export function AnalyticsScreen() {
   const openProgressSetup = () => {
     setSetupBackup(progress);
     setProgressSearch("");
-    setScreen("progressSetup");
+    navigate("/progress-setup");
   };
 
   return (
