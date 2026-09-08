@@ -20,14 +20,14 @@ import {
 } from "@mui/x-data-grid";
 import * as React from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import PageContainer from "../../components/PageContainer";
 import {
   deleteOne as deleteEmployee,
   getMany as getEmployees,
   type Employee,
-} from "../data/employees";
-import { useDialogs } from "../hooks/useDialogs/useDialogs";
-import useNotifications from "../hooks/useNotifications/useNotifications";
-import PageContainer from "./PageContainer";
+} from "../../data/employees";
+import { useDialogs } from "../../hooks/useDialogs/useDialogs";
+import useNotifications from "../../hooks/useNotifications/useNotifications";
 
 const INITIAL_PAGE_SIZE = 10;
 

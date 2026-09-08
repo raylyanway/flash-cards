@@ -13,8 +13,8 @@ import { type Theme, SxProps } from "@mui/material/styles";
 import type {} from "@mui/material/themeCssVarsAugmentation";
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { MINI_DRAWER_WIDTH } from "../constants";
-import DashboardSidebarContext from "../context/DashboardSidebarContext";
+import { MINI_DRAWER_WIDTH } from "../../constants";
+import DashboardSidebarContext from "../../context/DashboardSidebarContext";
 
 export interface DashboardSidebarPageItemProps {
   id: string;

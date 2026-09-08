@@ -1,8 +1,8 @@
 import Divider from "@mui/material/Divider";
 import type {} from "@mui/material/themeCssVarsAugmentation";
 import * as React from "react";
-import DashboardSidebarContext from "../context/DashboardSidebarContext";
-import getDrawerSxTransitionMixin from "../mixins";
+import DashboardSidebarContext from "../../context/DashboardSidebarContext";
+import getDrawerSxTransitionMixin from "../../mixins";
 
 export default function DashboardSidebarDividerItem() {
   const sidebarContext = React.useContext(DashboardSidebarContext);

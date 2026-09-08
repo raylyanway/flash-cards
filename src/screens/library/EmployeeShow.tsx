@@ -13,14 +13,14 @@ import Typography from "@mui/material/Typography";
 import dayjs from "dayjs";
 import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import PageContainer from "../../components/PageContainer";
 import {
   deleteOne as deleteEmployee,
   getOne as getEmployee,
   type Employee,
-} from "../data/employees";
-import { useDialogs } from "../hooks/useDialogs/useDialogs";
-import useNotifications from "../hooks/useNotifications/useNotifications";
-import PageContainer from "./PageContainer";
+} from "../../data/employees";
+import { useDialogs } from "../../hooks/useDialogs/useDialogs";
+import useNotifications from "../../hooks/useNotifications/useNotifications";
 
 export default function EmployeeShow() {
   const { employeeId } = useParams();

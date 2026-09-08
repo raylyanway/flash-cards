@@ -1,6 +1,6 @@
 import { BookRounded } from "@mui/icons-material";
 import { Outlet } from "react-router-dom";
-import { PageHeader } from "../components/PageHeader";
+import { PageHeader } from "../../components/PageHeader";
 
 export function LibraryScreen() {
   return (
