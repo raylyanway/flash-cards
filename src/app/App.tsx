@@ -59,8 +59,8 @@ export function App() {
                   path="/progress-setup"
                   element={<ProgressSetupScreen />}
                 />
-                <Route path="/library" element={<DashboardLayout />}>
-                  <Route element={<LibraryScreen />}>
+                <Route path="/library" element={<LibraryScreen />}>
+                  <Route element={<DashboardLayout />}>
                     <Route index element={<EmployeeList />} />
                     <Route path="employees" element={<EmployeeList />} />
                     <Route
