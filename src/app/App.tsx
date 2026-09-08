@@ -9,7 +9,6 @@ import { AnalyticsScreen } from "../screens/AnalyticsScreen";
 import { ContentScreen } from "../screens/ContentScreen";
 import { HomeScreen } from "../screens/HomeScreen";
 import { LearnScreen } from "../screens/LearnScreen";
-import DashboardLayout from "../screens/library/DashboardLayout";
 import EmployeeCreate from "../screens/library/EmployeeCreate";
 import EmployeeEdit from "../screens/library/EmployeeEdit";
 import EmployeeList from "../screens/library/EmployeeList";
@@ -60,20 +59,18 @@ export function App() {
                   element={<ProgressSetupScreen />}
                 />
                 <Route path="/library" element={<LibraryScreen />}>
-                  <Route element={<DashboardLayout />}>
-                    <Route index element={<EmployeeList />} />
-                    <Route path="employees" element={<EmployeeList />} />
-                    <Route
-                      path="employees/:employeeId"
-                      element={<EmployeeShow />}
-                    />
-                    <Route path="employees/new" element={<EmployeeCreate />} />
-                    <Route
-                      path="employees/:employeeId/edit"
-                      element={<EmployeeEdit />}
-                    />
-                    <Route path="*" element={<EmployeeList />} />
-                  </Route>
+                  <Route index element={<EmployeeList />} />
+                  <Route path="employees" element={<EmployeeList />} />
+                  <Route
+                    path="employees/:employeeId"
+                    element={<EmployeeShow />}
+                  />
+                  <Route path="employees/new" element={<EmployeeCreate />} />
+                  <Route
+                    path="employees/:employeeId/edit"
+                    element={<EmployeeEdit />}
+                  />
+                  <Route path="*" element={<EmployeeList />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

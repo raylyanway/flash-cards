@@ -3,10 +3,6 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import EmployeeForm, {
-  type EmployeeFormState,
-  type FormFieldValue,
-} from "../../components/EmployeeForm";
 import PageContainer from "../../components/PageContainer";
 import {
   getOne as getEmployee,
@@ -15,6 +11,10 @@ import {
   type Employee,
 } from "../../data/employees";
 import useNotifications from "../../hooks/useNotifications/useNotifications";
+import EmployeeForm, {
+  type EmployeeFormState,
+  type FormFieldValue,
+} from "./EmployeeForm";
 
 function EmployeeEditForm({
   initialValues,

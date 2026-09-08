@@ -1,6 +1,7 @@
 import { BookRounded } from "@mui/icons-material";
 import { Outlet } from "react-router-dom";
 import { PageHeader } from "../../components/PageHeader";
+import DashboardLayout from "./DashboardLayout";
 
 export function LibraryScreen() {
   return (
@@ -10,8 +11,9 @@ export function LibraryScreen() {
         title="Study library"
         description="Browse your collections and keep your learning routine consistent."
       />
-
-      <Outlet />
+      <DashboardLayout>
+        <Outlet />
+      </DashboardLayout>
     </>
   );
 }

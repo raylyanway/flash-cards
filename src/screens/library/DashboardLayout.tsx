@@ -5,10 +5,13 @@ import Box from "@mui/material/Box";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import * as React from "react";
-import { Outlet } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 
-export default function DashboardLayout() {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const theme = useTheme();
 
   const [isDesktopNavigationExpanded, setIsDesktopNavigationExpanded] =
@@ -94,7 +97,7 @@ export default function DashboardLayout() {
               </div>
             </Tooltip>
           </Container>
-          <Outlet />
+          {children}
         </Box>
       </Box>
     </Box>
