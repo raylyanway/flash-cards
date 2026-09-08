@@ -1,21 +1,40 @@
 import { BookRounded } from "@mui/icons-material";
-import { Card, CardContent, Grid, Stack, Typography } from "@mui/material";
+import { createHashRouter, RouterProvider } from "react-router";
+import DashboardLayout from "../components/DashboardLayout";
+import EmployeeCreate from "../components/EmployeeCreate";
+import EmployeeEdit from "../components/EmployeeEdit";
+import EmployeeList from "../components/EmployeeList";
+import EmployeeShow from "../components/EmployeeShow";
 import { PageHeader } from "../components/PageHeader";
 
-const libraryItems = [
+const router = createHashRouter([
   {
-    title: "Body parts",
-    description: "Vocabulary for anatomy and daily communication.",
+    Component: DashboardLayout,
+    children: [
+      {
+        path: "/employees",
+        Component: EmployeeList,
+      },
+      {
+        path: "/employees/:employeeId",
+        Component: EmployeeShow,
+      },
+      {
+        path: "/employees/new",
+        Component: EmployeeCreate,
+      },
+      {
+        path: "/employees/:employeeId/edit",
+        Component: EmployeeEdit,
+      },
+      // Fallback route for the example routes in dashboard sidebar items
+      {
+        path: "*",
+        Component: EmployeeList,
+      },
+    ],
   },
-  {
-    title: "Food",
-    description: "Everyday words for meals, ingredients, and shopping.",
-  },
-  {
-    title: "Sentences",
-    description: "Helpful phrases and sentence patterns for fluent recall.",
-  },
-];
+]);
 
 export function LibraryScreen() {
   return (
@@ -26,27 +45,7 @@ export function LibraryScreen() {
         description="Browse your collections and keep your learning routine consistent."
       />
 
-      <Grid container spacing={3}>
-        {libraryItems.map((item) => (
-          <Grid size={{ xs: 12, md: 4 }} key={item.title}>
-            <Card elevation={0} sx={{ borderRadius: 2, height: "100%" }}>
-              <CardContent sx={{ p: { xs: 2, md: 3 }, height: "100%" }}>
-                <Stack spacing={1.5} sx={{ height: "100%" }}>
-                  <Typography variant="overline" color="text.secondary">
-                    Collection
-                  </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    {item.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {item.description}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      <RouterProvider router={router} />
     </>
   );
 }

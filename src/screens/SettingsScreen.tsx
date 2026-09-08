@@ -1,22 +1,11 @@
 import { SettingsRounded } from "@mui/icons-material";
+
 import { Button, Stack } from "@mui/material";
 import { PageHeader } from "../components/PageHeader";
 import { SectionCard } from "../components/SectionCard";
 import { deleteAppDatabase, setCachedDataVersion } from "../DB";
 
-// const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
-
-// function getThemeDescription(option: ThemePreference) {
-//   if (option === "system") return "Follow your device theme preference.";
-//   if (option === "light") return "Soft, bright, and easy on the eyes.";
-//   return "High-contrast dark mode for focused study sessions.";
-// }
-
 export function SettingsScreen() {
-  // const theme = useAppStore((state) => state.theme);
-  // const currentSet = useAppStore((state) => state.currentSet);
-  // const setTheme = useAppStore((state) => state.setTheme);
-
   const handleDeleteDatabase = async () => {
     const confirmed = confirm(
       "Delete the saved app database? This will remove all stored progress and content data in IndexedDB.",
@@ -35,11 +24,6 @@ export function SettingsScreen() {
       alert("Could not delete the database. Close other tabs and try again.");
     }
   };
-
-  // const handleThemeChange = async (nextTheme: ThemePreference) => {
-  //   setTheme(nextTheme);
-  //   await setSettingsToDB({ currentSet, theme: nextTheme });
-  // };
 
   return (
     <>
