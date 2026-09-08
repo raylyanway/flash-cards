@@ -62,38 +62,43 @@ export function HomeScreen() {
         description="Review what’s due, track your progress, and jump back in with a clean daily rhythm."
       />
 
-      <Card elevation={0} sx={{ borderRadius: 2, mb: 3 }}>
-        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <Autocomplete
-              sx={{ flexGrow: 1 }}
-              options={options}
-              value={currentSet}
-              onChange={(event, newValue) => {
-                if (newValue) {
-                  useAppStore.setState({ currentSet: newValue });
-                }
-              }}
-              size="small"
-              renderInput={(params) => (
-                <TextField {...params} label="current set" variant="standard" />
-              )}
-            />
-            <Button
-              variant="contained"
-              startIcon={<PlayArrowRounded />}
-              onClick={() => setScreen("learn")}
-              sx={{ minWidth: 180 }}
-            >
-              Start review
-            </Button>
-          </Stack>
-        </CardContent>
-      </Card>
-
       <Grid container spacing={3}>
+        <Grid size={{ xs: 12 }}>
+          <Card>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                <Autocomplete
+                  sx={{ flexGrow: 1 }}
+                  options={options}
+                  value={currentSet}
+                  onChange={(event, newValue) => {
+                    if (newValue) {
+                      useAppStore.setState({ currentSet: newValue });
+                    }
+                  }}
+                  size="small"
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="current set"
+                      variant="standard"
+                    />
+                  )}
+                />
+                <Button
+                  variant="contained"
+                  startIcon={<PlayArrowRounded />}
+                  onClick={() => setScreen("learn")}
+                  sx={{ minWidth: 180 }}
+                >
+                  Start review
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
         <Grid size={{ xs: 12, md: 7 }}>
-          <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
+          <Card>
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
                 <Box sx={{ width: { xs: 170, sm: 190 }, mx: "auto" }}>
@@ -190,15 +195,11 @@ export function HomeScreen() {
             </CardContent>
           </Card>
         </Grid>
-
         <Grid size={{ xs: 12, md: 5 }}>
-          <Card elevation={0} sx={{ borderRadius: 4, height: "100%" }}>
+          <Card sx={{ height: "100%" }}>
             <CardContent sx={{ p: { xs: 2, md: 3 }, height: "100%" }}>
               <Stack spacing={2} sx={{ height: "100%" }}>
                 <Box>
-                  <Typography variant="overline" color="text.secondary">
-                    Next review
-                  </Typography>
                   <Typography
                     variant="h3"
                     sx={{ fontWeight: 800, letterSpacing: -0.05 }}
@@ -220,14 +221,6 @@ export function HomeScreen() {
                     ? "A few cards are ready for another pass. Keep the momentum going."
                     : "You are all caught up for now. A fresh review can still strengthen recall."}
                 </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<PlayArrowRounded />}
-                  onClick={() => setScreen("learn")}
-                  sx={{ mt: "auto" }}
-                >
-                  Continue learning
-                </Button>
               </Stack>
             </CardContent>
           </Card>

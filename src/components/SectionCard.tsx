@@ -24,16 +24,11 @@ export function SectionCard({
   sx,
 }: SectionCardProps) {
   return (
-    <Card elevation={0} sx={{ borderRadius: 2, ...sx }}>
+    <Card sx={{ ...sx }}>
       {(title || subtitle || action) && (
         <>
           <CardContent sx={{ p: { xs: 2, md: 3 }, pb: 1.5 }}>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              spacing={2}
-            >
+            <Stack direction="row" spacing={2}>
               <Box>
                 {title && (
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>
