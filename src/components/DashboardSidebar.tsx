@@ -270,6 +270,7 @@ export default function DashboardSidebar({
         onClose={handleSetSidebarExpanded(false)}
         ModalProps={{
           keepMounted: true, // Better open performance on mobile.
+          disableScrollLock: true,
         }}
         sx={[
           {
