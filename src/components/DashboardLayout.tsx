@@ -1,10 +1,11 @@
+import MenuIcon from "@mui/icons-material/Menu";
+import MenuOpenIcon from "@mui/icons-material/MenuOpen";
+import { Container, IconButton, Tooltip } from "@mui/material";
 import Box from "@mui/material/Box";
 import { useTheme } from "@mui/material/styles";
-import Toolbar from "@mui/material/Toolbar";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import * as React from "react";
 import { Outlet } from "react-router";
-import DashboardHeader from "./DashboardHeader";
 import DashboardSidebar from "./DashboardSidebar";
 
 export default function DashboardLayout() {
@@ -36,14 +37,13 @@ export default function DashboardLayout() {
     ],
   );
 
-  const handleToggleHeaderMenu = React.useCallback(
-    (isExpanded: boolean) => {
-      setIsNavigationExpanded(isExpanded);
-    },
-    [setIsNavigationExpanded],
-  );
+  const handleMenuOpen = React.useCallback(() => {
+    setIsNavigationExpanded(!isNavigationExpanded);
+  }, [isNavigationExpanded, setIsNavigationExpanded]);
 
   const layoutRef = React.useRef<HTMLDivElement>(null);
+  const expandMenuActionText = "Expand";
+  const collapseMenuActionText = "Collapse";
 
   return (
     <Box
@@ -56,12 +56,6 @@ export default function DashboardLayout() {
         width: "100%",
       }}
     >
-      <DashboardHeader
-        logo={null}
-        title=""
-        menuOpen={isNavigationExpanded}
-        onToggleMenu={handleToggleHeaderMenu}
-      />
       <DashboardSidebar
         expanded={isNavigationExpanded}
         setExpanded={setIsNavigationExpanded}
@@ -75,7 +69,6 @@ export default function DashboardLayout() {
           minWidth: 0,
         }}
       >
-        <Toolbar sx={{ displayPrint: "none" }} />
         <Box
           component="main"
           sx={{
@@ -85,6 +78,22 @@ export default function DashboardLayout() {
             overflow: "auto",
           }}
         >
+          <Container>
+            <Tooltip
+              title={`${isNavigationExpanded ? collapseMenuActionText : expandMenuActionText} menu`}
+              enterDelay={1000}
+            >
+              <div>
+                <IconButton
+                  size="small"
+                  aria-label={`${isNavigationExpanded ? collapseMenuActionText : expandMenuActionText} navigation menu`}
+                  onClick={handleMenuOpen}
+                >
+                  {isNavigationExpanded ? <MenuOpenIcon /> : <MenuIcon />}
+                </IconButton>
+              </div>
+            </Tooltip>
+          </Container>
           <Outlet />
         </Box>
       </Box>

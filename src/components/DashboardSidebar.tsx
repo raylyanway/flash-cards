@@ -1,11 +1,11 @@
 import BarChartIcon from "@mui/icons-material/BarChart";
 import DescriptionIcon from "@mui/icons-material/Description";
 import LayersIcon from "@mui/icons-material/Layers";
+
 import PersonIcon from "@mui/icons-material/Person";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
-import Toolbar from "@mui/material/Toolbar";
 import { useTheme, type Theme } from "@mui/material/styles";
 import type {} from "@mui/material/themeCssVarsAugmentation";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -125,7 +125,6 @@ export default function DashboardSidebar({
   const getDrawerContent = React.useCallback(
     (viewport: "phone" | "tablet" | "desktop") => (
       <React.Fragment>
-        <Toolbar />
         <Box
           component="nav"
           aria-label={`${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}`}
