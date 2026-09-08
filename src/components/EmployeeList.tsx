@@ -19,7 +19,7 @@ import {
   gridClasses,
 } from "@mui/x-data-grid";
 import * as React from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   deleteOne as deleteEmployee,
   getMany as getEmployees,

@@ -17,7 +17,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs, { Dayjs } from "dayjs";
 import * as React from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import type { Employee } from "../data/employees";
 
 export interface EmployeeFormState {

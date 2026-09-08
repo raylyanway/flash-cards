@@ -1,5 +1,5 @@
 import { BookRounded } from "@mui/icons-material";
-import { createHashRouter, RouterProvider } from "react-router";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import EmployeeCreate from "../components/EmployeeCreate";
 import EmployeeEdit from "../components/EmployeeEdit";

@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import * as React from "react";
-import { Outlet } from "react-router";
+import { Outlet } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 
 export default function DashboardLayout() {

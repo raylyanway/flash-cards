@@ -8,7 +8,7 @@ import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 const PageContentHeader = styled("div")(({ theme }) => ({
   display: "flex",

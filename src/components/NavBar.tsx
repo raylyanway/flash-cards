@@ -19,6 +19,7 @@ import { alpha, styled } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import type { Screen } from "../types";
 import ColorModeIconDropdown from "./ColorModeIconDropdown";
@@ -43,17 +44,34 @@ const NAV_ITEMS: Array<{
   screen: Screen;
   label: string;
   icon: typeof HomeRounded;
+  path: string;
 }> = [
-  { screen: "home", label: "Home", icon: HomeRounded },
-  { screen: "content", label: "Content", icon: StorageRounded },
-  { screen: "analytics", label: "Analytics", icon: AnalyticsRounded },
-  { screen: "settings", label: "Settings", icon: SettingsRounded },
-  { screen: "library", label: "Library", icon: BookRounded },
+  { screen: "home", label: "Home", icon: HomeRounded, path: "/" },
+  {
+    screen: "content",
+    label: "Content",
+    icon: StorageRounded,
+    path: "/content",
+  },
+  {
+    screen: "analytics",
+    label: "Analytics",
+    icon: AnalyticsRounded,
+    path: "/analytics",
+  },
+  {
+    screen: "settings",
+    label: "Settings",
+    icon: SettingsRounded,
+    path: "/settings",
+  },
+  { screen: "library", label: "Library", icon: BookRounded, path: "/library" },
 ];
 
 export function NavBar() {
   const screen = useAppStore((state) => state.screen);
   const setScreen = useAppStore((state) => state.setScreen);
+  const navigate = useNavigate();
 
   const [open, setOpen] = React.useState(false);
 
@@ -61,8 +79,9 @@ export function NavBar() {
     setOpen(newOpen);
   };
 
-  const handleClick = (screen: Screen) => () => {
+  const handleClick = (screen: Screen, path: string) => () => {
     setScreen(screen);
+    navigate(path);
     setOpen(false);
   };
 
@@ -91,7 +110,7 @@ export function NavBar() {
               Flash&nbsp;Cards
             </Typography>
             <Box sx={{ display: { xs: "none", md: "flex", columnGap: 16 } }}>
-              {NAV_ITEMS.map(({ label, screen: itemScreen }) => (
+              {NAV_ITEMS.map(({ label, screen: itemScreen, path }) => (
                 <Button
                   key={label}
                   sx={{
@@ -100,7 +119,7 @@ export function NavBar() {
                   }}
                   color={screen === itemScreen ? "primary" : "inherit"}
                   variant="text"
-                  onClick={handleClick(itemScreen)}
+                  onClick={handleClick(itemScreen, path)}
                 >
                   {label}
                 </Button>
@@ -139,11 +158,11 @@ export function NavBar() {
                   </IconButton>
                 </Box>
                 <MenuList>
-                  {NAV_ITEMS.map(({ label, screen: itemScreen }) => (
+                  {NAV_ITEMS.map(({ label, screen: itemScreen, path }) => (
                     <MenuItem
                       key={label}
                       selected={screen === itemScreen}
-                      onClick={handleClick(itemScreen)}
+                      onClick={handleClick(itemScreen, path)}
                     >
                       {label}
                     </MenuItem>

@@ -10,7 +10,7 @@ import { useTheme, type Theme } from "@mui/material/styles";
 import type {} from "@mui/material/themeCssVarsAugmentation";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import * as React from "react";
-import { matchPath, useLocation } from "react-router";
+import { matchPath, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from "../constants";
 import DashboardSidebarContext from "../context/DashboardSidebarContext";
 import getDrawerSxTransitionMixin from "../mixins";
