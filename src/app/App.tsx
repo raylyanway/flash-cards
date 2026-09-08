@@ -1,7 +1,7 @@
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import Container from "@mui/material/Container";
 import { useMemo } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import EmployeeCreate from "../components/EmployeeCreate";
 import EmployeeEdit from "../components/EmployeeEdit";
@@ -19,6 +19,17 @@ import { ProgressSetupScreen } from "../screens/ProgressSetupScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { useAppStore } from "../store/useAppStore";
 import { createAppTheme } from "../theme";
+
+function LegacyEmployeeRedirect() {
+  const { pathname } = useLocation();
+
+  return (
+    <Navigate
+      to={pathname.replace(/^\/employees/, "/library/employees")}
+      replace
+    />
+  );
+}
 
 export function App() {
   const themePreference = useAppStore((state) => state.theme);
@@ -58,6 +69,10 @@ export function App() {
                 <Route
                   path="/progress-setup"
                   element={<ProgressSetupScreen />}
+                />
+                <Route
+                  path="/employees/*"
+                  element={<LegacyEmployeeRedirect />}
                 />
                 <Route path="/library" element={<LibraryScreen />}>
                   <Route element={<DashboardLayout />}>

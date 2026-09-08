@@ -118,7 +118,7 @@ function EmployeeEditForm({
       onSubmit={handleFormSubmit}
       onReset={handleFormReset}
       submitButtonLabel="Save"
-      backButtonPath={`/employees/${employeeId}`}
+      backButtonPath={`/library/employees/${employeeId}`}
     />
   );
 }
@@ -191,8 +191,11 @@ export default function EmployeeEdit() {
     <PageContainer
       title={`Edit Employee ${employeeId}`}
       breadcrumbs={[
-        { title: "Employees", path: "/employees" },
-        { title: `Employee ${employeeId}`, path: `/employees/${employeeId}` },
+        { title: "Employees", path: "/library/employees" },
+        {
+          title: `Employee ${employeeId}`,
+          path: `/library/employees/${employeeId}`,
+        },
         { title: "Edit" },
       ]}
     >

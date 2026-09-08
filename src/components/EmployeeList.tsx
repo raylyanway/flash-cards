@@ -266,7 +266,7 @@ export default function EmployeeList() {
   return (
     <PageContainer
       title={pageTitle}
-      breadcrumbs={[{ title: pageTitle }]}
+      breadcrumbs={[{ title: pageTitle, path: "/library/employees" }]}
       actions={
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <Tooltip title="Reload data" placement="right" enterDelay={1000}>

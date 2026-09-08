@@ -109,7 +109,7 @@ export default function EmployeeCreate() {
     <PageContainer
       title="New Employee"
       breadcrumbs={[
-        { title: "Employees", path: "/employees" },
+        { title: "Employees", path: "/library/employees" },
         { title: "New" },
       ]}
     >

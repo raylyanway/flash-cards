@@ -19,7 +19,7 @@ import { alpha, styled } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import type { Screen } from "../types";
 import ColorModeIconDropdown from "./ColorModeIconDropdown";
@@ -68,12 +68,40 @@ const NAV_ITEMS: Array<{
   { screen: "library", label: "Library", icon: BookRounded, path: "/library" },
 ];
 
+const getScreenFromPath = (pathname: string): Screen => {
+  if (pathname === "/") {
+    return "home";
+  }
+
+  if (pathname.startsWith("/library")) {
+    return "library";
+  }
+
+  if (pathname.startsWith("/progress-setup")) {
+    return "progressSetup";
+  }
+
+  const pathScreenMap: Record<string, Screen> = {
+    "/learn": "learn",
+    "/analytics": "analytics",
+    "/settings": "settings",
+    "/content": "content",
+  };
+
+  return pathScreenMap[pathname] ?? "home";
+};
+
 export function NavBar() {
   const screen = useAppStore((state) => state.screen);
   const setScreen = useAppStore((state) => state.setScreen);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const [open, setOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setScreen(getScreenFromPath(pathname));
+  }, [pathname, setScreen]);
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -110,20 +138,24 @@ export function NavBar() {
               Flash&nbsp;Cards
             </Typography>
             <Box sx={{ display: { xs: "none", md: "flex", columnGap: 16 } }}>
-              {NAV_ITEMS.map(({ label, screen: itemScreen, path }) => (
-                <Button
-                  key={label}
-                  sx={{
-                    borderBottom: screen === itemScreen ? 1 : 0,
-                    borderColor: "primary.main",
-                  }}
-                  color={screen === itemScreen ? "primary" : "inherit"}
-                  variant="text"
-                  onClick={handleClick(itemScreen, path)}
-                >
-                  {label}
-                </Button>
-              ))}
+              {NAV_ITEMS.map(({ label, screen: itemScreen, path }) => {
+                const isSelected = getScreenFromPath(pathname) === itemScreen;
+
+                return (
+                  <Button
+                    key={label}
+                    sx={{
+                      borderBottom: isSelected ? 1 : 0,
+                      borderColor: "primary.main",
+                    }}
+                    color={isSelected ? "primary" : "inherit"}
+                    variant="text"
+                    onClick={handleClick(itemScreen, path)}
+                  >
+                    {label}
+                  </Button>
+                );
+              })}
             </Box>
           </Box>
           <ColorModeIconDropdown
@@ -161,7 +193,7 @@ export function NavBar() {
                   {NAV_ITEMS.map(({ label, screen: itemScreen, path }) => (
                     <MenuItem
                       key={label}
-                      selected={screen === itemScreen}
+                      selected={getScreenFromPath(pathname) === itemScreen}
                       onClick={handleClick(itemScreen, path)}
                     >
                       {label}

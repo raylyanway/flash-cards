@@ -157,9 +157,11 @@ export default function DashboardSidebar({
               id="employees"
               title="Employees"
               icon={<PersonIcon />}
-              href="/employees"
+              href="/library/employees"
               selected={
-                !!matchPath("/employees/*", pathname) || pathname === "/"
+                !!matchPath("/library/employees/*", pathname) ||
+                pathname === "/library" ||
+                pathname === "/library/"
               }
             />
             <DashboardSidebarDividerItem />

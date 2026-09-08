@@ -216,7 +216,7 @@ export default function EmployeeShow() {
     <PageContainer
       title={pageTitle}
       breadcrumbs={[
-        { title: "Employees", path: "/employees" },
+        { title: "Employees", path: "/library/employees" },
         { title: pageTitle },
       ]}
     >
