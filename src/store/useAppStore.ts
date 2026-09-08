@@ -36,6 +36,7 @@ type AppState = {
   speechSupported: boolean;
   theme: ThemePreference;
   wrongAttempts: number;
+  navExpanded: boolean;
 };
 
 type AppActions = {
@@ -59,6 +60,7 @@ type AppActions = {
   setSpeechSupported: (supported: boolean) => void;
   setTheme: (theme: ThemePreference) => void;
   setWrongAttempts: (attempts: number) => void;
+  setNavExpanded: (expanded: boolean) => void;
 };
 
 export type AppStore = AppState & AppActions;
@@ -81,6 +83,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   speechSupported: false,
   theme: DEFAULT_THEME,
   wrongAttempts: 0,
+  navExpanded: true,
 
   initialize: async () => {
     const settings = await getSettingsFromDB();
@@ -141,4 +144,5 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setSpeechSupported: (speechSupported) => set({ speechSupported }),
   setTheme: (theme) => set({ theme }),
   setWrongAttempts: (wrongAttempts) => set({ wrongAttempts }),
+  setNavExpanded: (navExpanded: boolean) => set({ navExpanded }),
 }));

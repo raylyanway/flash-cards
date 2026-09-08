@@ -7,6 +7,7 @@ import {
 } from "@mui/icons-material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MenuIcon from "@mui/icons-material/Menu";
+import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { MenuItem } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -20,6 +21,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAppStore } from "../store/useAppStore";
 import ColorModeIconDropdown from "./ColorModeIconDropdown";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
@@ -78,10 +80,16 @@ export function NavBar() {
   const activeLabel = activeNavItem?.label ?? "";
 
   const [open, setOpen] = React.useState(false);
+  const navExpanded = useAppStore((s) => s.navExpanded);
+  const setNavExpanded = useAppStore((s) => s.setNavExpanded);
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
   };
+
+  const showLibraryToggle = isNavItemSelected(pathname, "/library");
+
+  const handleNavToggle = () => setNavExpanded(!navExpanded);
 
   const handleClick = (path: string) => () => {
     navigate(path);
@@ -101,6 +109,21 @@ export function NavBar() {
     >
       <Container maxWidth="lg">
         <StyledToolbar variant="dense" disableGutters>
+          {showLibraryToggle ? (
+            <IconButton
+              size="small"
+              onClick={handleNavToggle}
+              aria-label={
+                navExpanded
+                  ? "Collapse navigation menu"
+                  : "Expand navigation menu"
+              }
+              sx={{ mr: 1 }}
+            >
+              {navExpanded ? <MenuOpenIcon /> : <MenuIcon />}
+            </IconButton>
+          ) : null}
+
           <Box
             sx={{
               flexGrow: 1,

@@ -14,23 +14,22 @@ import { matchPath, useLocation } from "react-router-dom";
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from "../../constants";
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
 import getDrawerSxTransitionMixin from "../../mixins";
+import { useAppStore } from "../../store/useAppStore";
 import DashboardSidebarDividerItem from "./DashboardSidebarDividerItem";
 import DashboardSidebarHeaderItem from "./DashboardSidebarHeaderItem";
 import DashboardSidebarPageItem from "./DashboardSidebarPageItem";
 
 export interface DashboardSidebarProps {
-  expanded?: boolean;
-  setExpanded: (expanded: boolean) => void;
   disableCollapsibleSidebar?: boolean;
   container?: Element;
 }
 
 export default function DashboardSidebar({
-  expanded = true,
-  setExpanded,
   disableCollapsibleSidebar = false,
   container,
 }: DashboardSidebarProps) {
+  const navExpanded = useAppStore((s) => s.navExpanded);
+  const setNavExpanded = useAppStore((s) => s.setNavExpanded);
   const theme = useTheme();
 
   const { pathname } = useLocation();
@@ -52,11 +51,11 @@ export default function DashboardSidebar({
     ? 0
     : theme.transitions.duration.leavingScreen;
 
-  const [isFullyExpanded, setIsFullyExpanded] = React.useState(expanded);
-  const [isFullyCollapsed, setIsFullyCollapsed] = React.useState(!expanded);
+  const [isFullyExpanded, setIsFullyExpanded] = React.useState(navExpanded);
+  const [isFullyCollapsed, setIsFullyCollapsed] = React.useState(!navExpanded);
 
   React.useEffect(() => {
-    if (expanded) {
+    if (navExpanded) {
       if (drawerEnteringDuration === 0) {
         setIsFullyExpanded(true);
         return undefined;
@@ -72,10 +71,10 @@ export default function DashboardSidebar({
     setIsFullyExpanded(false);
 
     return undefined;
-  }, [drawerEnteringDuration, expanded]);
+  }, [drawerEnteringDuration, navExpanded]);
 
   React.useEffect(() => {
-    if (!expanded) {
+    if (!navExpanded) {
       if (drawerLeavingDuration === 0) {
         setIsFullyCollapsed(true);
         return undefined;
@@ -91,15 +90,15 @@ export default function DashboardSidebar({
     setIsFullyCollapsed(false);
 
     return undefined;
-  }, [drawerLeavingDuration, expanded]);
+  }, [drawerLeavingDuration, navExpanded]);
 
-  const mini = !disableCollapsibleSidebar && !expanded;
+  const mini = !disableCollapsibleSidebar && !navExpanded;
 
   const handleSetSidebarExpanded = React.useCallback(
     (newExpanded: boolean) => () => {
-      setExpanded(newExpanded);
+      setNavExpanded(newExpanded);
     },
-    [setExpanded],
+    [setNavExpanded],
   );
 
   const handlePageItemClick = React.useCallback(
@@ -113,10 +112,10 @@ export default function DashboardSidebar({
             : [...previousValue, itemId],
         );
       } else if (!isOverSmViewport && !hasNestedNavigation) {
-        setExpanded(false);
+        setNavExpanded(false);
       }
     },
-    [mini, setExpanded, isOverSmViewport],
+    [mini, setNavExpanded, isOverSmViewport],
   );
 
   const hasDrawerTransitions =
@@ -221,7 +220,7 @@ export default function DashboardSidebar({
     (isTemporary: boolean) => (drawerTheme: Theme) => {
       const drawerWidth = mini ? MINI_DRAWER_WIDTH : DRAWER_WIDTH;
       const widthTransitionStyles = getDrawerSxTransitionMixin(
-        expanded,
+        navExpanded,
         "width",
       )(drawerTheme);
 
@@ -242,7 +241,7 @@ export default function DashboardSidebar({
         },
       };
     },
-    [expanded, mini],
+    [navExpanded, mini],
   );
 
   const sidebarContextValue = React.useMemo(() => {
@@ -266,7 +265,7 @@ export default function DashboardSidebar({
       <Drawer
         container={container}
         variant="temporary"
-        open={expanded}
+        open={navExpanded}
         onClose={handleSetSidebarExpanded(false)}
         ModalProps={{
           keepMounted: true, // Better open performance on mobile.
