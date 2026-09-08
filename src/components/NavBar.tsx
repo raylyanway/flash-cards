@@ -72,6 +72,11 @@ export function NavBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
+  const activeNavItem = NAV_ITEMS.find(({ path }) =>
+    isNavItemSelected(pathname, path),
+  );
+  const activeLabel = activeNavItem?.label ?? "";
+
   const [open, setOpen] = React.useState(false);
 
   const toggleDrawer = (newOpen: boolean) => () => {
@@ -104,8 +109,19 @@ export function NavBar() {
               columnGap: 5,
             }}
           >
-            <Typography variant="h6" component="div">
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ display: { xs: "none", md: "block" } }}
+            >
               Flash&nbsp;Cards
+            </Typography>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ display: { xs: "block", md: "none" } }}
+            >
+              {activeLabel}
             </Typography>
             <Box sx={{ display: { xs: "none", md: "flex", columnGap: 16 } }}>
               {NAV_ITEMS.map(({ label, path }) => {
@@ -131,7 +147,13 @@ export function NavBar() {
           <ColorModeIconDropdown
             sx={{ display: { xs: "none", md: "block" } }}
           />
-          <Box sx={{ display: { xs: "flex", md: "none" }, columnGap: 1 }}>
+          <Box
+            sx={{
+              display: { xs: "flex", md: "none" },
+              columnGap: 1,
+              alignItems: "center",
+            }}
+          >
             <ColorModeIconDropdown size="medium" />
             <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
               <MenuIcon />
