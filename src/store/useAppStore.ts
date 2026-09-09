@@ -1,5 +1,6 @@
+import { del, get, set } from "idb-keyval";
 import { create } from "zustand";
-import { persist, type StateStorage } from "zustand/middleware";
+import { createJSONStorage, persist, StateStorage } from "zustand/middleware";
 import {
   DEFAULT_CONTENT,
   getContentOptions,
@@ -15,14 +16,28 @@ import type {
   ThemePreference,
 } from "../types";
 import { initializeMissingProgress } from "../utils/cardProgress";
-import idbStateStorage from "./persistStorage";
+
+const storage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    console.log(name, "has been retrieved");
+    return (await get(name)) || null;
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    console.log(name, "with value", value, "has been saved");
+    await set(name, value);
+  },
+  removeItem: async (name: string): Promise<void> => {
+    console.log(name, "has been deleted");
+    await del(name);
+  },
+};
 
 const DEFAULT_THEME: ThemePreference = "system";
 const DEFAULT_SET = "body-parts";
 
 export type AppState = {
+  _hasHydrated: boolean;
   initialized: boolean;
-  isHydrated: boolean;
   contentOptions: ContentOption[];
   cards: Card[];
   currentCard: Card | null;
@@ -64,14 +79,14 @@ export type AppActions = {
   setTheme: (theme: ThemePreference) => void;
   setWrongAttempts: (attempts: number) => void;
   setNavExpanded: (expanded: boolean) => void;
-  setIsHydrated: (hydrated: boolean) => void;
+  setHasHydrated: (hydrated: boolean) => void;
 };
 
 export type AppStore = AppState & AppActions;
 
 const DEFAULT_STATE: AppState = {
+  _hasHydrated: false,
   initialized: false,
-  isHydrated: false,
   contentOptions: DEFAULT_CONTENT,
   cards: [],
   currentCard: null,
@@ -96,76 +111,58 @@ export const useAppStore = create<AppStore>()(
     (set, get) => ({
       ...DEFAULT_STATE,
 
-      setIsHydrated: (hydrated: boolean) => set({ isHydrated: hydrated }),
+      setHasHydrated: (state) => {
+        set({
+          _hasHydrated: state,
+        });
+      },
 
       initialize: async () => {
-        try {
-          const settings = await getSettingsFromDB();
-          const savedSet = settings.currentSet || DEFAULT_SET;
-          const contentOptions = await get().refreshContentOptions(savedSet);
+        const settings = await getSettingsFromDB();
+        const savedSet = settings.currentSet || DEFAULT_SET;
+        const contentOptions = await get().refreshContentOptions(savedSet);
 
-          const setToLoad = contentOptions.some(
-            (option) => option.key === savedSet,
-          )
-            ? savedSet
-            : contentOptions[0]?.key || DEFAULT_SET;
+        const setToLoad = contentOptions.some(
+          (option) => option.key === savedSet,
+        )
+          ? savedSet
+          : contentOptions[0]?.key || DEFAULT_SET;
 
-          await get().loadSetData(setToLoad);
+        await get().loadSetData(setToLoad);
 
-          set({
-            theme: settings.theme ?? DEFAULT_THEME,
-            currentSet: savedSet,
-            initialized: true,
-          });
-        } catch (err) {
-          console.error("initialize failed:", err);
-          // still mark initialized to avoid blocking UI indefinitely
-          set({ initialized: true });
-        }
+        set({
+          theme: settings.theme ?? DEFAULT_THEME,
+          currentSet: savedSet,
+          initialized: true,
+        });
       },
 
       loadSetData: async (setName: string) => {
-        try {
-          const [storedProgress, loadedCards] = await Promise.all([
-            getProgressFromDB(setName),
-            initializeContent(setName),
-          ]);
-          const nextProgress = initializeMissingProgress(
-            loadedCards,
-            storedProgress || {},
-          );
-          set({ cards: loadedCards, progress: nextProgress });
-          await setProgressToDB(setName, nextProgress);
-        } catch (err) {
-          console.error("loadSetData failed:", err);
-        }
+        const [storedProgress, loadedCards] = await Promise.all([
+          getProgressFromDB(setName),
+          initializeContent(setName),
+        ]);
+        const nextProgress = initializeMissingProgress(
+          loadedCards,
+          storedProgress || {},
+        );
+        set({ cards: loadedCards, progress: nextProgress });
+        await setProgressToDB(setName, nextProgress);
       },
 
       refreshContentOptions: async (preferredSet?: string) => {
-        try {
-          const targetSet = preferredSet || get().currentSet;
-          const options = await getContentOptions();
-          set({ contentOptions: options });
-          if (
-            !options.some((option) => option.key === targetSet) &&
-            options[0]
-          ) {
-            set({ currentSet: options[0].key });
-          }
-          return options;
-        } catch (err) {
-          console.error("refreshContentOptions failed:", err);
-          return get().contentOptions;
+        const targetSet = preferredSet || get().currentSet;
+        const options = await getContentOptions();
+        set({ contentOptions: options });
+        if (!options.some((option) => option.key === targetSet) && options[0]) {
+          set({ currentSet: options[0].key });
         }
+        return options;
       },
 
       saveProgress: async (progress) => {
-        try {
-          set({ progress });
-          await setProgressToDB(get().currentSet, progress);
-        } catch (err) {
-          console.error("saveProgress failed:", err);
-        }
+        set({ progress });
+        await setProgressToDB(get().currentSet, progress);
       },
 
       setContentOptions: (contentOptions) => set({ contentOptions }),
@@ -188,21 +185,15 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: "flash-cards-store-v1",
-      storage: idbStateStorage as StateStorage,
-      // Called when rehydration starts/finishes
-      onRehydrateStorage: (hydration) => {
-        return (err) => {
-          if (err) return;
-          try {
-            const maybe = hydration as unknown as {
-              setState?: (state: Partial<AppState>, replace?: boolean) => void;
-            };
-            maybe.setState?.({ isHydrated: true }, true);
-          } catch {
-            // ignore
-          }
-        };
-      },
+      storage: createJSONStorage(() => storage),
+      partialize: (state) => ({
+        theme: state.theme,
+        currentSet: state.currentSet,
+        navExpanded: state.navExpanded,
+        skipEnabled: state.skipEnabled,
+        speechSupported: state.speechSupported,
+      }),
+      onRehydrateStorage: (state) => () => state.setHasHydrated(true),
     },
   ),
 );

@@ -45,29 +45,27 @@ function openDB(): Promise<IDBDatabase> {
     };
 
     request.onupgradeneeded = (event) => {
-      const {
-        result: { objectStoreNames, createObjectStore },
-      } = event.target as IDBOpenDBRequest;
+      const db = (event.target as IDBOpenDBRequest).result;
 
-      if (!objectStoreNames.contains(CONTENT_STORE_NAME)) {
-        const store = createObjectStore(CONTENT_STORE_NAME, {
+      if (!db.objectStoreNames.contains(CONTENT_STORE_NAME)) {
+        const store = db.createObjectStore(CONTENT_STORE_NAME, {
           keyPath: "text",
         });
         store.createIndex("setName", "setName", { unique: false });
       }
 
-      if (!objectStoreNames.contains(CONTENT_METADATA_STORE_NAME)) {
-        createObjectStore(CONTENT_METADATA_STORE_NAME, {
+      if (!db.objectStoreNames.contains(CONTENT_METADATA_STORE_NAME)) {
+        db.createObjectStore(CONTENT_METADATA_STORE_NAME, {
           keyPath: "setName",
         });
       }
 
-      if (!objectStoreNames.contains(PROGRESS_STORE_NAME)) {
-        createObjectStore(PROGRESS_STORE_NAME, { keyPath: "setName" });
+      if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+        db.createObjectStore(PROGRESS_STORE_NAME, { keyPath: "setName" });
       }
 
-      if (!objectStoreNames.contains(SETTINGS_STORE_NAME)) {
-        createObjectStore(SETTINGS_STORE_NAME, { keyPath: "key" });
+      if (!db.objectStoreNames.contains(SETTINGS_STORE_NAME)) {
+        db.createObjectStore(SETTINGS_STORE_NAME, { keyPath: "key" });
       }
     };
 
