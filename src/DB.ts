@@ -18,14 +18,14 @@ const CSV_DELIMITER = ",";
 
 let dbConnection: IDBDatabase | null = null;
 
-export function ensureStorageAvailable() {
+function isDBAvailable() {
   if (!window.indexedDB) {
     throw new Error("IndexedDB is not supported by this browser.");
   }
 }
 
-function openDatabase(): Promise<IDBDatabase> {
-  ensureStorageAvailable();
+function openDB(): Promise<IDBDatabase> {
+  isDBAvailable();
 
   if (dbConnection) {
     return Promise.resolve(dbConnection);
@@ -45,34 +45,29 @@ function openDatabase(): Promise<IDBDatabase> {
     };
 
     request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
+      const {
+        result: { objectStoreNames, createObjectStore },
+      } = event.target as IDBOpenDBRequest;
 
-      if (!db.objectStoreNames.contains(CONTENT_STORE_NAME)) {
-        const store = db.createObjectStore(CONTENT_STORE_NAME, {
+      if (!objectStoreNames.contains(CONTENT_STORE_NAME)) {
+        const store = createObjectStore(CONTENT_STORE_NAME, {
           keyPath: "text",
         });
         store.createIndex("setName", "setName", { unique: false });
-      } else {
-        const store = (
-          event.target as IDBOpenDBRequest
-        ).transaction?.objectStore(CONTENT_STORE_NAME);
-        if (store && !store.indexNames.contains("setName")) {
-          store.createIndex("setName", "setName", { unique: false });
-        }
       }
 
-      if (!db.objectStoreNames.contains(CONTENT_METADATA_STORE_NAME)) {
-        db.createObjectStore(CONTENT_METADATA_STORE_NAME, {
+      if (!objectStoreNames.contains(CONTENT_METADATA_STORE_NAME)) {
+        createObjectStore(CONTENT_METADATA_STORE_NAME, {
           keyPath: "setName",
         });
       }
 
-      if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
-        db.createObjectStore(PROGRESS_STORE_NAME, { keyPath: "setName" });
+      if (!objectStoreNames.contains(PROGRESS_STORE_NAME)) {
+        createObjectStore(PROGRESS_STORE_NAME, { keyPath: "setName" });
       }
 
-      if (!db.objectStoreNames.contains(SETTINGS_STORE_NAME)) {
-        db.createObjectStore(SETTINGS_STORE_NAME, { keyPath: "key" });
+      if (!objectStoreNames.contains(SETTINGS_STORE_NAME)) {
+        createObjectStore(SETTINGS_STORE_NAME, { keyPath: "key" });
       }
     };
 
@@ -120,37 +115,16 @@ function getStoreCountForSet(
   return new Promise((resolve, reject) => {
     const tx = db.transaction(CONTENT_STORE_NAME, "readonly");
     const store = tx.objectStore(CONTENT_STORE_NAME);
+    const request = store.index("setName").count(IDBKeyRange.only(setName));
 
-    if (store.indexNames.contains("setName")) {
-      const request = store.index("setName").count(IDBKeyRange.only(setName));
-      request.onerror = () => {
-        reject(
-          request.error || new Error("Failed to count records for content."),
-        );
-      };
-      request.onsuccess = () => resolve(request.result);
-      return;
-    }
-
-    let count = 0;
-    const cursorRequest = store.openCursor();
-    cursorRequest.onerror = () => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => {
       reject(
-        cursorRequest.error ||
-          new Error("Failed to count records for content."),
+        request.error || new Error("Failed to count records for content."),
       );
     };
-    cursorRequest.onsuccess = (event) => {
-      const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-      if (!cursor) {
-        resolve(count);
-        return;
-      }
-      if ((cursor.value as Card).setName === setName) {
-        count += 1;
-      }
-      cursor.continue();
-    };
+
+    return;
   });
 }
 
@@ -313,7 +287,7 @@ async function fetchAndSeed(currentSet: string, db: IDBDatabase) {
 }
 
 export function getAllCardsForSet(currentSet: string): Promise<Card[]> {
-  return openDatabase().then((db) => {
+  return openDB().then((db) => {
     return new Promise((resolve, reject) => {
       const tx = db.transaction(CONTENT_STORE_NAME, "readonly");
       const store = tx.objectStore(CONTENT_STORE_NAME);
@@ -358,7 +332,7 @@ async function getContentMetadata(setName: string): Promise<{
   displayName?: string;
   importedAt?: number;
 } | null> {
-  const db = await openDatabase();
+  const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(CONTENT_METADATA_STORE_NAME, "readonly");
     const store = tx.objectStore(CONTENT_METADATA_STORE_NAME);
@@ -375,7 +349,7 @@ export async function setContentMetadata(metadata: {
   displayName: string;
   importedAt: number;
 }) {
-  const db = await openDatabase();
+  const db = await openDB();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(CONTENT_METADATA_STORE_NAME, "readwrite");
     tx.objectStore(CONTENT_METADATA_STORE_NAME).put(metadata);
@@ -386,7 +360,7 @@ export async function setContentMetadata(metadata: {
 }
 
 async function deleteContentMetadata(setName: string) {
-  const db = await openDatabase();
+  const db = await openDB();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(CONTENT_METADATA_STORE_NAME, "readwrite");
     tx.objectStore(CONTENT_METADATA_STORE_NAME).delete(setName);
@@ -427,7 +401,7 @@ function deleteContentRecords(db: IDBDatabase, setName: string) {
 }
 
 export async function deleteContent(setName: string) {
-  const db = await openDatabase();
+  const db = await openDB();
   await deleteContentRecords(db, setName);
   await deleteContentMetadata(setName);
   await deleteProgressFromDB(setName);
@@ -440,7 +414,7 @@ export async function getContentDisplayName(setName: string) {
 
 export async function getUniqueContentNames() {
   const names = new Set(DEFAULT_CONTENT.map((item) => item.key));
-  const db = await openDatabase();
+  const db = await openDB();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(CONTENT_STORE_NAME, "readonly");
     const request = tx.objectStore(CONTENT_STORE_NAME).openCursor();
@@ -487,7 +461,7 @@ export async function getContentOptions() {
 }
 
 export async function importContent(setName: string, cards: Card[]) {
-  const db = await openDatabase();
+  const db = await openDB();
   await deleteContentRecords(db, setName);
 
   return new Promise<void>((resolve, reject) => {
@@ -579,8 +553,8 @@ async function clearDefaultContent(db: IDBDatabase) {
 }
 
 export async function initializeContent(currentSet: string) {
-  ensureStorageAvailable();
-  const db = await openDatabase();
+  isDBAvailable();
+  const db = await openDB();
   const cachedVersion = await getCachedDataVersion();
   const setCount = await getStoreCountForSet(db, currentSet);
 
@@ -602,7 +576,7 @@ export async function getProgressFromDB(
   setName: string,
 ): Promise<ProgressMap | null> {
   try {
-    const db = await openDatabase();
+    const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(PROGRESS_STORE_NAME, "readonly");
       const request = tx.objectStore(PROGRESS_STORE_NAME).get(setName);
@@ -623,7 +597,7 @@ export async function setProgressToDB(
   setName: string,
   progressData: ProgressMap,
 ) {
-  const db = await openDatabase();
+  const db = await openDB();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(PROGRESS_STORE_NAME, "readwrite");
     tx.objectStore(PROGRESS_STORE_NAME).put({
@@ -638,7 +612,7 @@ export async function setProgressToDB(
 }
 
 async function deleteProgressFromDB(setName: string) {
-  const db = await openDatabase();
+  const db = await openDB();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(PROGRESS_STORE_NAME, "readwrite");
     tx.objectStore(PROGRESS_STORE_NAME).delete(setName);
@@ -650,7 +624,7 @@ async function deleteProgressFromDB(setName: string) {
 
 export async function getSettingsFromDB(): Promise<Settings> {
   try {
-    const db = await openDatabase();
+    const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(SETTINGS_STORE_NAME, "readonly");
       const request = tx.objectStore(SETTINGS_STORE_NAME).get("settings");
@@ -668,7 +642,7 @@ export async function getSettingsFromDB(): Promise<Settings> {
 }
 
 export async function setSettingsToDB(settingsData: Settings) {
-  const db = await openDatabase();
+  const db = await openDB();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(SETTINGS_STORE_NAME, "readwrite");
     tx.objectStore(SETTINGS_STORE_NAME).put({
