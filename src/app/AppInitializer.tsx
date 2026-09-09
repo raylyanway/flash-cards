@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from "react";
+import { useHydrated } from "../hooks/useHydrated";
 import { useTheme } from "../hooks/useTheme";
 import { useAppStore } from "../store/useAppStore";
 import { AppLoader } from "./AppLoader";
@@ -11,10 +12,14 @@ export function AppInitializer({ children }: AppInitializerProps) {
   const initialized = useAppStore((state) => state.initialized);
   const initialize = useAppStore((state) => state.initialize);
   const setNow = useAppStore((state) => state.setNow);
+  const isHydrated = useAppStore((s) => s.isHydrated);
+  const hydratedReady = useHydrated();
 
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    if (hydratedReady && isHydrated) {
+      initialize();
+    }
+  }, [initialize, hydratedReady, isHydrated]);
 
   useTheme();
 
@@ -23,7 +28,7 @@ export function AppInitializer({ children }: AppInitializerProps) {
     return () => window.clearInterval(timer);
   }, [setNow]);
 
-  if (!initialized) return <AppLoader />;
+  if (!initialized || !hydratedReady || !isHydrated) return <AppLoader />;
 
   return <>{children}</>;
 }
