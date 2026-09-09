@@ -5,14 +5,13 @@ import {
   DEFAULT_CONTENT,
   getContentOptions,
   getProgressFromDB,
-  getSettingsFromDB,
   initializeContent,
-  setProgressToDB,
 } from "../DB";
 import type {
   Card,
   ContentOption,
   ProgressMap,
+  SetProgress,
   ThemePreference,
 } from "../types";
 import { initializeMissingProgress } from "../utils/cardProgress";
@@ -49,7 +48,7 @@ export type AppState = {
   recognizedText: string;
   result: string;
   resultClass: string;
-  setupBackup: ProgressMap | null;
+  setupBackup: SetProgress | null;
   skipEnabled: boolean;
   speechSupported: boolean;
   theme: ThemePreference;
@@ -61,7 +60,6 @@ export type AppActions = {
   initialize: () => Promise<void>;
   loadSetData: (setName: string) => Promise<void>;
   refreshContentOptions: (preferredSet?: string) => Promise<ContentOption[]>;
-  saveProgress: (progress: ProgressMap) => Promise<void>;
   setContentOptions: (options: ContentOption[]) => void;
   setCards: (cards: Card[]) => void;
   setCurrentCard: (card: Card | null) => void;
@@ -73,7 +71,7 @@ export type AppActions = {
   setRecognizedText: (text: string) => void;
   setResult: (result: string) => void;
   setResultClass: (resultClass: string) => void;
-  setSetupBackup: (progress: ProgressMap | null) => void;
+  setSetupBackup: (progress: SetProgress | null) => void;
   setSkipEnabled: (enabled: boolean) => void;
   setSpeechSupported: (supported: boolean) => void;
   setTheme: (theme: ThemePreference) => void;
@@ -118,21 +116,18 @@ export const useAppStore = create<AppStore>()(
       },
 
       initialize: async () => {
-        const settings = await getSettingsFromDB();
-        const savedSet = settings.currentSet || DEFAULT_SET;
-        const contentOptions = await get().refreshContentOptions(savedSet);
+        const { currentSet } = get();
+        const contentOptions = await get().refreshContentOptions(currentSet);
 
         const setToLoad = contentOptions.some(
-          (option) => option.key === savedSet,
+          (option) => option.key === currentSet,
         )
-          ? savedSet
+          ? currentSet
           : contentOptions[0]?.key || DEFAULT_SET;
 
         await get().loadSetData(setToLoad);
 
         set({
-          theme: settings.theme ?? DEFAULT_THEME,
-          currentSet: savedSet,
           initialized: true,
         });
       },
@@ -147,7 +142,6 @@ export const useAppStore = create<AppStore>()(
           storedProgress || {},
         );
         set({ cards: loadedCards, progress: nextProgress });
-        await setProgressToDB(setName, nextProgress);
       },
 
       refreshContentOptions: async (preferredSet?: string) => {
@@ -160,18 +154,14 @@ export const useAppStore = create<AppStore>()(
         return options;
       },
 
-      saveProgress: async (progress) => {
-        set({ progress });
-        await setProgressToDB(get().currentSet, progress);
-      },
-
       setContentOptions: (contentOptions) => set({ contentOptions }),
       setCards: (cards) => set({ cards }),
       setCurrentCard: (currentCard) => set({ currentCard }),
       setCurrentSet: (currentSet) => set({ currentSet }),
       setListening: (listening) => set({ listening }),
       setNow: (now) => set({ now }),
-      setProgress: (progress) => set({ progress }),
+      setProgress: (progress) =>
+        set((prev) => ({ progress: { ...prev.progress, ...progress } })),
       setProgressSearch: (progressSearch) => set({ progressSearch }),
       setRecognizedText: (recognizedText) => set({ recognizedText }),
       setResult: (result) => set({ result }),

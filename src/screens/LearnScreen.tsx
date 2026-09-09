@@ -17,13 +17,18 @@ import {
 export function LearnScreen() {
   const cards = useAppStore((state) => state.cards);
   const currentCard = useAppStore((state) => state.currentCard);
+  const currentSet = useAppStore((state) => state.currentSet);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
+  const currentSetProgress = progress[currentSet];
 
-  const stageCounts = useMemo(() => countStages(progress), [progress]);
+  const stageCounts = useMemo(
+    () => countStages(currentSetProgress),
+    [currentSetProgress],
+  );
   const nextDueTimestamp = useMemo(
-    () => getNextDueTimestamp(cards, progress),
-    [cards, progress],
+    () => getNextDueTimestamp(cards, currentSetProgress),
+    [cards, currentSetProgress],
   );
   const learning = useLearningSession({ nextDueTimestamp });
 
@@ -38,7 +43,7 @@ export function LearnScreen() {
 
   return (
     <Stack spacing={3}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
+      <Stack direction="row">
         <Typography variant="overline" color="text.secondary">
           Learning session
         </Typography>
@@ -63,10 +68,10 @@ export function LearnScreen() {
             "linear-gradient(135deg, rgba(79,70,229,0.06), rgba(148,163,184,0.04))",
         }}
       >
-        <Stack spacing={1.5} alignItems="center" textAlign="center">
+        <Stack spacing={1.5}>
           <Typography variant="overline" color="text.secondary">
             {currentCard
-              ? getStageName(progress[currentCard.text]?.stage || 0)
+              ? getStageName(currentSetProgress[currentCard.text]?.stage || 0)
               : "No cards are due"}
           </Typography>
           <Typography

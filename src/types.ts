@@ -13,7 +13,8 @@ export type ProgressEntry = {
   correctCount: number;
 };
 
-export type ProgressMap = Record<string, ProgressEntry>;
+export type ProgressMap = Record<string, Record<string, ProgressEntry>>;
+export type SetProgress = Record<string, ProgressEntry>;
 
 export type ContentOption = {
   key: string;

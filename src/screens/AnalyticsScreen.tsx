@@ -45,12 +45,17 @@ export function AnalyticsScreen() {
   const cards = useAppStore((state) => state.cards);
   const currentSet = useAppStore((state) => state.currentSet);
   const progress = useAppStore((state) => state.progress);
-  const saveProgress = useAppStore((state) => state.saveProgress);
+  const setProgress = useAppStore((state) => state.setProgress);
   const setProgressSearch = useAppStore((state) => state.setProgressSearch);
   const setSetupBackup = useAppStore((state) => state.setSetupBackup);
   const navigate = useNavigate();
 
-  const stageCounts = useMemo(() => countStages(progress), [progress]);
+  const currentSetProgress = progress[currentSet];
+
+  const stageCounts = useMemo(
+    () => countStages(currentSetProgress),
+    [currentSetProgress],
+  );
   const sortedCards = useMemo(
     () => [...cards].sort((a, b) => a.text.localeCompare(b.text)),
     [cards],
@@ -59,11 +64,11 @@ export function AnalyticsScreen() {
   const resetProgress = async () => {
     if (!confirm(`Reset progress for "${currentSet}"?`)) return;
     const nextProgress = initializeMissingProgress(cards, {});
-    await saveProgress(nextProgress);
+    setProgress({ [currentSet]: nextProgress });
   };
 
   const openProgressSetup = () => {
-    setSetupBackup(progress);
+    setSetupBackup(currentSetProgress);
     setProgressSearch("");
     navigate("/progress-setup");
   };
@@ -101,7 +106,9 @@ export function AnalyticsScreen() {
               </TableHead>
               <TableBody>
                 {sortedCards.map((card) => {
-                  const cardProgress = progress[card.text] || { stage: 0 };
+                  const cardProgress = currentSetProgress[card.text] || {
+                    stage: 0,
+                  };
                   return (
                     <TableRow key={card.text} hover>
                       <TableCell>{card.text}</TableCell>

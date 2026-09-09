@@ -32,7 +32,6 @@ import {
   importContent,
   parseCsvToJson,
   setContentMetadata,
-  setSettingsToDB,
 } from "../DB";
 import { FeatureActionCard } from "../components/FeatureActionCard";
 import { PageHeader } from "../components/PageHeader";
@@ -44,7 +43,6 @@ export function ContentScreen() {
   const importContentInputRef = useRef<HTMLInputElement | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const theme = useAppStore((state) => state.theme);
   const contentOptions = useAppStore((state) => state.contentOptions);
   const currentSet = useAppStore((state) => state.currentSet);
   const setContentOptions = useAppStore((state) => state.setContentOptions);
@@ -119,7 +117,6 @@ export function ContentScreen() {
         });
         await refreshContentOptions(setName);
         setCurrentSet(setName);
-        await setSettingsToDB({ currentSet: setName, theme });
         await loadSetData(setName);
         alert(`Content "${displayName}" imported successfully.`);
       } catch (error) {
@@ -153,7 +150,6 @@ export function ContentScreen() {
       const nextSet = options[0]?.key || "body-parts";
       setContentOptions(options);
       setCurrentSet(nextSet);
-      await setSettingsToDB({ currentSet: nextSet, theme });
       await loadSetData(nextSet);
       alert(`Content "${displayName}" deleted.`);
     } catch (error) {
@@ -167,7 +163,6 @@ export function ContentScreen() {
   const handleSetChange = async (event: ChangeEvent<HTMLSelectElement>) => {
     const nextSet = event.target.value;
     setCurrentSet(nextSet);
-    await setSettingsToDB({ currentSet: nextSet, theme });
     await loadSetData(nextSet);
   };
 

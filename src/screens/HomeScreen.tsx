@@ -27,33 +27,35 @@ export function HomeScreen() {
   const progress = useAppStore((state) => state.progress);
   const navigate = useNavigate();
 
+  const currentSetProgress = progress[currentSet];
+
   const options = useMemo(
     () => contentOptions.map((option) => option.key),
     [contentOptions],
   );
 
   const completePercent = useMemo(
-    () => getCompletePercent(cards, progress),
-    [cards, progress],
+    () => getCompletePercent(cards, currentSetProgress),
+    [cards, currentSetProgress],
   );
 
   const nextReviewLabel = useMemo(
-    () => getNextReviewLabel(progress, now),
-    [now, progress],
+    () => getNextReviewLabel(currentSetProgress, now),
+    [now, currentSetProgress],
   );
 
   const totalCards = cards.length;
   const learnedCount = useMemo(
-    () => Object.values(progress).filter((p) => p.stage === 3).length,
-    [progress],
+    () => Object.values(currentSetProgress).filter((p) => p.stage === 3).length,
+    [currentSetProgress],
   );
 
   const dueCount = useMemo(() => {
     const nowTs = Date.now();
-    return Object.values(progress).filter(
+    return Object.values(currentSetProgress).filter(
       (p) => p.stage < 3 && p.nextReview <= nowTs,
     ).length;
-  }, [progress, now]);
+  }, [currentSetProgress, now]);
 
   return (
     <>

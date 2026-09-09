@@ -21,7 +21,7 @@ import { type ChangeEvent, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { createCsvFromProgress, parseCsvToJson } from "../DB";
 import { useAppStore } from "../store/useAppStore";
-import type { Card as CardModel, ProgressMap } from "../types";
+import type { Card as CardModel, SetProgress } from "../types";
 import { getStageName, initializeMissingProgress } from "../utils/cardProgress";
 import { downloadCsv } from "../utils/downloadCsv";
 
@@ -34,11 +34,12 @@ export function ProgressSetupScreen() {
   const progressSearch = useAppStore((state) => state.progressSearch);
   const setupBackup = useAppStore((state) => state.setupBackup);
 
-  const saveProgress = useAppStore((state) => state.saveProgress);
   const setProgress = useAppStore((state) => state.setProgress);
   const setProgressSearch = useAppStore((state) => state.setProgressSearch);
   const setSetupBackup = useAppStore((state) => state.setSetupBackup);
   const navigate = useNavigate();
+
+  const currentSetProgress = progress[currentSet];
 
   const filteredCards = cards.filter((card) =>
     card.text.toLowerCase().includes(progressSearch.toLowerCase()),
@@ -46,14 +47,14 @@ export function ProgressSetupScreen() {
 
   const closeProgressSetup = () => {
     if (setupBackup) {
-      setProgress(setupBackup);
+      setProgress({ [currentSet]: setupBackup });
       setSetupBackup(null);
     }
     navigate("/analytics");
   };
 
   const doneProgressSetup = async () => {
-    await saveProgress(progress);
+    setProgress({ [currentSet]: currentSetProgress });
     setSetupBackup(null);
     navigate("/analytics");
   };
@@ -82,7 +83,7 @@ export function ProgressSetupScreen() {
     reader.onload = async (loadEvent) => {
       try {
         const data = parseCsvToJson(String(loadEvent.target?.result || ""));
-        const importedProgress: ProgressMap = {};
+        const importedProgress: SetProgress = {};
         for (const row of data) {
           const text = String(row.text || "").trim();
           if (!text) continue;
@@ -103,10 +104,10 @@ export function ProgressSetupScreen() {
         if (!confirmed) return;
 
         const nextProgress = initializeMissingProgress(cards, {
-          ...progress,
+          ...currentSetProgress,
           ...importedProgress,
         });
-        await saveProgress(nextProgress);
+        setProgress({ [currentSet]: nextProgress });
         alert("Progress imported successfully!");
       } catch (error) {
         alert(`Failed to import progress: ${(error as Error).message}`);
@@ -118,7 +119,7 @@ export function ProgressSetupScreen() {
   };
 
   const setAllStages = (stage: number) => {
-    const nextProgress: ProgressMap = {};
+    const nextProgress: SetProgress = {};
     for (const card of cards) {
       nextProgress[card.text] = {
         stage,
@@ -126,27 +127,29 @@ export function ProgressSetupScreen() {
         correctCount: stage === 3 ? 3 : 0,
       };
     }
-    setProgress(nextProgress);
+    setProgress({ [currentSet]: nextProgress });
   };
 
   const setCardStage = (card: CardModel, stage: number) => {
     setProgress({
-      ...progress,
-      [card.text]: {
-        ...progress[card.text],
-        stage,
-        nextReview: 0,
-        correctCount:
-          stage === 3
-            ? Math.max(progress[card.text]?.correctCount || 0, 3)
-            : progress[card.text]?.correctCount || 0,
+      [currentSet]: {
+        ...currentSetProgress,
+        [card.text]: {
+          ...currentSetProgress[card.text],
+          stage,
+          nextReview: 0,
+          correctCount:
+            stage === 3
+              ? Math.max(currentSetProgress[card.text]?.correctCount || 0, 3)
+              : currentSetProgress[card.text]?.correctCount || 0,
+        },
       },
     });
   };
 
   return (
     <Stack spacing={3}>
-      <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack direction="row" spacing={1}>
         <Button
           variant="text"
           startIcon={<ArrowBackRounded />}
@@ -199,7 +202,7 @@ export function ProgressSetupScreen() {
 
               <Stack spacing={1.5} sx={{ mt: 2 }}>
                 {filteredCards.map((card) => {
-                  const cardProgress = progress[card.text] || {
+                  const cardProgress = currentSetProgress[card.text] || {
                     stage: 0,
                     correctCount: 0,
                   };
@@ -287,7 +290,7 @@ export function ProgressSetupScreen() {
               </Stack>
             </Box>
 
-            <Stack direction="row" justifyContent="flex-end">
+            <Stack direction="row">
               <Button variant="contained" onClick={doneProgressSetup}>
                 Done
               </Button>

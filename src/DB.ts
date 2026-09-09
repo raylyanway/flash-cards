@@ -1,4 +1,4 @@
-import type { Card, ContentOption, ProgressMap, Settings } from "./types";
+import type { Card, ContentOption, ProgressMap } from "./types";
 
 export const DEFAULT_CONTENT: ContentOption[] = [
   { key: "body-parts", label: "Body Parts" },
@@ -591,24 +591,6 @@ export async function getProgressFromDB(
   }
 }
 
-export async function setProgressToDB(
-  setName: string,
-  progressData: ProgressMap,
-) {
-  const db = await openDB();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(PROGRESS_STORE_NAME, "readwrite");
-    tx.objectStore(PROGRESS_STORE_NAME).put({
-      setName,
-      data: progressData,
-      lastUpdated: Date.now(),
-    });
-    tx.oncomplete = () => resolve();
-    tx.onerror = () =>
-      reject(tx.error || new Error("Progress transaction failed."));
-  });
-}
-
 async function deleteProgressFromDB(setName: string) {
   const db = await openDB();
   return new Promise<void>((resolve, reject) => {
@@ -617,40 +599,6 @@ async function deleteProgressFromDB(setName: string) {
     tx.oncomplete = () => resolve();
     tx.onerror = () =>
       reject(tx.error || new Error("Progress delete transaction failed."));
-  });
-}
-
-export async function getSettingsFromDB(): Promise<Settings> {
-  try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(SETTINGS_STORE_NAME, "readonly");
-      const request = tx.objectStore(SETTINGS_STORE_NAME).get("settings");
-      request.onerror = () =>
-        reject(
-          request.error || new Error("Failed to read settings from IndexedDB."),
-        );
-      request.onsuccess = () =>
-        resolve(request.result ? request.result.data : {});
-    });
-  } catch (error) {
-    console.error("getSettingsFromDB failed:", error);
-    return {};
-  }
-}
-
-export async function setSettingsToDB(settingsData: Settings) {
-  const db = await openDB();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(SETTINGS_STORE_NAME, "readwrite");
-    tx.objectStore(SETTINGS_STORE_NAME).put({
-      key: "settings",
-      data: settingsData,
-      lastUpdated: Date.now(),
-    });
-    tx.oncomplete = () => resolve();
-    tx.onerror = () =>
-      reject(tx.error || new Error("Settings transaction failed."));
   });
 }
 
