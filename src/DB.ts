@@ -402,7 +402,6 @@ export async function deleteContent(setName: string) {
   const db = await openDB();
   await deleteContentRecords(db, setName);
   await deleteContentMetadata(setName);
-  await deleteProgressFromDB(setName);
 }
 
 export async function getContentDisplayName(setName: string) {
@@ -568,38 +567,6 @@ export async function initializeContent(currentSet: string) {
 
   await fetchAndSeed(currentSet, db);
   return getAllCardsForSet(currentSet);
-}
-
-export async function getProgressFromDB(
-  setName: string,
-): Promise<ProgressMap | null> {
-  try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(PROGRESS_STORE_NAME, "readonly");
-      const request = tx.objectStore(PROGRESS_STORE_NAME).get(setName);
-      request.onerror = () =>
-        reject(
-          request.error || new Error("Failed to read progress from IndexedDB."),
-        );
-      request.onsuccess = () =>
-        resolve(request.result ? request.result.data : null);
-    });
-  } catch (error) {
-    console.error("getProgressFromDB failed:", error);
-    return null;
-  }
-}
-
-async function deleteProgressFromDB(setName: string) {
-  const db = await openDB();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(PROGRESS_STORE_NAME, "readwrite");
-    tx.objectStore(PROGRESS_STORE_NAME).delete(setName);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () =>
-      reject(tx.error || new Error("Progress delete transaction failed."));
-  });
 }
 
 export async function deleteAppDatabase() {

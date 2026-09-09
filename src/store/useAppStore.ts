@@ -1,12 +1,7 @@
 import { del, get, set } from "idb-keyval";
 import { create } from "zustand";
 import { createJSONStorage, persist, StateStorage } from "zustand/middleware";
-import {
-  DEFAULT_CONTENT,
-  getContentOptions,
-  getProgressFromDB,
-  initializeContent,
-} from "../DB";
+import { DEFAULT_CONTENT, getContentOptions, initializeContent } from "../DB";
 import type {
   Card,
   ContentOption,
@@ -133,15 +128,19 @@ export const useAppStore = create<AppStore>()(
       },
 
       loadSetData: async (setName: string) => {
+        const { progress } = get();
         const [storedProgress, loadedCards] = await Promise.all([
-          getProgressFromDB(setName),
+          progress[setName],
           initializeContent(setName),
         ]);
         const nextProgress = initializeMissingProgress(
           loadedCards,
           storedProgress || {},
         );
-        set({ cards: loadedCards, progress: nextProgress });
+        set((prev) => ({
+          cards: loadedCards,
+          progress: { ...prev.progress, [setName]: nextProgress },
+        }));
       },
 
       refreshContentOptions: async (preferredSet?: string) => {
