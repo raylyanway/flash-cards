@@ -23,7 +23,6 @@ import { FeatureActionCard } from "../components/FeatureActionCard";
 import { PageHeader } from "../components/PageHeader";
 import { SectionCard } from "../components/SectionCard";
 import {
-  createCsvFromCards,
   DEFAULT_CONTENT,
   deleteContent,
   getAllCardsForSet,
@@ -33,11 +32,10 @@ import {
   getDisplayNameForSet,
   getUniqueContentNames,
   importContent,
-  parseCsvToJson,
   setContentMetadata,
 } from "../db";
 import { useAppStore } from "../store/useAppStore";
-import { downloadCsv } from "../utils/downloadCsv";
+import { createCsvFromCards, downloadCsv, parseCsv } from "../utils/csv";
 
 export function ContentScreen() {
   const importContentInputRef = useRef<HTMLInputElement | null>(null);
@@ -92,7 +90,7 @@ export function ContentScreen() {
     const reader = new FileReader();
     reader.onload = async (loadEvent) => {
       try {
-        const data = parseCsvToJson(String(loadEvent.target?.result || ""));
+        const data = parseCsv(String(loadEvent.target?.result || ""));
         const setName = getContentBaseName(file.name);
         if (!setName) {
           throw new Error(

@@ -19,11 +19,10 @@ import {
 } from "@mui/material";
 import { type ChangeEvent, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { createCsvFromProgress, parseCsvToJson } from "../db";
 import { useAppStore } from "../store/useAppStore";
 import type { Card as CardModel, SetProgress } from "../types";
 import { getStageName, initializeMissingProgress } from "../utils/cardProgress";
-import { downloadCsv } from "../utils/downloadCsv";
+import { createCsvFromProgress, downloadCsv, parseCsv } from "../utils/csv";
 
 export function ProgressSetupScreen() {
   const importProgressInputRef = useRef<HTMLInputElement | null>(null);
@@ -82,7 +81,7 @@ export function ProgressSetupScreen() {
     const reader = new FileReader();
     reader.onload = async (loadEvent) => {
       try {
-        const data = parseCsvToJson(String(loadEvent.target?.result || ""));
+        const data = parseCsv(String(loadEvent.target?.result || ""));
         const importedProgress: SetProgress = {};
         for (const row of data) {
           const text = String(row.text || "").trim();
