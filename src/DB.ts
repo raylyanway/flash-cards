@@ -1,27 +1,16 @@
-import type { Card, ContentOption, ProgressMap } from "./types";
+import type {
+  Card,
+  ContentMetadata,
+  ContentOption,
+  ContentRecord,
+  ProgressMap,
+  ProgressRecord,
+  SettingRecord,
+} from "./types";
 
 import { Dexie, type EntityTable } from "dexie";
-type ContentRecord = Card & {
-  setName: string;
-};
 
-type ContentMetadata = {
-  setName: string;
-  displayName?: string;
-  importedAt?: number;
-};
-
-type ProgressRecord = {
-  setName: string;
-  progress: ProgressMap[string];
-};
-
-type SettingRecord = {
-  key: string;
-  value: string;
-};
-
-const db = new Dexie("flashCardDB") as Dexie & {
+const db = new Dexie("flashCardsDB") as Dexie & {
   uiStore: EntityTable<{ key: string; state: string }, "key">;
   content: EntityTable<ContentRecord, "text">;
   contentMetadata: EntityTable<ContentMetadata, "setName">;
@@ -30,13 +19,6 @@ const db = new Dexie("flashCardDB") as Dexie & {
 };
 
 db.version(1).stores({
-  content: "text, setName",
-  contentMetadata: "setName",
-  progress: "setName",
-  settings: "key",
-});
-
-db.version(2).stores({
   uiStore: "key",
   content: "text, setName",
   contentMetadata: "setName",
@@ -52,32 +34,10 @@ export const DEFAULT_CONTENT: ContentOption[] = [
   { key: "sentences", label: "Sentences" },
 ];
 
-const LATEST_DATA_VERSION = 1;
-const CACHE_VERSION_KEY = "cached_data_version";
 const CSV_DELIMITER = ",";
 
 async function getStoreCountForSet(setName: string) {
   return db.content.where("setName").equals(setName).count();
-}
-
-async function getCachedDataVersion() {
-  try {
-    return Number(localStorage.getItem(CACHE_VERSION_KEY) ?? 0);
-  } catch (error) {
-    console.warn(
-      "Unable to read cached_data_version from localStorage.",
-      error,
-    );
-    return 0;
-  }
-}
-
-export async function setCachedDataVersion(version: number) {
-  try {
-    localStorage.setItem(CACHE_VERSION_KEY, String(version));
-  } catch (error) {
-    console.warn("Unable to write cached_data_version to localStorage.", error);
-  }
 }
 
 export function getContentBaseName(fileName: string) {
@@ -220,7 +180,6 @@ async function fetchAndSeed(currentSet: string) {
   await db.content.bulkPut(
     data.map((item) => ({ ...item, setName: currentSet })),
   );
-  await setCachedDataVersion(LATEST_DATA_VERSION);
 }
 
 export async function getAllCardsForSet(currentSet: string): Promise<Card[]> {
@@ -374,23 +333,8 @@ export function createCsvFromProgress(
   return rows.join("\r\n");
 }
 
-async function clearDefaultContent() {
-  await Promise.all(
-    DEFAULT_CONTENT.map((item) => deleteContentRecords(item.key)),
-  );
-}
-
 export async function initializeContent(currentSet: string) {
-  const cachedVersion = await getCachedDataVersion();
   const setCount = await getStoreCountForSet(currentSet);
-
-  if (cachedVersion !== LATEST_DATA_VERSION) {
-    await clearDefaultContent();
-    if (DEFAULT_CONTENT.some((item) => item.key === currentSet)) {
-      await fetchAndSeed(currentSet);
-    }
-    return getAllCardsForSet(currentSet);
-  }
 
   if (setCount > 0) return getAllCardsForSet(currentSet);
 

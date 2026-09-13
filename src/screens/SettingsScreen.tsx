@@ -3,7 +3,7 @@ import { SettingsRounded } from "@mui/icons-material";
 import { Button, Stack } from "@mui/material";
 import { PageHeader } from "../components/PageHeader";
 import { SectionCard } from "../components/SectionCard";
-import { deleteAppDatabase, setCachedDataVersion } from "../db";
+import { deleteAppDatabase } from "../db";
 
 export function SettingsScreen() {
   const handleDeleteDatabase = async () => {
@@ -14,7 +14,6 @@ export function SettingsScreen() {
 
     try {
       await deleteAppDatabase();
-      await setCachedDataVersion(0);
       alert(
         "App database deleted. The app will reload to recreate fresh storage.",
       );
