@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { type ChangeEvent, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { createCsvFromProgress, parseCsvToJson } from "../DB";
+import { createCsvFromProgress, parseCsvToJson } from "../db";
 import { useAppStore } from "../store/useAppStore";
 import type { Card as CardModel, SetProgress } from "../types";
 import { getStageName, initializeMissingProgress } from "../utils/cardProgress";

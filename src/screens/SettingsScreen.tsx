@@ -3,7 +3,7 @@ import { SettingsRounded } from "@mui/icons-material";
 import { Button, Stack } from "@mui/material";
 import { PageHeader } from "../components/PageHeader";
 import { SectionCard } from "../components/SectionCard";
-import { deleteAppDatabase, setCachedDataVersion } from "../DB";
+import { deleteAppDatabase, setCachedDataVersion } from "../db";
 
 export function SettingsScreen() {
   const handleDeleteDatabase = async () => {

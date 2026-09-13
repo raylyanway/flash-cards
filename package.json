@@ -50,10 +50,10 @@
     "@mui/x-data-grid": "^9.13.0",
     "@mui/x-date-pickers": "^9.13.0",
     "dayjs": "^1.11.23",
+    "dexie": "^4.4.6",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.3",
-    "zustand": "^5.0.14",
-    "idb-keyval": "^6.2.0"
+    "zustand": "^5.0.14"
   }
 }

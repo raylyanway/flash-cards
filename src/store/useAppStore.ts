@@ -1,7 +1,11 @@
-import { del, get, set } from "idb-keyval";
 import { create } from "zustand";
 import { createJSONStorage, persist, StateStorage } from "zustand/middleware";
-import { DEFAULT_CONTENT, getContentOptions, initializeContent } from "../DB";
+import {
+  db,
+  DEFAULT_CONTENT,
+  getContentOptions,
+  initializeContent,
+} from "../db";
 import type {
   Card,
   ContentOption,
@@ -11,18 +15,16 @@ import type {
 } from "../types";
 import { initializeMissingProgress } from "../utils/cardProgress";
 
-const storage: StateStorage = {
+const dbStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
-    console.log(name, "has been retrieved");
-    return (await get(name)) || null;
+    const row = await db.uiStore.get(name);
+    return row?.state ?? null;
   },
-  setItem: async (name: string, value: string): Promise<void> => {
-    console.log(name, "with value", value, "has been saved");
-    await set(name, value);
+  setItem: async (name: string, newValue: string): Promise<void> => {
+    await db.uiStore.put({ key: name, state: newValue });
   },
   removeItem: async (name: string): Promise<void> => {
-    console.log(name, "has been deleted");
-    await del(name);
+    await db.uiStore.delete(name);
   },
 };
 
@@ -173,8 +175,8 @@ export const useAppStore = create<AppStore>()(
       setNavExpanded: (navExpanded: boolean) => set({ navExpanded }),
     }),
     {
-      name: "flash-cards-store-v1",
-      storage: createJSONStorage(() => storage),
+      name: "global",
+      storage: createJSONStorage(() => dbStorage),
       partialize: (state) => ({
         theme: state.theme,
         currentSet: state.currentSet,

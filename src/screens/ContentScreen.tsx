@@ -19,6 +19,9 @@ import {
   Typography,
 } from "@mui/material";
 import { type ChangeEvent, useRef, useState } from "react";
+import { FeatureActionCard } from "../components/FeatureActionCard";
+import { PageHeader } from "../components/PageHeader";
+import { SectionCard } from "../components/SectionCard";
 import {
   createCsvFromCards,
   DEFAULT_CONTENT,
@@ -32,10 +35,7 @@ import {
   importContent,
   parseCsvToJson,
   setContentMetadata,
-} from "../DB";
-import { FeatureActionCard } from "../components/FeatureActionCard";
-import { PageHeader } from "../components/PageHeader";
-import { SectionCard } from "../components/SectionCard";
+} from "../db";
 import { useAppStore } from "../store/useAppStore";
 import { downloadCsv } from "../utils/downloadCsv";
 

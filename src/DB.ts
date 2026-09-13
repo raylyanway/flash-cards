@@ -1,5 +1,30 @@
 import type { Card, ContentOption, ProgressMap } from "./types";
 
+// New DB start
+import { Dexie, type EntityTable } from "dexie";
+interface Friend {
+  id: number;
+  name: string;
+  age: number;
+}
+
+const db = new Dexie("FlashCardsDatabase") as Dexie & {
+  uiStore: EntityTable<{ key: string; state: string }, "key">;
+  friends: EntityTable<
+    Friend,
+    "id" // primary key "id" (for the typings only)
+  >;
+};
+
+db.version(1).stores({
+  uiStore: "key",
+  friends: "++id, name, age", // primary key "id" (for the runtime!)
+});
+
+export { db };
+export type { Friend };
+// New DB end
+
 export const DEFAULT_CONTENT: ContentOption[] = [
   { key: "body-parts", label: "Body Parts" },
   { key: "food", label: "Food" },
