@@ -1,29 +1,50 @@
 import type { Card, ContentOption, ProgressMap } from "./types";
 
-// New DB start
 import { Dexie, type EntityTable } from "dexie";
-interface Friend {
-  id: number;
-  name: string;
-  age: number;
-}
+type ContentRecord = Card & {
+  setName: string;
+};
 
-const db = new Dexie("FlashCardsDatabase") as Dexie & {
+type ContentMetadata = {
+  setName: string;
+  displayName?: string;
+  importedAt?: number;
+};
+
+type ProgressRecord = {
+  setName: string;
+  progress: ProgressMap[string];
+};
+
+type SettingRecord = {
+  key: string;
+  value: string;
+};
+
+const db = new Dexie("flashCardDB") as Dexie & {
   uiStore: EntityTable<{ key: string; state: string }, "key">;
-  friends: EntityTable<
-    Friend,
-    "id" // primary key "id" (for the typings only)
-  >;
+  content: EntityTable<ContentRecord, "text">;
+  contentMetadata: EntityTable<ContentMetadata, "setName">;
+  progress: EntityTable<ProgressRecord, "setName">;
+  settings: EntityTable<SettingRecord, "key">;
 };
 
 db.version(1).stores({
+  content: "text, setName",
+  contentMetadata: "setName",
+  progress: "setName",
+  settings: "key",
+});
+
+db.version(2).stores({
   uiStore: "key",
-  friends: "++id, name, age", // primary key "id" (for the runtime!)
+  content: "text, setName",
+  contentMetadata: "setName",
+  progress: "setName",
+  settings: "key",
 });
 
 export { db };
-export type { Friend };
-// New DB end
 
 export const DEFAULT_CONTENT: ContentOption[] = [
   { key: "body-parts", label: "Body Parts" },
@@ -32,83 +53,11 @@ export const DEFAULT_CONTENT: ContentOption[] = [
 ];
 
 const LATEST_DATA_VERSION = 1;
-const DB_NAME = "flashCardDB";
-const DB_VERSION = 1;
-const CONTENT_STORE_NAME = "content";
-const CONTENT_METADATA_STORE_NAME = "contentMetadata";
-const PROGRESS_STORE_NAME = "progress";
-const SETTINGS_STORE_NAME = "settings";
 const CACHE_VERSION_KEY = "cached_data_version";
 const CSV_DELIMITER = ",";
 
-let dbConnection: IDBDatabase | null = null;
-
-function isDBAvailable() {
-  if (!window.indexedDB) {
-    throw new Error("IndexedDB is not supported by this browser.");
-  }
-}
-
-function openDB(): Promise<IDBDatabase> {
-  isDBAvailable();
-
-  if (dbConnection) {
-    return Promise.resolve(dbConnection);
-  }
-
-  return new Promise((resolve, reject) => {
-    const request = window.indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => {
-      reject(request.error || new Error("Failed to open IndexedDB."));
-    };
-
-    request.onblocked = () => {
-      console.warn(
-        "IndexedDB open blocked. Close other tabs using this database.",
-      );
-    };
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-
-      if (!db.objectStoreNames.contains(CONTENT_STORE_NAME)) {
-        const store = db.createObjectStore(CONTENT_STORE_NAME, {
-          keyPath: "text",
-        });
-        store.createIndex("setName", "setName", { unique: false });
-      }
-
-      if (!db.objectStoreNames.contains(CONTENT_METADATA_STORE_NAME)) {
-        db.createObjectStore(CONTENT_METADATA_STORE_NAME, {
-          keyPath: "setName",
-        });
-      }
-
-      if (!db.objectStoreNames.contains(PROGRESS_STORE_NAME)) {
-        db.createObjectStore(PROGRESS_STORE_NAME, { keyPath: "setName" });
-      }
-
-      if (!db.objectStoreNames.contains(SETTINGS_STORE_NAME)) {
-        db.createObjectStore(SETTINGS_STORE_NAME, { keyPath: "key" });
-      }
-    };
-
-    request.onsuccess = () => {
-      const db = request.result;
-      db.onerror = (event) => {
-        console.error("IndexedDB error:", (event.target as IDBRequest).error);
-      };
-      db.onversionchange = () => {
-        db.close();
-        if (dbConnection === db) {
-          dbConnection = null;
-        }
-      };
-      dbConnection = db;
-      resolve(db);
-    };
-  });
+async function getStoreCountForSet(setName: string) {
+  return db.content.where("setName").equals(setName).count();
 }
 
 async function getCachedDataVersion() {
@@ -129,26 +78,6 @@ export async function setCachedDataVersion(version: number) {
   } catch (error) {
     console.warn("Unable to write cached_data_version to localStorage.", error);
   }
-}
-
-function getStoreCountForSet(
-  db: IDBDatabase,
-  setName: string,
-): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(CONTENT_STORE_NAME, "readonly");
-    const store = tx.objectStore(CONTENT_STORE_NAME);
-    const request = store.index("setName").count(IDBKeyRange.only(setName));
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => {
-      reject(
-        request.error || new Error("Failed to count records for content."),
-      );
-    };
-
-    return;
-  });
 }
 
 export function getContentBaseName(fileName: string) {
@@ -281,64 +210,24 @@ async function resolveContentUrl(setName: string) {
   throw new Error(`Failed to fetch content data. Tried: ${tried.join(", ")}`);
 }
 
-async function fetchAndSeed(currentSet: string, db: IDBDatabase) {
+async function fetchAndSeed(currentSet: string) {
   const { response, url } = await resolveContentUrl(currentSet);
   const text = url.endsWith(".gz")
     ? await decompressOrDecodeBuffer(await response.arrayBuffer())
     : await response.text();
   const data = parseCsvToJson(text);
 
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CONTENT_STORE_NAME, "readwrite");
-    const store = tx.objectStore(CONTENT_STORE_NAME);
-
-    tx.onerror = () =>
-      reject(tx.error || new Error("Transaction failed during seed."));
-    tx.oncomplete = () => {
-      setCachedDataVersion(LATEST_DATA_VERSION);
-      resolve();
-    };
-
-    try {
-      for (const item of data) {
-        store.put({ ...item, setName: currentSet });
-      }
-    } catch (error) {
-      reject(error);
-    }
-  });
+  await db.content.bulkPut(
+    data.map((item) => ({ ...item, setName: currentSet })),
+  );
+  await setCachedDataVersion(LATEST_DATA_VERSION);
 }
 
-export function getAllCardsForSet(currentSet: string): Promise<Card[]> {
-  return openDB().then((db) => {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(CONTENT_STORE_NAME, "readonly");
-      const store = tx.objectStore(CONTENT_STORE_NAME);
-      const cardsForSet: Card[] = [];
-      const request = store.indexNames.contains("setName")
-        ? store.index("setName").openCursor(IDBKeyRange.only(currentSet))
-        : store.openCursor();
-
-      request.onerror = () => {
-        reject(
-          request.error || new Error("Failed to read cards from IndexedDB."),
-        );
-      };
-      request.onsuccess = (event) => {
-        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-        if (!cursor) {
-          resolve(cardsForSet);
-          return;
-        }
-
-        const record = cursor.value as Card;
-        if (!record.setName || record.setName === currentSet) {
-          cardsForSet.push(record);
-        }
-        cursor.continue();
-      };
-    });
-  });
+export async function getAllCardsForSet(currentSet: string): Promise<Card[]> {
+  const records = await db.content.toArray();
+  return records.filter(
+    (record) => !record.setName || record.setName === currentSet,
+  );
 }
 
 export function getDisplayNameForSet(setName: string) {
@@ -350,21 +239,10 @@ export function getDisplayNameForSet(setName: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-async function getContentMetadata(setName: string): Promise<{
-  setName: string;
-  displayName?: string;
-  importedAt?: number;
-} | null> {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(CONTENT_METADATA_STORE_NAME, "readonly");
-    const store = tx.objectStore(CONTENT_METADATA_STORE_NAME);
-    const request = store.get(setName);
-
-    request.onerror = () =>
-      reject(request.error || new Error("Failed to read content metadata."));
-    request.onsuccess = () => resolve(request.result || null);
-  });
+async function getContentMetadata(
+  setName: string,
+): Promise<ContentMetadata | undefined> {
+  return db.contentMetadata.get(setName);
 }
 
 export async function setContentMetadata(metadata: {
@@ -372,60 +250,19 @@ export async function setContentMetadata(metadata: {
   displayName: string;
   importedAt: number;
 }) {
-  const db = await openDB();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CONTENT_METADATA_STORE_NAME, "readwrite");
-    tx.objectStore(CONTENT_METADATA_STORE_NAME).put(metadata);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () =>
-      reject(tx.error || new Error("Content metadata transaction failed."));
-  });
+  await db.contentMetadata.put(metadata);
 }
 
 async function deleteContentMetadata(setName: string) {
-  const db = await openDB();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CONTENT_METADATA_STORE_NAME, "readwrite");
-    tx.objectStore(CONTENT_METADATA_STORE_NAME).delete(setName);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () =>
-      reject(
-        tx.error || new Error("Content metadata delete transaction failed."),
-      );
-  });
+  await db.contentMetadata.delete(setName);
 }
 
-function deleteContentRecords(db: IDBDatabase, setName: string) {
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CONTENT_STORE_NAME, "readwrite");
-    const store = tx.objectStore(CONTENT_STORE_NAME);
-    const request = store.indexNames.contains("setName")
-      ? store.index("setName").openCursor(IDBKeyRange.only(setName))
-      : store.openCursor();
-
-    request.onerror = () =>
-      reject(request.error || new Error("Failed to delete content records."));
-    request.onsuccess = (event) => {
-      const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-      if (!cursor) {
-        resolve();
-        return;
-      }
-
-      if (
-        !store.indexNames.contains("setName") ||
-        cursor.value.setName === setName
-      ) {
-        cursor.delete();
-      }
-      cursor.continue();
-    };
-  });
+function deleteContentRecords(setName: string) {
+  return db.content.where("setName").equals(setName).delete();
 }
 
 export async function deleteContent(setName: string) {
-  const db = await openDB();
-  await deleteContentRecords(db, setName);
+  await deleteContentRecords(setName);
   await deleteContentMetadata(setName);
 }
 
@@ -436,25 +273,10 @@ export async function getContentDisplayName(setName: string) {
 
 export async function getUniqueContentNames() {
   const names = new Set(DEFAULT_CONTENT.map((item) => item.key));
-  const db = await openDB();
-  await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CONTENT_STORE_NAME, "readonly");
-    const request = tx.objectStore(CONTENT_STORE_NAME).openCursor();
-    request.onerror = () =>
-      reject(request.error || new Error("Failed to iterate content."));
-    request.onsuccess = (event) => {
-      const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-      if (!cursor) {
-        resolve();
-        return;
-      }
-
-      if ((cursor.value as Card).setName) {
-        names.add((cursor.value as Card).setName as string);
-      }
-      cursor.continue();
-    };
-  });
+  const records = await db.content.toArray();
+  for (const record of records) {
+    if (record.setName) names.add(record.setName);
+  }
 
   return Array.from(names);
 }
@@ -483,24 +305,8 @@ export async function getContentOptions() {
 }
 
 export async function importContent(setName: string, cards: Card[]) {
-  const db = await openDB();
-  await deleteContentRecords(db, setName);
-
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(CONTENT_STORE_NAME, "readwrite");
-    const store = tx.objectStore(CONTENT_STORE_NAME);
-    tx.onerror = () =>
-      reject(tx.error || new Error("Failed to import content."));
-    tx.oncomplete = () => resolve();
-
-    try {
-      for (const item of cards) {
-        store.put({ ...item, setName });
-      }
-    } catch (error) {
-      reject(error);
-    }
-  });
+  await deleteContentRecords(setName);
+  await db.content.bulkPut(cards.map((item) => ({ ...item, setName })));
 }
 
 function escapeCsvValue(value: unknown) {
@@ -568,48 +374,30 @@ export function createCsvFromProgress(
   return rows.join("\r\n");
 }
 
-async function clearDefaultContent(db: IDBDatabase) {
+async function clearDefaultContent() {
   await Promise.all(
-    DEFAULT_CONTENT.map((item) => deleteContentRecords(db, item.key)),
+    DEFAULT_CONTENT.map((item) => deleteContentRecords(item.key)),
   );
 }
 
 export async function initializeContent(currentSet: string) {
-  isDBAvailable();
-  const db = await openDB();
   const cachedVersion = await getCachedDataVersion();
-  const setCount = await getStoreCountForSet(db, currentSet);
+  const setCount = await getStoreCountForSet(currentSet);
 
   if (cachedVersion !== LATEST_DATA_VERSION) {
-    await clearDefaultContent(db);
+    await clearDefaultContent();
     if (DEFAULT_CONTENT.some((item) => item.key === currentSet)) {
-      await fetchAndSeed(currentSet, db);
+      await fetchAndSeed(currentSet);
     }
     return getAllCardsForSet(currentSet);
   }
 
   if (setCount > 0) return getAllCardsForSet(currentSet);
 
-  await fetchAndSeed(currentSet, db);
+  await fetchAndSeed(currentSet);
   return getAllCardsForSet(currentSet);
 }
 
 export async function deleteAppDatabase() {
-  if (dbConnection) {
-    dbConnection.close();
-    dbConnection = null;
-  }
-
-  return new Promise<void>((resolve, reject) => {
-    const request = window.indexedDB.deleteDatabase(DB_NAME);
-    request.onsuccess = () => resolve();
-    request.onblocked = () =>
-      reject(
-        new Error(
-          "Delete blocked by another open connection. Close other tabs first.",
-        ),
-      );
-    request.onerror = () =>
-      reject(request.error || new Error("Failed to delete IndexedDB."));
-  });
+  await db.delete();
 }
