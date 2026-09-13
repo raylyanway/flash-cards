@@ -3,12 +3,15 @@ import type {
   ContentMetadata,
   ContentOption,
   ContentRecord,
+  ParsedRow,
+  ParseOptions,
   ProgressMap,
   ProgressRecord,
   SettingRecord,
 } from "./types";
 
 import { Dexie, type EntityTable } from "dexie";
+import Papa from "papaparse";
 
 const db = new Dexie("flashCardsDB") as Dexie & {
   uiStore: EntityTable<{ key: string; state: string }, "key">;
@@ -47,94 +50,53 @@ export function getContentBaseName(fileName: string) {
   return name;
 }
 
-function csvCellToValue(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-    return trimmed.slice(1, -1).trim();
+/**
+ * Parses any raw CSV text into an array of abstract objects.
+ * Automatically converts pipe-separated values (|) into native arrays.
+ */
+export function parseCsv(
+  csvText: string,
+  options: ParseOptions = {},
+): ParsedRow[] {
+  const { data, errors, meta } = Papa.parse<Record<string, string>>(csvText, {
+    header: true,
+    skipEmptyLines: "greedy",
+    transformHeader: (header) => header.trim(),
+  });
+
+  if (errors.length > 0) {
+    throw new Error(`Failed to parse CSV: ${errors[0].message}`);
   }
-  return trimmed;
-}
 
-export function parseCsvToJson(csvText: string): Card[] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = "";
-  let inQuotes = false;
+  if (data.length === 0) {
+    throw new Error("CSV file is empty or missing a header row.");
+  }
 
-  for (let i = 0; i < csvText.length; i += 1) {
-    const char = csvText[i];
-    const nextChar = csvText[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        cell += '"';
-        i += 1;
-        continue;
+  const headers = meta.fields || [];
+  if (options.requiredHeaders) {
+    for (const required of options.requiredHeaders) {
+      if (!headers.includes(required)) {
+        throw new Error(
+          `Validation Error: The CSV file is missing the required '${required}' column.`,
+        );
       }
-      inQuotes = !inQuotes;
-      continue;
     }
-
-    if (!inQuotes && char === CSV_DELIMITER) {
-      row.push(cell);
-      cell = "";
-      continue;
-    }
-
-    if (!inQuotes && char === "\n") {
-      row.push(cell);
-      rows.push(row);
-      row = [];
-      cell = "";
-      continue;
-    }
-
-    if (!inQuotes && char === "\r") continue;
-    cell += char;
   }
 
-  if (cell !== "" || row.length > 0) {
-    row.push(cell);
-    rows.push(row);
-  }
+  return data.map((row) => {
+    const record: ParsedRow = {};
 
-  const [headers, ...dataRows] = rows.filter((r) =>
-    r.some((cellValue) => cellValue !== ""),
-  );
-  if (!headers?.length) throw new Error("CSV file is missing header row.");
+    for (const [key, rawValue] of Object.entries(row)) {
+      const cleanValue = rawValue.trim();
 
-  const headerNames = headers.map((header) => header.trim());
-  if (!headerNames.includes("text")) {
-    throw new Error("CSV file must include a 'text' column.");
-  }
-
-  return dataRows.map((rowValues, rowIndex) => {
-    const record: Card = { text: "" };
-    for (let index = 0; index < headerNames.length; index += 1) {
-      const key = headerNames[index];
-      const rawValue = rowValues[index] ?? "";
-      if (key === "answers") {
-        const trimmed = rawValue.trim();
-        let answersText = trimmed;
-        if (answersText.startsWith("[") && answersText.endsWith("]")) {
-          answersText = answersText.slice(1, -1);
-        }
-        record.answers = answersText
-          ? answersText
-              .split("|")
-              .map((part) => part.trim())
-              .filter(Boolean)
-          : [];
-      } else if (key === "text") {
-        record.text = String(rawValue).trim();
+      if (cleanValue.includes("|")) {
+        record[key] = cleanValue
+          .split("|")
+          .map((part) => part.trim())
+          .filter(Boolean);
       } else {
-        record[key] = csvCellToValue(rawValue);
+        record[key] = cleanValue;
       }
-    }
-
-    if (!record.text) {
-      throw new Error(`CSV row ${rowIndex + 2} is missing a text value.`);
     }
 
     return record;
@@ -175,7 +137,7 @@ async function fetchAndSeed(currentSet: string) {
   const text = url.endsWith(".gz")
     ? await decompressOrDecodeBuffer(await response.arrayBuffer())
     : await response.text();
-  const data = parseCsvToJson(text);
+  const data = parseCsv(text);
 
   await db.content.bulkPut(
     data.map((item) => ({ ...item, setName: currentSet })),

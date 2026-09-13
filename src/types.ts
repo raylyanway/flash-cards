@@ -45,3 +45,12 @@ export type SettingRecord = {
   key: string;
   value: string;
 };
+
+export interface ParsedRow {
+  [key: string]: string | string[];
+}
+
+export interface ParseOptions {
+  /** Optional array of header keys that MUST exist in the spreadsheet */
+  requiredHeaders?: string[];
+}
