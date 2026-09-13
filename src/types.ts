@@ -25,3 +25,23 @@ export type Settings = {
   currentSet?: string;
   theme?: ThemePreference;
 };
+
+export type ContentRecord = Card & {
+  setName: string;
+};
+
+export type ContentMetadata = {
+  setName: string;
+  displayName?: string;
+  importedAt?: number;
+};
+
+export type ProgressRecord = {
+  setName: string;
+  progress: ProgressMap[string];
+};
+
+export type SettingRecord = {
+  key: string;
+  value: string;
+};
