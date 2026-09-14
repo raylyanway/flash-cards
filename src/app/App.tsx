@@ -2,11 +2,6 @@ import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import Container from "@mui/material/Container";
 import { useMemo } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import DashboardLayout from "../components/DashboardLayout";
-import EmployeeCreate from "../components/EmployeeCreate";
-import EmployeeEdit from "../components/EmployeeEdit";
-import EmployeeList from "../components/EmployeeList";
-import EmployeeShow from "../components/EmployeeShow";
 import { NavBar } from "../components/NavBar";
 import DialogsProvider from "../hooks/useDialogs/DialogsProvider";
 import NotificationsProvider from "../hooks/useNotifications/NotificationsProvider";
@@ -14,7 +9,11 @@ import { AnalyticsScreen } from "../screens/AnalyticsScreen";
 import { ContentScreen } from "../screens/ContentScreen";
 import { HomeScreen } from "../screens/HomeScreen";
 import { LearnScreen } from "../screens/LearnScreen";
-import { LibraryScreen } from "../screens/LibraryScreen";
+import EmployeeCreate from "../screens/library/EmployeeCreate";
+import EmployeeEdit from "../screens/library/EmployeeEdit";
+import EmployeeList from "../screens/library/EmployeeList";
+import EmployeeShow from "../screens/library/EmployeeShow";
+import { LibraryScreen } from "../screens/library/LibraryScreen";
 import { ProgressSetupScreen } from "../screens/ProgressSetupScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { useAppStore } from "../store/useAppStore";
@@ -60,20 +59,18 @@ export function App() {
                   element={<ProgressSetupScreen />}
                 />
                 <Route path="/library" element={<LibraryScreen />}>
-                  <Route element={<DashboardLayout />}>
-                    <Route index element={<EmployeeList />} />
-                    <Route path="employees" element={<EmployeeList />} />
-                    <Route
-                      path="employees/:employeeId"
-                      element={<EmployeeShow />}
-                    />
-                    <Route path="employees/new" element={<EmployeeCreate />} />
-                    <Route
-                      path="employees/:employeeId/edit"
-                      element={<EmployeeEdit />}
-                    />
-                    <Route path="*" element={<EmployeeList />} />
-                  </Route>
+                  <Route index element={<EmployeeList />} />
+                  <Route path="employees" element={<EmployeeList />} />
+                  <Route
+                    path="employees/:employeeId"
+                    element={<EmployeeShow />}
+                  />
+                  <Route path="employees/new" element={<EmployeeCreate />} />
+                  <Route
+                    path="employees/:employeeId/edit"
+                    element={<EmployeeEdit />}
+                  />
+                  <Route path="*" element={<EmployeeList />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

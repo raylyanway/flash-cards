@@ -13,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { MetricCard } from "../components/MetricCard";
 import { PageHeader } from "../components/PageHeader";
 import { useAppStore } from "../store/useAppStore";
@@ -24,7 +25,9 @@ export function HomeScreen() {
   const contentOptions = useAppStore((state) => state.contentOptions);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
-  const setScreen = useAppStore((state) => state.setScreen);
+  const navigate = useNavigate();
+
+  const currentSetProgress = progress[currentSet];
 
   const options = useMemo(
     () => contentOptions.map((option) => option.key),
@@ -32,27 +35,27 @@ export function HomeScreen() {
   );
 
   const completePercent = useMemo(
-    () => getCompletePercent(cards, progress),
-    [cards, progress],
+    () => getCompletePercent(cards, currentSetProgress),
+    [cards, currentSetProgress],
   );
 
   const nextReviewLabel = useMemo(
-    () => getNextReviewLabel(progress, now),
-    [now, progress],
+    () => getNextReviewLabel(currentSetProgress, now),
+    [now, currentSetProgress],
   );
 
   const totalCards = cards.length;
   const learnedCount = useMemo(
-    () => Object.values(progress).filter((p) => p.stage === 3).length,
-    [progress],
+    () => Object.values(currentSetProgress).filter((p) => p.stage === 3).length,
+    [currentSetProgress],
   );
 
   const dueCount = useMemo(() => {
     const nowTs = Date.now();
-    return Object.values(progress).filter(
+    return Object.values(currentSetProgress).filter(
       (p) => p.stage < 3 && p.nextReview <= nowTs,
     ).length;
-  }, [progress, now]);
+  }, [currentSetProgress, now]);
 
   return (
     <>
@@ -88,7 +91,7 @@ export function HomeScreen() {
                 <Button
                   variant="contained"
                   startIcon={<PlayArrowRounded />}
-                  onClick={() => setScreen("learn")}
+                  onClick={() => navigate("/learn")}
                   sx={{ minWidth: 180 }}
                 >
                   Start review

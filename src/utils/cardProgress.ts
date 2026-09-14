@@ -1,4 +1,4 @@
-import type { Card, ProgressMap } from "../types";
+import type { Card, SetProgress } from "../types";
 
 export const REVIEW_1_DELAY = 30 * 1000;
 export const REVIEW_2_DELAY = 60 * 1000;
@@ -6,7 +6,7 @@ export const MAX_WRONG_ATTEMPTS = 3;
 
 export function initializeMissingProgress(
   cards: Card[],
-  progress: ProgressMap,
+  progress: SetProgress,
 ) {
   const next = { ...progress };
   for (const card of cards) {
@@ -53,7 +53,7 @@ export function normalizeAnswer(text: string) {
     .replace(/[.,!?]/g, "");
 }
 
-export function countStages(progress: ProgressMap) {
+export function countStages(progress: SetProgress) {
   return Object.values(progress).reduce(
     (counts, item) => {
       if (item.stage === 3) counts.learnedCount += 1;
@@ -71,12 +71,12 @@ export function countStages(progress: ProgressMap) {
   );
 }
 
-export function getCompletePercent(cards: Card[], progress: ProgressMap) {
+export function getCompletePercent(cards: Card[], progress: SetProgress) {
   if (cards.length === 0) return 0;
   return Math.round((countStages(progress).learnedCount * 100) / cards.length);
 }
 
-export function getNextDueTimestamp(cards: Card[], progress: ProgressMap) {
+export function getNextDueTimestamp(cards: Card[], progress: SetProgress) {
   let nextTime: number | null = null;
   for (const card of cards) {
     const cardProgress = progress[card.text];
@@ -88,7 +88,7 @@ export function getNextDueTimestamp(cards: Card[], progress: ProgressMap) {
   return nextTime;
 }
 
-export function getNextReviewLabel(progress: ProgressMap, now: number) {
+export function getNextReviewLabel(progress: SetProgress, now: number) {
   let nearest: number | null = null;
   for (const item of Object.values(progress)) {
     if (item.stage < 3 && item.nextReview > now) {

@@ -18,7 +18,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs, { Dayjs } from "dayjs";
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import type { Employee } from "../data/employees";
+import type { Employee } from "../../data/employees";
 
 export interface EmployeeFormState {
   values: Partial<Omit<Employee, "id">>;
@@ -128,7 +128,7 @@ export default function EmployeeForm(props: EmployeeFormProps) {
   }, [formValues, onReset]);
 
   const handleBack = React.useCallback(() => {
-    navigate(backButtonPath ?? "/employees");
+    navigate(backButtonPath ?? "/library/employees");
   }, [navigate, backButtonPath]);
 
   return (

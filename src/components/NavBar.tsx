@@ -7,6 +7,7 @@ import {
 } from "@mui/icons-material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MenuIcon from "@mui/icons-material/Menu";
+import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { MenuItem } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -19,9 +20,8 @@ import { alpha, styled } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
-import type { Screen } from "../types";
 import ColorModeIconDropdown from "./ColorModeIconDropdown";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
@@ -41,46 +41,57 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 }));
 
 const NAV_ITEMS: Array<{
-  screen: Screen;
   label: string;
   icon: typeof HomeRounded;
   path: string;
 }> = [
-  { screen: "home", label: "Home", icon: HomeRounded, path: "/" },
-  {
-    screen: "content",
-    label: "Content",
-    icon: StorageRounded,
-    path: "/content",
-  },
-  {
-    screen: "analytics",
-    label: "Analytics",
-    icon: AnalyticsRounded,
-    path: "/analytics",
-  },
-  {
-    screen: "settings",
-    label: "Settings",
-    icon: SettingsRounded,
-    path: "/settings",
-  },
-  { screen: "library", label: "Library", icon: BookRounded, path: "/library" },
+  { label: "Home", icon: HomeRounded, path: "/" },
+  { label: "Content", icon: StorageRounded, path: "/content" },
+  { label: "Analytics", icon: AnalyticsRounded, path: "/analytics" },
+  { label: "Settings", icon: SettingsRounded, path: "/settings" },
+  { label: "Library", icon: BookRounded, path: "/library" },
 ];
 
+const isNavItemSelected = (pathname: string, targetPath: string) => {
+  if (targetPath === "/") {
+    return pathname === "/";
+  }
+
+  if (targetPath === "/library") {
+    return pathname === "/library" || pathname.startsWith("/library/");
+  }
+
+  if (targetPath === "/progress-setup") {
+    return (
+      pathname === "/progress-setup" || pathname.startsWith("/progress-setup/")
+    );
+  }
+
+  return pathname === targetPath;
+};
+
 export function NavBar() {
-  const screen = useAppStore((state) => state.screen);
-  const setScreen = useAppStore((state) => state.setScreen);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  const activeNavItem = NAV_ITEMS.find(({ path }) =>
+    isNavItemSelected(pathname, path),
+  );
+  const activeLabel = activeNavItem?.label ?? "";
 
   const [open, setOpen] = React.useState(false);
+  const navExpanded = useAppStore((s) => s.navExpanded);
+  const setNavExpanded = useAppStore((s) => s.setNavExpanded);
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
   };
 
-  const handleClick = (screen: Screen, path: string) => () => {
-    setScreen(screen);
+  const showLibraryToggle = isNavItemSelected(pathname, "/library");
+
+  const handleNavToggle = () => setNavExpanded(!navExpanded);
+
+  const handleClick = (path: string) => () => {
     navigate(path);
     setOpen(false);
   };
@@ -98,6 +109,21 @@ export function NavBar() {
     >
       <Container maxWidth="lg">
         <StyledToolbar variant="dense" disableGutters>
+          {showLibraryToggle ? (
+            <IconButton
+              size="small"
+              onClick={handleNavToggle}
+              aria-label={
+                navExpanded
+                  ? "Collapse navigation menu"
+                  : "Expand navigation menu"
+              }
+              sx={{ mr: 1 }}
+            >
+              {navExpanded ? <MenuOpenIcon /> : <MenuIcon />}
+            </IconButton>
+          ) : null}
+
           <Box
             sx={{
               flexGrow: 1,
@@ -106,30 +132,51 @@ export function NavBar() {
               columnGap: 5,
             }}
           >
-            <Typography variant="h6" component="div">
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ display: { xs: "none", md: "block" } }}
+            >
               Flash&nbsp;Cards
             </Typography>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ display: { xs: "block", md: "none" } }}
+            >
+              {activeLabel}
+            </Typography>
             <Box sx={{ display: { xs: "none", md: "flex", columnGap: 16 } }}>
-              {NAV_ITEMS.map(({ label, screen: itemScreen, path }) => (
-                <Button
-                  key={label}
-                  sx={{
-                    borderBottom: screen === itemScreen ? 1 : 0,
-                    borderColor: "primary.main",
-                  }}
-                  color={screen === itemScreen ? "primary" : "inherit"}
-                  variant="text"
-                  onClick={handleClick(itemScreen, path)}
-                >
-                  {label}
-                </Button>
-              ))}
+              {NAV_ITEMS.map(({ label, path }) => {
+                const isSelected = isNavItemSelected(pathname, path);
+
+                return (
+                  <Button
+                    key={label}
+                    sx={{
+                      borderBottom: isSelected ? 1 : 0,
+                      borderColor: "primary.main",
+                    }}
+                    color={isSelected ? "primary" : "inherit"}
+                    variant="text"
+                    onClick={handleClick(path)}
+                  >
+                    {label}
+                  </Button>
+                );
+              })}
             </Box>
           </Box>
           <ColorModeIconDropdown
             sx={{ display: { xs: "none", md: "block" } }}
           />
-          <Box sx={{ display: { xs: "flex", md: "none" }, columnGap: 1 }}>
+          <Box
+            sx={{
+              display: { xs: "flex", md: "none" },
+              columnGap: 1,
+              alignItems: "center",
+            }}
+          >
             <ColorModeIconDropdown size="medium" />
             <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
               <MenuIcon />
@@ -158,11 +205,11 @@ export function NavBar() {
                   </IconButton>
                 </Box>
                 <MenuList>
-                  {NAV_ITEMS.map(({ label, screen: itemScreen, path }) => (
+                  {NAV_ITEMS.map(({ label, path }) => (
                     <MenuItem
                       key={label}
-                      selected={screen === itemScreen}
-                      onClick={handleClick(itemScreen, path)}
+                      selected={isNavItemSelected(pathname, path)}
+                      onClick={handleClick(path)}
                     >
                       {label}
                     </MenuItem>

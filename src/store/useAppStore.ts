@@ -1,25 +1,38 @@
 import { create } from "zustand";
+import { createJSONStorage, persist, StateStorage } from "zustand/middleware";
 import {
+  db,
   DEFAULT_CONTENT,
   getContentOptions,
-  getProgressFromDB,
-  getSettingsFromDB,
   initializeContent,
-  setProgressToDB,
-} from "../DB";
+} from "../db";
 import type {
   Card,
   ContentOption,
   ProgressMap,
-  Screen,
+  SetProgress,
   ThemePreference,
 } from "../types";
 import { initializeMissingProgress } from "../utils/cardProgress";
 
+const dbStorage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    const row = await db.uiStore.get(name);
+    return row?.state ?? null;
+  },
+  setItem: async (name: string, newValue: string): Promise<void> => {
+    await db.uiStore.put({ key: name, state: newValue });
+  },
+  removeItem: async (name: string): Promise<void> => {
+    await db.uiStore.delete(name);
+  },
+};
+
 const DEFAULT_THEME: ThemePreference = "system";
 const DEFAULT_SET = "body-parts";
 
-type AppState = {
+export type AppState = {
+  _hasHydrated: boolean;
   initialized: boolean;
   contentOptions: ContentOption[];
   cards: Card[];
@@ -32,19 +45,18 @@ type AppState = {
   recognizedText: string;
   result: string;
   resultClass: string;
-  screen: Screen;
-  setupBackup: ProgressMap | null;
+  setupBackup: SetProgress | null;
   skipEnabled: boolean;
   speechSupported: boolean;
   theme: ThemePreference;
   wrongAttempts: number;
+  navExpanded: boolean;
 };
 
-type AppActions = {
+export type AppActions = {
   initialize: () => Promise<void>;
   loadSetData: (setName: string) => Promise<void>;
   refreshContentOptions: (preferredSet?: string) => Promise<ContentOption[]>;
-  saveProgress: (progress: ProgressMap) => Promise<void>;
   setContentOptions: (options: ContentOption[]) => void;
   setCards: (cards: Card[]) => void;
   setCurrentCard: (card: Card | null) => void;
@@ -56,17 +68,19 @@ type AppActions = {
   setRecognizedText: (text: string) => void;
   setResult: (result: string) => void;
   setResultClass: (resultClass: string) => void;
-  setScreen: (screen: Screen) => void;
-  setSetupBackup: (progress: ProgressMap | null) => void;
+  setSetupBackup: (progress: SetProgress | null) => void;
   setSkipEnabled: (enabled: boolean) => void;
   setSpeechSupported: (supported: boolean) => void;
   setTheme: (theme: ThemePreference) => void;
   setWrongAttempts: (attempts: number) => void;
+  setNavExpanded: (expanded: boolean) => void;
+  setHasHydrated: (hydrated: boolean) => void;
 };
 
 export type AppStore = AppState & AppActions;
 
-export const useAppStore = create<AppStore>((set, get) => ({
+const DEFAULT_STATE: AppState = {
+  _hasHydrated: false,
   initialized: false,
   contentOptions: DEFAULT_CONTENT,
   cards: [],
@@ -79,71 +93,100 @@ export const useAppStore = create<AppStore>((set, get) => ({
   recognizedText: "Press Start Listening",
   result: "",
   resultClass: "",
-  screen: "home",
   setupBackup: null,
   skipEnabled: true,
   speechSupported: false,
   theme: DEFAULT_THEME,
   wrongAttempts: 0,
+  navExpanded: true,
+};
 
-  initialize: async () => {
-    const settings = await getSettingsFromDB();
-    const savedSet = settings.currentSet || DEFAULT_SET;
-    const contentOptions = await get().refreshContentOptions(savedSet);
+export const useAppStore = create<AppStore>()(
+  persist(
+    (set, get) => ({
+      ...DEFAULT_STATE,
 
-    const setToLoad = contentOptions.some((option) => option.key === savedSet)
-      ? savedSet
-      : contentOptions[0]?.key || DEFAULT_SET;
+      setHasHydrated: (state) => {
+        set({
+          _hasHydrated: state,
+        });
+      },
 
-    await get().loadSetData(setToLoad);
+      initialize: async () => {
+        const { currentSet } = get();
+        const contentOptions = await get().refreshContentOptions(currentSet);
 
-    set({
-      theme: settings.theme ?? DEFAULT_THEME,
-      currentSet: savedSet,
-      initialized: true,
-    });
-  },
+        const setToLoad = contentOptions.some(
+          (option) => option.key === currentSet,
+        )
+          ? currentSet
+          : contentOptions[0]?.key || DEFAULT_SET;
 
-  loadSetData: async (setName: string) => {
-    const [storedProgress, loadedCards] = await Promise.all([
-      getProgressFromDB(setName),
-      initializeContent(setName),
-    ]);
-    const nextProgress = initializeMissingProgress(
-      loadedCards,
-      storedProgress || {},
-    );
-    set({ cards: loadedCards, progress: nextProgress });
-    await setProgressToDB(setName, nextProgress);
-  },
-  refreshContentOptions: async (preferredSet?: string) => {
-    const targetSet = preferredSet || get().currentSet;
-    const options = await getContentOptions();
-    set({ contentOptions: options });
-    if (!options.some((option) => option.key === targetSet) && options[0]) {
-      set({ currentSet: options[0].key });
-    }
-    return options;
-  },
-  saveProgress: async (progress) => {
-    set({ progress });
-    await setProgressToDB(get().currentSet, progress);
-  },
-  setContentOptions: (contentOptions) => set({ contentOptions }),
-  setCards: (cards) => set({ cards }),
-  setCurrentCard: (currentCard) => set({ currentCard }),
-  setCurrentSet: (currentSet) => set({ currentSet }),
-  setListening: (listening) => set({ listening }),
-  setNow: (now) => set({ now }),
-  setProgress: (progress) => set({ progress }),
-  setProgressSearch: (progressSearch) => set({ progressSearch }),
-  setRecognizedText: (recognizedText) => set({ recognizedText }),
-  setResult: (result) => set({ result }),
-  setResultClass: (resultClass) => set({ resultClass }),
-  setScreen: (screen) => set({ screen }),
-  setSetupBackup: (setupBackup) => set({ setupBackup }),
-  setSkipEnabled: (skipEnabled) => set({ skipEnabled }),
-  setSpeechSupported: (speechSupported) => set({ speechSupported }),
-  setTheme: (theme) => set({ theme }),
-  setWrongAttempts: (wrongAttempts) => set({ wrongAttempts }),
-}));
+        await get().loadSetData(setToLoad);
+
+        set({
+          initialized: true,
+        });
+      },
+
+      loadSetData: async (setName: string) => {
+        const { progress } = get();
+        const [storedProgress, loadedCards] = await Promise.all([
+          progress[setName],
+          initializeContent(setName),
+        ]);
+        const nextProgress = initializeMissingProgress(
+          loadedCards,
+          storedProgress || {},
+        );
+        set((prev) => ({
+          cards: loadedCards,
+          progress: { ...prev.progress, [setName]: nextProgress },
+        }));
+      },
+
+      refreshContentOptions: async (preferredSet?: string) => {
+        const targetSet = preferredSet || get().currentSet;
+        const options = await getContentOptions();
+        set({ contentOptions: options });
+        if (!options.some((option) => option.key === targetSet) && options[0]) {
+          set({ currentSet: options[0].key });
+        }
+        return options;
+      },
+
+      setContentOptions: (contentOptions) => set({ contentOptions }),
+      setCards: (cards) => set({ cards }),
+      setCurrentCard: (currentCard) => set({ currentCard }),
+      setCurrentSet: (currentSet) => set({ currentSet }),
+      setListening: (listening) => set({ listening }),
+      setNow: (now) => set({ now }),
+      setProgress: (progress) =>
+        set((prev) => ({ progress: { ...prev.progress, ...progress } })),
+      setProgressSearch: (progressSearch) => set({ progressSearch }),
+      setRecognizedText: (recognizedText) => set({ recognizedText }),
+      setResult: (result) => set({ result }),
+      setResultClass: (resultClass) => set({ resultClass }),
+      setSetupBackup: (setupBackup) => set({ setupBackup }),
+      setSkipEnabled: (skipEnabled) => set({ skipEnabled }),
+      setSpeechSupported: (speechSupported) => set({ speechSupported }),
+      setTheme: (theme) => set({ theme }),
+      setWrongAttempts: (wrongAttempts) => set({ wrongAttempts }),
+      setNavExpanded: (navExpanded: boolean) => set({ navExpanded }),
+    }),
+    {
+      name: "global",
+      storage: createJSONStorage(() => dbStorage),
+      partialize: (state) => ({
+        theme: state.theme,
+        currentSet: state.currentSet,
+        navExpanded: state.navExpanded,
+        skipEnabled: state.skipEnabled,
+        speechSupported: state.speechSupported,
+      }),
+      onRehydrateStorage: (state) => () => state.setHasHydrated(true),
+    },
+  ),
+);
+
+export default useAppStore;

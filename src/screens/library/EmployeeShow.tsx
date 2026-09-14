@@ -13,14 +13,14 @@ import Typography from "@mui/material/Typography";
 import dayjs from "dayjs";
 import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import PageContainer from "../../components/PageContainer";
 import {
   deleteOne as deleteEmployee,
   getOne as getEmployee,
   type Employee,
-} from "../data/employees";
-import { useDialogs } from "../hooks/useDialogs/useDialogs";
-import useNotifications from "../hooks/useNotifications/useNotifications";
-import PageContainer from "./PageContainer";
+} from "../../data/employees";
+import { useDialogs } from "../../hooks/useDialogs/useDialogs";
+import useNotifications from "../../hooks/useNotifications/useNotifications";
 
 export default function EmployeeShow() {
   const { employeeId } = useParams();
@@ -52,7 +52,7 @@ export default function EmployeeShow() {
   }, [loadData]);
 
   const handleEmployeeEdit = React.useCallback(() => {
-    navigate(`/employees/${employeeId}/edit`);
+    navigate(`/library/employees/${employeeId}/edit`);
   }, [navigate, employeeId]);
 
   const handleEmployeeDelete = React.useCallback(async () => {
@@ -75,7 +75,7 @@ export default function EmployeeShow() {
       try {
         await deleteEmployee(Number(employeeId));
 
-        navigate("/employees");
+        navigate("/library/employees");
 
         notifications.show("Employee deleted successfully.", {
           severity: "success",
@@ -95,7 +95,7 @@ export default function EmployeeShow() {
   }, [employee, dialogs, employeeId, navigate, notifications]);
 
   const handleBack = React.useCallback(() => {
-    navigate("/employees");
+    navigate("/library/employees");
   }, [navigate]);
 
   const renderShow = React.useMemo(() => {
@@ -216,7 +216,7 @@ export default function EmployeeShow() {
     <PageContainer
       title={pageTitle}
       breadcrumbs={[
-        { title: "Employees", path: "/employees" },
+        { title: "Employees", path: "/library/employees" },
         { title: pageTitle },
       ]}
     >

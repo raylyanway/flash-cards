@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import {
-  createSpeechRecognition,
-  speakWord,
-  type SpeechRecognitionInstance,
-} from "../utils/speech";
+import { useLocation } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import type { Card, ProgressEntry } from "../types";
 import {
@@ -14,6 +10,11 @@ import {
   REVIEW_1_DELAY,
   REVIEW_2_DELAY,
 } from "../utils/cardProgress";
+import {
+  createSpeechRecognition,
+  speakWord,
+  type SpeechRecognitionInstance,
+} from "../utils/speech";
 
 type UseLearningSessionParams = {
   nextDueTimestamp: number | null;
@@ -26,11 +27,11 @@ export function useLearningSession({
   const currentCard = useAppStore((state) => state.currentCard);
   const listening = useAppStore((state) => state.listening);
   const now = useAppStore((state) => state.now);
+  const currentSet = useAppStore((state) => state.currentSet);
   const progress = useAppStore((state) => state.progress);
   const recognizedText = useAppStore((state) => state.recognizedText);
   const result = useAppStore((state) => state.result);
   const resultClass = useAppStore((state) => state.resultClass);
-  const screen = useAppStore((state) => state.screen);
   const skipEnabled = useAppStore((state) => state.skipEnabled);
   const speechSupported = useAppStore((state) => state.speechSupported);
   const wrongAttempts = useAppStore((state) => state.wrongAttempts);
@@ -39,15 +40,19 @@ export function useLearningSession({
   const setRecognizedText = useAppStore((state) => state.setRecognizedText);
   const setResult = useAppStore((state) => state.setResult);
   const setResultClass = useAppStore((state) => state.setResultClass);
-  const saveProgress = useAppStore((state) => state.saveProgress);
+  const setProgress = useAppStore((state) => state.setProgress);
   const setSkipEnabled = useAppStore((state) => state.setSkipEnabled);
   const setSpeechSupported = useAppStore((state) => state.setSpeechSupported);
   const setWrongAttempts = useAppStore((state) => state.setWrongAttempts);
 
+  const { pathname } = useLocation();
+  const isLearnRoute = pathname === "/learn";
+  const currentSetProgress = progress[currentSet];
+
   const skippedCardsRef = useRef(new Set<string>());
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const transitionTimerRef = useRef<number | null>(null);
-  const progressRef = useRef(progress);
+  const progressRef = useRef(currentSetProgress);
   const cardsRef = useRef(cards);
   const currentCardRef = useRef(currentCard);
   const listeningRef = useRef(listening);
@@ -70,10 +75,10 @@ export function useLearningSession({
         [card.text]: updater({ ...progressRef.current[card.text] }),
       };
       progressRef.current = nextProgress;
-      await saveProgress(nextProgress);
+      setProgress({ [currentSet]: nextProgress });
       return nextProgress[card.text];
     },
-    [saveProgress],
+    [setProgress],
   );
 
   const selectNextCard = useCallback(() => {
@@ -240,12 +245,12 @@ export function useLearningSession({
   }, []);
 
   useEffect(() => {
-    progressRef.current = progress;
+    progressRef.current = currentSetProgress;
     cardsRef.current = cards;
     currentCardRef.current = currentCard;
     listeningRef.current = listening;
     wrongAttemptsRef.current = wrongAttempts;
-  }, [cards, currentCard, listening, progress, wrongAttempts]);
+  }, [cards, currentCard, listening, currentSetProgress, wrongAttempts]);
 
   useEffect(() => {
     return () => {
@@ -256,11 +261,11 @@ export function useLearningSession({
   }, []);
 
   useEffect(() => {
-    if (screen !== "learn" || currentCard) return;
+    if (!isLearnRoute || currentCard) return;
     if (nextDueTimestamp !== null && nextDueTimestamp <= now) {
       selectNextCard();
     }
-  }, [currentCard, nextDueTimestamp, now, screen, selectNextCard]);
+  }, [currentCard, isLearnRoute, nextDueTimestamp, now, selectNextCard]);
 
   const startLearningSession = () => {
     setResult("");

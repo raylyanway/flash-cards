@@ -1,16 +1,16 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
+import PageContainer from "../../components/PageContainer";
 import {
   createOne as createEmployee,
   validate as validateEmployee,
   type Employee,
-} from "../data/employees";
-import useNotifications from "../hooks/useNotifications/useNotifications";
+} from "../../data/employees";
+import useNotifications from "../../hooks/useNotifications/useNotifications";
 import EmployeeForm, {
   type EmployeeFormState,
   type FormFieldValue,
 } from "./EmployeeForm";
-import PageContainer from "./PageContainer";
 
 const INITIAL_FORM_VALUES: Partial<EmployeeFormState["values"]> = {
   role: "Market",
@@ -92,7 +92,7 @@ export default function EmployeeCreate() {
         autoHideDuration: 3000,
       });
 
-      navigate("/employees");
+      navigate("/library/employees");
     } catch (createError) {
       notifications.show(
         `Failed to create employee. Reason: ${(createError as Error).message}`,
@@ -109,7 +109,7 @@ export default function EmployeeCreate() {
     <PageContainer
       title="New Employee"
       breadcrumbs={[
-        { title: "Employees", path: "/employees" },
+        { title: "Employees", path: "/library/employees" },
         { title: "New" },
       ]}
     >

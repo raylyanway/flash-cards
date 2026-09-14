@@ -11,7 +11,7 @@ export function PageHeader({ icon, title, description }: PageHeaderProps) {
   return (
     <Box
       sx={{
-        display: "flex",
+        display: { xs: "none", md: "flex" },
         alignItems: "center",
         gap: 2,
         mb: { xs: 3, md: 4 },

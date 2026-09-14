@@ -3,18 +3,18 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import PageContainer from "../../components/PageContainer";
 import {
   getOne as getEmployee,
   updateOne as updateEmployee,
   validate as validateEmployee,
   type Employee,
-} from "../data/employees";
-import useNotifications from "../hooks/useNotifications/useNotifications";
+} from "../../data/employees";
+import useNotifications from "../../hooks/useNotifications/useNotifications";
 import EmployeeForm, {
   type EmployeeFormState,
   type FormFieldValue,
 } from "./EmployeeForm";
-import PageContainer from "./PageContainer";
 
 function EmployeeEditForm({
   initialValues,
@@ -98,7 +98,7 @@ function EmployeeEditForm({
         autoHideDuration: 3000,
       });
 
-      navigate("/employees");
+      navigate("/library/employees");
     } catch (editError) {
       notifications.show(
         `Failed to edit employee. Reason: ${(editError as Error).message}`,
@@ -118,7 +118,7 @@ function EmployeeEditForm({
       onSubmit={handleFormSubmit}
       onReset={handleFormReset}
       submitButtonLabel="Save"
-      backButtonPath={`/employees/${employeeId}`}
+      backButtonPath={`/library/employees/${employeeId}`}
     />
   );
 }
@@ -191,8 +191,11 @@ export default function EmployeeEdit() {
     <PageContainer
       title={`Edit Employee ${employeeId}`}
       breadcrumbs={[
-        { title: "Employees", path: "/employees" },
-        { title: `Employee ${employeeId}`, path: `/employees/${employeeId}` },
+        { title: "Employees", path: "/library/employees" },
+        {
+          title: `Employee ${employeeId}`,
+          path: `/library/employees/${employeeId}`,
+        },
         { title: "Edit" },
       ]}
     >

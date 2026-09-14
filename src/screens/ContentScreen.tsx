@@ -19,8 +19,10 @@ import {
   Typography,
 } from "@mui/material";
 import { type ChangeEvent, useRef, useState } from "react";
+import { FeatureActionCard } from "../components/FeatureActionCard";
+import { PageHeader } from "../components/PageHeader";
+import { SectionCard } from "../components/SectionCard";
 import {
-  createCsvFromCards,
   DEFAULT_CONTENT,
   deleteContent,
   getAllCardsForSet,
@@ -30,21 +32,15 @@ import {
   getDisplayNameForSet,
   getUniqueContentNames,
   importContent,
-  parseCsvToJson,
   setContentMetadata,
-  setSettingsToDB,
-} from "../DB";
-import { FeatureActionCard } from "../components/FeatureActionCard";
-import { PageHeader } from "../components/PageHeader";
-import { SectionCard } from "../components/SectionCard";
+} from "../db";
 import { useAppStore } from "../store/useAppStore";
-import { downloadCsv } from "../utils/downloadCsv";
+import { createCsvFromCards, downloadCsv, parseCsv } from "../utils/csv";
 
 export function ContentScreen() {
   const importContentInputRef = useRef<HTMLInputElement | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const theme = useAppStore((state) => state.theme);
   const contentOptions = useAppStore((state) => state.contentOptions);
   const currentSet = useAppStore((state) => state.currentSet);
   const setContentOptions = useAppStore((state) => state.setContentOptions);
@@ -94,7 +90,7 @@ export function ContentScreen() {
     const reader = new FileReader();
     reader.onload = async (loadEvent) => {
       try {
-        const data = parseCsvToJson(String(loadEvent.target?.result || ""));
+        const data = parseCsv(String(loadEvent.target?.result || ""));
         const setName = getContentBaseName(file.name);
         if (!setName) {
           throw new Error(
@@ -119,7 +115,6 @@ export function ContentScreen() {
         });
         await refreshContentOptions(setName);
         setCurrentSet(setName);
-        await setSettingsToDB({ currentSet: setName, theme });
         await loadSetData(setName);
         alert(`Content "${displayName}" imported successfully.`);
       } catch (error) {
@@ -153,7 +148,6 @@ export function ContentScreen() {
       const nextSet = options[0]?.key || "body-parts";
       setContentOptions(options);
       setCurrentSet(nextSet);
-      await setSettingsToDB({ currentSet: nextSet, theme });
       await loadSetData(nextSet);
       alert(`Content "${displayName}" deleted.`);
     } catch (error) {
@@ -167,7 +161,6 @@ export function ContentScreen() {
   const handleSetChange = async (event: ChangeEvent<HTMLSelectElement>) => {
     const nextSet = event.target.value;
     setCurrentSet(nextSet);
-    await setSettingsToDB({ currentSet: nextSet, theme });
     await loadSetData(nextSet);
   };
 
@@ -242,7 +235,7 @@ export function ContentScreen() {
                   ref={importContentInputRef}
                   type="file"
                   hidden
-                  accept=".csv"
+                  accept=".csv,text/csv"
                   onChange={handleImportContent}
                 />
               }
