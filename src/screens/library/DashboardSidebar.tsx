@@ -22,11 +22,15 @@ import DashboardSidebarPageItem from "./DashboardSidebarPageItem";
 export interface DashboardSidebarProps {
   disableCollapsibleSidebar?: boolean;
   container?: Element;
+  selectedTable?: string;
+  tableNames?: string[];
 }
 
 export default function DashboardSidebar({
   disableCollapsibleSidebar = false,
   container,
+  selectedTable,
+  tableNames = [],
 }: DashboardSidebarProps) {
   const navExpanded = useAppStore((s) => s.navExpanded);
   const setNavExpanded = useAppStore((s) => s.setNavExpanded);
@@ -152,17 +156,16 @@ export default function DashboardSidebar({
             }}
           >
             <DashboardSidebarHeaderItem>Main items</DashboardSidebarHeaderItem>
-            <DashboardSidebarPageItem
-              id="employees"
-              title="Employees"
-              icon={<PersonIcon />}
-              href="/library/employees"
-              selected={
-                !!matchPath("/library/employees/*", pathname) ||
-                pathname === "/library" ||
-                pathname === "/library/"
-              }
-            />
+            {tableNames.map((tableName) => (
+              <DashboardSidebarPageItem
+                key={tableName}
+                id={`table-${tableName}`}
+                title={tableName}
+                icon={<PersonIcon />}
+                href={`/library?table=${encodeURIComponent(tableName)}`}
+                selected={selectedTable === tableName}
+              />
+            ))}
             <DashboardSidebarDividerItem />
             <DashboardSidebarHeaderItem>
               Example items
@@ -213,7 +216,15 @@ export default function DashboardSidebar({
         </Box>
       </React.Fragment>
     ),
-    [mini, hasDrawerTransitions, isFullyExpanded, expandedItemIds, pathname],
+    [
+      mini,
+      hasDrawerTransitions,
+      isFullyExpanded,
+      expandedItemIds,
+      pathname,
+      selectedTable,
+      tableNames,
+    ],
   );
 
   const getDrawerSharedSx = React.useCallback(

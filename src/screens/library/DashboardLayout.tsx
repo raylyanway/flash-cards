@@ -4,8 +4,12 @@ import DashboardSidebar from "./DashboardSidebar";
 
 export default function DashboardLayout({
   children,
+  selectedTable,
+  tableNames,
 }: {
   children: React.ReactNode;
+  selectedTable: string;
+  tableNames: string[];
 }) {
   const layoutRef = React.useRef<HTMLDivElement>(null);
 
@@ -20,7 +24,11 @@ export default function DashboardLayout({
         width: "100%",
       }}
     >
-      <DashboardSidebar container={layoutRef?.current ?? undefined} />
+      <DashboardSidebar
+        container={layoutRef?.current ?? undefined}
+        selectedTable={selectedTable}
+        tableNames={tableNames}
+      />
       <Box
         sx={{
           display: "flex",
