@@ -235,7 +235,7 @@ export function ContentScreen() {
                   ref={importContentInputRef}
                   type="file"
                   hidden
-                  accept=".csv"
+                  accept=".csv,text/csv"
                   onChange={handleImportContent}
                 />
               }

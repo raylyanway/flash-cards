@@ -283,7 +283,7 @@ export function ProgressSetupScreen() {
                   ref={importProgressInputRef}
                   type="file"
                   hidden
-                  accept=".csv"
+                  accept=".csv,text/csv"
                   onChange={handleImportProgress}
                 />
               </Stack>

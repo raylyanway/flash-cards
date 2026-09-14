@@ -1,7 +1,5 @@
 import papaparse from "papaparse";
-import { Card, ParsedRow, ParseOptions, ProgressMap } from "../types";
-
-const CSV_DELIMITER = ",";
+import type { Card, ParsedRow, ParseOptions, ProgressMap } from "../types";
 
 export function downloadCsv(csvText: string, fileName: string) {
   const blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
@@ -15,18 +13,10 @@ export function downloadCsv(csvText: string, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-function escapeCsvValue(value: unknown) {
-  if (value === undefined || value === null) return "";
-
-  let output: string;
-  if (Array.isArray(value)) output = value.join("|");
-  else if (typeof value === "object") output = JSON.stringify(value);
-  else output = String(value);
-
-  if (new RegExp(`["${CSV_DELIMITER}\\r\\n]`).test(output)) {
-    output = `"${output.replace(/"/g, '""')}"`;
-  }
-  return output;
+function serializeCellValue(value: unknown) {
+  if (Array.isArray(value)) return value.join("|");
+  if (value !== null && typeof value === "object") return JSON.stringify(value);
+  return value;
 }
 
 export function createCsvFromCards(cards: Card[]) {
@@ -46,12 +36,14 @@ export function createCsvFromCards(cards: Card[]) {
     ...extraFields,
   ];
 
-  return [
-    headers.join(CSV_DELIMITER),
-    ...cards.map((card) =>
-      headers.map((key) => escapeCsvValue(card[key])).join(CSV_DELIMITER),
+  return papaparse.unparse(
+    cards.map((card) =>
+      Object.fromEntries(
+        headers.map((key) => [key, serializeCellValue(card[key])]),
+      ),
     ),
-  ].join("\r\n");
+    { columns: headers },
+  );
 }
 
 export function createCsvFromProgress(
@@ -59,25 +51,22 @@ export function createCsvFromProgress(
   cards: Card[],
 ) {
   const headers = ["text", "stage", "nextReview", "correctCount"];
-  const rows = [headers.join(CSV_DELIMITER)];
-
-  for (const card of cards) {
-    const progressEntry = progressData[card.text] || {
-      stage: 0,
-      nextReview: 0,
-      correctCount: 0,
-    };
-    rows.push(
-      [
-        escapeCsvValue(card.text),
-        escapeCsvValue(progressEntry.stage),
-        escapeCsvValue(progressEntry.nextReview),
-        escapeCsvValue(progressEntry.correctCount),
-      ].join(CSV_DELIMITER),
-    );
-  }
-
-  return rows.join("\r\n");
+  return papaparse.unparse(
+    cards.map((card) => {
+      const progressEntry = progressData[card.text] || {
+        stage: 0,
+        nextReview: 0,
+        correctCount: 0,
+      };
+      return {
+        text: card.text,
+        stage: progressEntry.stage,
+        nextReview: progressEntry.nextReview,
+        correctCount: progressEntry.correctCount,
+      };
+    }),
+    { columns: headers },
+  );
 }
 
 /**
@@ -90,11 +79,7 @@ export function parseCsv(
 ): ParsedRow[] {
   const { data, errors, meta } = papaparse.parse<Record<string, string>>(
     csvText,
-    {
-      header: true,
-      skipEmptyLines: "greedy",
-      transformHeader: (header) => header.trim(),
-    },
+    { header: true, skipEmptyLines: "greedy" },
   );
 
   if (errors.length > 0) {
@@ -120,15 +105,18 @@ export function parseCsv(
     const record: ParsedRow = {};
 
     for (const [key, rawValue] of Object.entries(row)) {
-      const cleanValue = rawValue.trim();
+      if (rawValue === undefined || rawValue === null) {
+        record[key] = "";
+        continue;
+      }
 
-      if (cleanValue.includes("|")) {
-        record[key] = cleanValue
+      if (rawValue.includes("|")) {
+        record[key] = rawValue
           .split("|")
-          .map((part) => part.trim())
+          .map((part) => part)
           .filter(Boolean);
       } else {
-        record[key] = cleanValue;
+        record[key] = rawValue;
       }
     }
 
