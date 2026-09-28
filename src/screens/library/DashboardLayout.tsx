@@ -11,11 +11,8 @@ export default function DashboardLayout({
   selectedTable: string;
   tableNames: string[];
 }) {
-  const layoutRef = React.useRef<HTMLDivElement>(null);
-
   return (
     <Box
-      ref={layoutRef}
       sx={{
         position: "relative",
         display: "flex",
@@ -24,11 +21,7 @@ export default function DashboardLayout({
         width: "100%",
       }}
     >
-      <DashboardSidebar
-        container={layoutRef?.current ?? undefined}
-        selectedTable={selectedTable}
-        tableNames={tableNames}
-      />
+      <DashboardSidebar selectedTable={selectedTable} tableNames={tableNames} />
       <Box
         sx={{
           display: "flex",

@@ -80,8 +80,8 @@ export function NavBar() {
   const activeLabel = activeNavItem?.label ?? "";
 
   const [open, setOpen] = React.useState(false);
-  const navExpanded = useAppStore((s) => s.navExpanded);
-  const setNavExpanded = useAppStore((s) => s.setNavExpanded);
+  const libraryNavOpen = useAppStore((s) => s.libraryNavOpen);
+  const setLibraryNavOpen = useAppStore((s) => s.setLibraryNavOpen);
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -89,7 +89,7 @@ export function NavBar() {
 
   const showLibraryToggle = isNavItemSelected(pathname, "/library");
 
-  const handleNavToggle = () => setNavExpanded(!navExpanded);
+  const handleNavToggle = () => setLibraryNavOpen(!libraryNavOpen);
 
   const handleClick = (path: string) => () => {
     navigate(path);
@@ -114,13 +114,13 @@ export function NavBar() {
               size="small"
               onClick={handleNavToggle}
               aria-label={
-                navExpanded
-                  ? "Collapse navigation menu"
-                  : "Expand navigation menu"
+                libraryNavOpen
+                  ? "Close library navigation"
+                  : "Open library navigation"
               }
               sx={{ mr: 1 }}
             >
-              {navExpanded ? <MenuOpenIcon /> : <MenuIcon />}
+              {libraryNavOpen ? <MenuOpenIcon /> : <MenuIcon />}
             </IconButton>
           ) : null}
 
