@@ -41,13 +41,12 @@ export interface Breadcrumb {
 }
 export interface Props extends ContainerProps {
   children?: React.ReactNode;
-  title?: string;
   breadcrumbs?: Breadcrumb[];
   actions?: React.ReactNode;
 }
 
 export default function PageContainer(props: Props) {
-  const { children, breadcrumbs, title, actions = null } = props;
+  const { children, breadcrumbs, actions = null } = props;
 
   return (
     <Box
@@ -87,7 +86,6 @@ export default function PageContainer(props: Props) {
               : null}
           </PageHeaderBreadcrumbs>
           <PageContentHeader>
-            {title ? <Typography variant="h4">{title}</Typography> : null}
             <PageHeaderToolbar>{actions}</PageHeaderToolbar>
           </PageContentHeader>
         </Stack>
