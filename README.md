@@ -10,4 +10,4 @@
 - [ ] recheck setNow() implementation
 - [ ] implement error screen with error interception
 - [ ] set second start button at the top part of the screen
-- [ ] check is it possible to hide browser's controls while see the app
+- [ ] check is it possible to hide browser's controls while see the app.
