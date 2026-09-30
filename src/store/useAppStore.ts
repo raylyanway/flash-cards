@@ -50,7 +50,7 @@ export type AppState = {
   speechSupported: boolean;
   theme: ThemePreference;
   wrongAttempts: number;
-  navExpanded: boolean;
+  libraryNavOpen: boolean;
 };
 
 export type AppActions = {
@@ -73,7 +73,7 @@ export type AppActions = {
   setSpeechSupported: (supported: boolean) => void;
   setTheme: (theme: ThemePreference) => void;
   setWrongAttempts: (attempts: number) => void;
-  setNavExpanded: (expanded: boolean) => void;
+  setLibraryNavOpen: (open: boolean) => void;
   setHasHydrated: (hydrated: boolean) => void;
 };
 
@@ -98,7 +98,7 @@ const DEFAULT_STATE: AppState = {
   speechSupported: false,
   theme: DEFAULT_THEME,
   wrongAttempts: 0,
-  navExpanded: true,
+  libraryNavOpen: false,
 };
 
 export const useAppStore = create<AppStore>()(
@@ -172,7 +172,7 @@ export const useAppStore = create<AppStore>()(
       setSpeechSupported: (speechSupported) => set({ speechSupported }),
       setTheme: (theme) => set({ theme }),
       setWrongAttempts: (wrongAttempts) => set({ wrongAttempts }),
-      setNavExpanded: (navExpanded: boolean) => set({ navExpanded }),
+      setLibraryNavOpen: (libraryNavOpen: boolean) => set({ libraryNavOpen }),
     }),
     {
       name: "global",
@@ -180,7 +180,6 @@ export const useAppStore = create<AppStore>()(
       partialize: (state) => ({
         theme: state.theme,
         currentSet: state.currentSet,
-        navExpanded: state.navExpanded,
         skipEnabled: state.skipEnabled,
         speechSupported: state.speechSupported,
       }),

@@ -1,8 +1,7 @@
-"use client";
 import NavigateNextRoundedIcon from "@mui/icons-material/NavigateNextRounded";
 import Box from "@mui/material/Box";
 import Breadcrumbs, { breadcrumbsClasses } from "@mui/material/Breadcrumbs";
-import Container, { ContainerProps } from "@mui/material/Container";
+import { ContainerProps } from "@mui/material/Container";
 import MuiLink from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
@@ -40,18 +39,23 @@ export interface Breadcrumb {
   title: string;
   path?: string;
 }
-export interface PageContainerProps extends ContainerProps {
+export interface Props extends ContainerProps {
   children?: React.ReactNode;
-  title?: string;
   breadcrumbs?: Breadcrumb[];
   actions?: React.ReactNode;
 }
 
-export default function PageContainer(props: PageContainerProps) {
-  const { children, breadcrumbs, title, actions = null } = props;
+export default function PageContainer(props: Props) {
+  const { children, breadcrumbs, actions = null } = props;
 
   return (
-    <Container sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+    <Box
+      sx={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Stack sx={{ flex: 1, my: 2 }} spacing={2}>
         <Stack>
           <PageHeaderBreadcrumbs
@@ -82,7 +86,6 @@ export default function PageContainer(props: PageContainerProps) {
               : null}
           </PageHeaderBreadcrumbs>
           <PageContentHeader>
-            {title ? <Typography variant="h4">{title}</Typography> : null}
             <PageHeaderToolbar>{actions}</PageHeaderToolbar>
           </PageContentHeader>
         </Stack>
@@ -90,6 +93,6 @@ export default function PageContainer(props: PageContainerProps) {
           {children}
         </Box>
       </Stack>
-    </Container>
+    </Box>
   );
 }
