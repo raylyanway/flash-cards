@@ -1,14 +1,12 @@
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import Alert from "@mui/material/Alert";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { styled } from "@mui/material/styles";
@@ -36,7 +34,6 @@ import {
 } from "@mui/x-data-grid";
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
-import PageContainer from "../../components/PageContainer";
 import {
   getIndexedDbTableNames,
   getIndexedDbTableRows,
@@ -310,60 +307,42 @@ export default function EmployeeList() {
   );
 
   return (
-    <PageContainer
-      breadcrumbs={[{ title: tableName || "Library", path: "/library" }]}
-      actions={
-        <Tooltip title="Reload data" placement="right" enterDelay={1000}>
-          <span>
-            <IconButton
-              size="small"
-              aria-label="refresh"
-              onClick={loadData}
-              disabled={isLoading}
-            >
-              <RefreshIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      }
-    >
-      <Box sx={{ flex: 1, width: "100%" }}>
-        {error ? (
-          <Alert severity="error">{error.message}</Alert>
-        ) : (
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            getRowId={(row) => row[primaryKey ?? ""] as string | number}
-            loading={isLoading}
-            editMode="row"
-            processRowUpdate={handleRowUpdate}
-            initialState={{
-              pagination: { paginationModel: { pageSize: INITIAL_PAGE_SIZE } },
-            }}
-            pageSizeOptions={[5, INITIAL_PAGE_SIZE, 25]}
-            showToolbar
-            slots={{ toolbar: CustomToolbar }}
-            disableRowSelectionOnClick
-            sx={{
-              [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
-                outline: "transparent",
+    <Box sx={{ flex: 1, width: "100%" }}>
+      {error ? (
+        <Alert severity="error">{error.message}</Alert>
+      ) : (
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row[primaryKey ?? ""] as string | number}
+          loading={isLoading}
+          editMode="row"
+          processRowUpdate={handleRowUpdate}
+          initialState={{
+            pagination: { paginationModel: { pageSize: INITIAL_PAGE_SIZE } },
+          }}
+          pageSizeOptions={[5, INITIAL_PAGE_SIZE, 25]}
+          showToolbar
+          slots={{ toolbar: CustomToolbar }}
+          disableRowSelectionOnClick
+          sx={{
+            [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
+              outline: "transparent",
+            },
+            [`& .${gridClasses.columnHeader}:focus-within, & .${gridClasses.cell}:focus-within`]:
+              {
+                outline: "none",
               },
-              [`& .${gridClasses.columnHeader}:focus-within, & .${gridClasses.cell}:focus-within`]:
-                {
-                  outline: "none",
-                },
-            }}
-            slotProps={{
-              loadingOverlay: {
-                variant: "circular-progress",
-                noRowsVariant: "circular-progress",
-              },
-              baseIconButton: { size: "small" },
-            }}
-          />
-        )}
-      </Box>
-    </PageContainer>
+          }}
+          slotProps={{
+            loadingOverlay: {
+              variant: "circular-progress",
+              noRowsVariant: "circular-progress",
+            },
+            baseIconButton: { size: "small" },
+          }}
+        />
+      )}
+    </Box>
   );
 }
