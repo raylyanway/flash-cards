@@ -229,7 +229,7 @@ function CustomToolbar() {
   );
 }
 
-export default function EmployeeList() {
+export function LibraryGrid() {
   const [searchParams] = useSearchParams();
   const tableName =
     searchParams.get("table") ?? getIndexedDbTableNames()[0] ?? "";
