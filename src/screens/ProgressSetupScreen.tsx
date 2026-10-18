@@ -20,7 +20,7 @@ import {
 import { type ChangeEvent, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
-import type { Card as CardModel, SetProgress } from "../types";
+import type { Card as CardModel, GroupProgress } from "../types";
 import { getStageName, initializeMissingProgress } from "../utils/cardProgress";
 import { createCsvFromProgress, downloadCsv, parseCsv } from "../utils/csv";
 
@@ -28,7 +28,7 @@ export function ProgressSetupScreen() {
   const importProgressInputRef = useRef<HTMLInputElement | null>(null);
 
   const cards = useAppStore((state) => state.cards);
-  const currentSet = useAppStore((state) => state.currentSet);
+  const currentGroup = useAppStore((state) => state.currentGroup);
   const progress = useAppStore((state) => state.progress);
   const progressSearch = useAppStore((state) => state.progressSearch);
   const setupBackup = useAppStore((state) => state.setupBackup);
@@ -38,7 +38,7 @@ export function ProgressSetupScreen() {
   const setSetupBackup = useAppStore((state) => state.setSetupBackup);
   const navigate = useNavigate();
 
-  const currentSetProgress = progress[currentSet];
+  const currentGroupProgress = progress[currentGroup];
 
   const filteredCards = cards.filter((card) =>
     card.text.toLowerCase().includes(progressSearch.toLowerCase()),
@@ -46,14 +46,14 @@ export function ProgressSetupScreen() {
 
   const closeProgressSetup = () => {
     if (setupBackup) {
-      setProgress({ [currentSet]: setupBackup });
+      setProgress({ [currentGroup]: setupBackup });
       setSetupBackup(null);
     }
     navigate("/analytics");
   };
 
   const doneProgressSetup = async () => {
-    setProgress({ [currentSet]: currentSetProgress });
+    setProgress({ [currentGroup]: currentGroupProgress });
     setSetupBackup(null);
     navigate("/analytics");
   };
@@ -65,7 +65,7 @@ export function ProgressSetupScreen() {
     }
     downloadCsv(
       createCsvFromProgress(progress, cards),
-      `${currentSet}-progress-${new Date().toISOString().split("T")[0]}.csv`,
+      `${currentGroup}-progress-${new Date().toISOString().split("T")[0]}.csv`,
     );
   };
 
@@ -82,7 +82,7 @@ export function ProgressSetupScreen() {
     reader.onload = async (loadEvent) => {
       try {
         const data = parseCsv(String(loadEvent.target?.result || ""));
-        const importedProgress: SetProgress = {};
+        const importedProgress: GroupProgress = {};
         for (const row of data) {
           const text = String(row.text || "").trim();
           if (!text) continue;
@@ -98,15 +98,15 @@ export function ProgressSetupScreen() {
         }
 
         const confirmed = confirm(
-          `Import progress for "${currentSet}"? This will overwrite progress for matching cards.`,
+          `Import progress for "${currentGroup}"? This will overwrite progress for matching cards.`,
         );
         if (!confirmed) return;
 
         const nextProgress = initializeMissingProgress(cards, {
-          ...currentSetProgress,
+          ...currentGroupProgress,
           ...importedProgress,
         });
-        setProgress({ [currentSet]: nextProgress });
+        setProgress({ [currentGroup]: nextProgress });
         alert("Progress imported successfully!");
       } catch (error) {
         alert(`Failed to import progress: ${(error as Error).message}`);
@@ -118,7 +118,7 @@ export function ProgressSetupScreen() {
   };
 
   const setAllStages = (stage: number) => {
-    const nextProgress: SetProgress = {};
+    const nextProgress: GroupProgress = {};
     for (const card of cards) {
       nextProgress[card.text] = {
         stage,
@@ -126,21 +126,21 @@ export function ProgressSetupScreen() {
         correctCount: stage === 3 ? 3 : 0,
       };
     }
-    setProgress({ [currentSet]: nextProgress });
+    setProgress({ [currentGroup]: nextProgress });
   };
 
   const setCardStage = (card: CardModel, stage: number) => {
     setProgress({
-      [currentSet]: {
-        ...currentSetProgress,
+      [currentGroup]: {
+        ...currentGroupProgress,
         [card.text]: {
-          ...currentSetProgress[card.text],
+          ...currentGroupProgress[card.text],
           stage,
           nextReview: 0,
           correctCount:
             stage === 3
-              ? Math.max(currentSetProgress[card.text]?.correctCount || 0, 3)
-              : currentSetProgress[card.text]?.correctCount || 0,
+              ? Math.max(currentGroupProgress[card.text]?.correctCount || 0, 3)
+              : currentGroupProgress[card.text]?.correctCount || 0,
         },
       },
     });
@@ -201,7 +201,7 @@ export function ProgressSetupScreen() {
 
               <Stack spacing={1.5} sx={{ mt: 2 }}>
                 {filteredCards.map((card) => {
-                  const cardProgress = currentSetProgress[card.text] || {
+                  const cardProgress = currentGroupProgress[card.text] || {
                     stage: 0,
                     correctCount: 0,
                   };

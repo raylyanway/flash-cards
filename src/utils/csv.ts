@@ -23,7 +23,7 @@ export function createCsvFromCards(cards: Card[]) {
   const fieldSet = new Set<string>();
   for (const card of cards) {
     Object.keys(card).forEach((key) => {
-      if (key !== "setName") fieldSet.add(key);
+      if (key !== "group") fieldSet.add(key);
     });
   }
 

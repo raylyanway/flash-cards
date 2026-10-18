@@ -43,18 +43,18 @@ const STAGE_METRICS: Array<{
 
 export function AnalyticsScreen() {
   const cards = useAppStore((state) => state.cards);
-  const currentSet = useAppStore((state) => state.currentSet);
+  const currentGroup = useAppStore((state) => state.currentGroup);
   const progress = useAppStore((state) => state.progress);
   const setProgress = useAppStore((state) => state.setProgress);
   const setProgressSearch = useAppStore((state) => state.setProgressSearch);
   const setSetupBackup = useAppStore((state) => state.setSetupBackup);
   const navigate = useNavigate();
 
-  const currentSetProgress = progress[currentSet];
+  const currentGroupProgress = progress[currentGroup];
 
   const stageCounts = useMemo(
-    () => countStages(currentSetProgress),
-    [currentSetProgress],
+    () => countStages(currentGroupProgress),
+    [currentGroupProgress],
   );
   const sortedCards = useMemo(
     () => [...cards].sort((a, b) => a.text.localeCompare(b.text)),
@@ -62,13 +62,13 @@ export function AnalyticsScreen() {
   );
 
   const resetProgress = async () => {
-    if (!confirm(`Reset progress for "${currentSet}"?`)) return;
+    if (!confirm(`Reset progress for "${currentGroup}"?`)) return;
     const nextProgress = initializeMissingProgress(cards, {});
-    setProgress({ [currentSet]: nextProgress });
+    setProgress({ [currentGroup]: nextProgress });
   };
 
   const openProgressSetup = () => {
-    setSetupBackup(currentSetProgress);
+    setSetupBackup(currentGroupProgress);
     setProgressSearch("");
     navigate("/progress-setup");
   };
@@ -78,7 +78,7 @@ export function AnalyticsScreen() {
       <PageHeader
         icon={<AnalyticsRounded />}
         title="Analytics"
-        description="A quick view of your current progress and the cards in this set."
+        description="A quick view of your current progress and the cards in this group."
       />
 
       <Stack spacing={3}>
@@ -106,7 +106,7 @@ export function AnalyticsScreen() {
               </TableHead>
               <TableBody>
                 {sortedCards.map((card) => {
-                  const cardProgress = currentSetProgress[card.text] || {
+                  const cardProgress = currentGroupProgress[card.text] || {
                     stage: 0,
                   };
                   return (

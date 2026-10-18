@@ -3,7 +3,7 @@ export type ThemePreference = "system" | "light" | "dark";
 export type Card = {
   text: string;
   answers?: string[];
-  setName?: string;
+  group?: string;
   [key: string]: unknown;
 };
 
@@ -14,7 +14,7 @@ export type ProgressEntry = {
 };
 
 export type ProgressMap = Record<string, Record<string, ProgressEntry>>;
-export type SetProgress = Record<string, ProgressEntry>;
+export type GroupProgress = Record<string, ProgressEntry>;
 
 export type ContentOption = {
   key: string;
@@ -22,22 +22,22 @@ export type ContentOption = {
 };
 
 export type Settings = {
-  currentSet?: string;
+  currentGroup?: string;
   theme?: ThemePreference;
 };
 
 export type ContentRecord = Card & {
-  setName: string;
+  group: string;
 };
 
 export type ContentMetadata = {
-  setName: string;
+  group: string;
   displayName?: string;
   importedAt?: number;
 };
 
 export type ProgressRecord = {
-  setName: string;
+  group: string;
   progress: ProgressMap[string];
 };
 

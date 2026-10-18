@@ -17,18 +17,18 @@ import {
 export function LearnScreen() {
   const cards = useAppStore((state) => state.cards);
   const currentCard = useAppStore((state) => state.currentCard);
-  const currentSet = useAppStore((state) => state.currentSet);
+  const currentGroup = useAppStore((state) => state.currentGroup);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
-  const currentSetProgress = progress[currentSet];
+  const currentGroupProgress = progress[currentGroup];
 
   const stageCounts = useMemo(
-    () => countStages(currentSetProgress),
-    [currentSetProgress],
+    () => countStages(currentGroupProgress),
+    [currentGroupProgress],
   );
   const nextDueTimestamp = useMemo(
-    () => getNextDueTimestamp(cards, currentSetProgress),
-    [cards, currentSetProgress],
+    () => getNextDueTimestamp(cards, currentGroupProgress),
+    [cards, currentGroupProgress],
   );
   const learning = useLearningSession({ nextDueTimestamp });
 
@@ -71,7 +71,7 @@ export function LearnScreen() {
         <Stack spacing={1.5}>
           <Typography variant="overline" color="text.secondary">
             {currentCard
-              ? getStageName(currentSetProgress[currentCard.text]?.stage || 0)
+              ? getStageName(currentGroupProgress[currentCard.text]?.stage || 0)
               : "No cards are due"}
           </Typography>
           <Typography
@@ -79,7 +79,7 @@ export function LearnScreen() {
             sx={{
               fontWeight: 800,
               letterSpacing: -0.06,
-              // Card sets range from single words to full sentences, so the
+              // Card groups range from single words to full sentences, so the
               // prompt scales down on small screens instead of overflowing.
               fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3.25rem" },
               lineHeight: 1.15,

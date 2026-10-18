@@ -13,8 +13,8 @@ import { parseCsv } from "./utils/csv";
 const db = new Dexie("flashCardsDB") as Dexie & {
   uiStore: EntityTable<{ key: string; state: string }, "key">;
   content: EntityTable<ContentRecord, "text">;
-  contentMetadata: EntityTable<ContentMetadata, "setName">;
-  progress: EntityTable<ProgressRecord, "setName">;
+  contentMetadata: EntityTable<ContentMetadata, "group">;
+  progress: EntityTable<ProgressRecord, "group">;
   settings: EntityTable<SettingRecord, "key">;
 };
 
@@ -25,6 +25,29 @@ db.version(1).stores({
   progress: "setName",
   settings: "key",
 });
+
+db.version(2)
+  .stores({
+    uiStore: "key",
+    content: "text, group",
+    contentMetadata: "group",
+    progress: "group",
+    settings: "key",
+  })
+  .upgrade((transaction) =>
+    Promise.all(
+      ["content", "contentMetadata", "progress"].map((tableName) =>
+        transaction
+          .table(tableName)
+          .toCollection()
+          .modify((record) => {
+            const legacyGroup = record.setName;
+            if (typeof legacyGroup === "string") record.group = legacyGroup;
+            delete record.setName;
+          }),
+      ),
+    ),
+  );
 
 export { db };
 
@@ -38,11 +61,11 @@ export const DEFAULT_CONTENT: ContentOption[] = [
   { key: "sentences", label: "Sentences" },
 ];
 
-async function getStoreCountForSet(setName: string) {
-  return db.content.where("setName").equals(setName).count();
+async function getStoreCountForGroup(group: string) {
+  return db.content.where("group").equals(group).count();
 }
 
-export function getContentBaseName(fileName: string) {
+export function getContentGroupBaseName(fileName: string) {
   let name = fileName;
   if (name.toLowerCase().endsWith(".gz")) name = name.slice(0, -3);
   if (name.toLowerCase().endsWith(".csv")) name = name.slice(0, -4);
@@ -63,10 +86,10 @@ async function decompressOrDecodeBuffer(buffer: ArrayBuffer) {
   return new Response(new Blob([buffer]).stream().pipeThrough(ds)).text();
 }
 
-async function resolveContentUrl(setName: string) {
+async function resolveContentUrl(group: string) {
   const tried: string[] = [];
   for (const suffix of [".csv.gz", ".csv"]) {
-    const url = `content/${setName}${suffix}`;
+    const url = `content/${group}${suffix}`;
     tried.push(url);
     try {
       const response = await fetch(url, { cache: "reload" });
@@ -78,78 +101,80 @@ async function resolveContentUrl(setName: string) {
   throw new Error(`Failed to fetch content data. Tried: ${tried.join(", ")}`);
 }
 
-async function fetchAndSeed(currentSet: string) {
-  const { response, url } = await resolveContentUrl(currentSet);
+async function fetchAndSeed(currentGroup: string) {
+  const { response, url } = await resolveContentUrl(currentGroup);
   const text = url.endsWith(".gz")
     ? await decompressOrDecodeBuffer(await response.arrayBuffer())
     : await response.text();
   const data = parseCsv(text);
 
   await db.content.bulkPut(
-    data.map((item) => ({ ...item, setName: currentSet })),
+    data.map((item) => ({ ...item, group: currentGroup })),
   );
 }
 
-export async function getAllCardsForSet(currentSet: string): Promise<Card[]> {
+export async function getAllCardsForGroup(
+  currentGroup: string,
+): Promise<Card[]> {
   const records = await db.content.toArray();
   return records.filter(
-    (record) => !record.setName || record.setName === currentSet,
+    (record) => !record.group || record.group === currentGroup,
   );
 }
 
-export function getDisplayNameForSet(setName: string) {
-  const defaultEntry = DEFAULT_CONTENT.find((item) => item.key === setName);
+export function getDisplayNameForGroup(group: string) {
+  const defaultEntry = DEFAULT_CONTENT.find((item) => item.key === group);
   if (defaultEntry) return defaultEntry.label;
 
-  return setName
+  return group
     .replace(/[-_]/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 async function getContentMetadata(
-  setName: string,
+  group: string,
 ): Promise<ContentMetadata | undefined> {
-  return db.contentMetadata.get(setName);
+  return db.contentMetadata.get(group);
 }
 
 export async function setContentMetadata(metadata: {
-  setName: string;
+  group: string;
   displayName: string;
   importedAt: number;
 }) {
   await db.contentMetadata.put(metadata);
 }
 
-async function deleteContentMetadata(setName: string) {
-  await db.contentMetadata.delete(setName);
+async function deleteContentMetadata(group: string) {
+  await db.contentMetadata.delete(group);
 }
 
-function deleteContentRecords(setName: string) {
-  return db.content.where("setName").equals(setName).delete();
+function deleteContentRecords(group: string) {
+  return db.content.where("group").equals(group).delete();
 }
 
-export async function deleteContent(setName: string) {
-  await deleteContentRecords(setName);
-  await deleteContentMetadata(setName);
+export async function deleteContent(group: string) {
+  await deleteContentRecords(group);
+  await deleteContentMetadata(group);
 }
 
-export async function getContentDisplayName(setName: string) {
-  const metadata = await getContentMetadata(setName);
-  return metadata?.displayName || getDisplayNameForSet(setName);
+export async function getContentDisplayName(group: string) {
+  const metadata = await getContentMetadata(group);
+  return metadata?.displayName || getDisplayNameForGroup(group);
 }
 
-export async function getUniqueContentNames() {
-  const names = new Set(DEFAULT_CONTENT.map((item) => item.key));
+export async function getUniqueContentGroups() {
+  const groups = new Set(DEFAULT_CONTENT.map((item) => item.key));
   const records = await db.content.toArray();
   for (const record of records) {
-    if (record.setName) names.add(record.setName);
+    if (record.group) groups.add(record.group);
   }
 
-  return Array.from(names);
+  return Array.from(groups);
 }
 
 export async function getContentOptions() {
-  const storedNames = await getUniqueContentNames();
+  const storedGroups = await getUniqueContentGroups();
   const optionSet = new Set<string>();
   const options: ContentOption[] = [];
 
@@ -158,31 +183,31 @@ export async function getContentOptions() {
     options.push(content);
   }
 
-  for (const setName of storedNames) {
-    if (optionSet.has(setName)) continue;
-    optionSet.add(setName);
-    const metadata = await getContentMetadata(setName);
+  for (const group of storedGroups) {
+    if (optionSet.has(group)) continue;
+    optionSet.add(group);
+    const metadata = await getContentMetadata(group);
     options.push({
-      key: setName,
-      label: metadata?.displayName || getDisplayNameForSet(setName),
+      key: group,
+      label: metadata?.displayName || getDisplayNameForGroup(group),
     });
   }
 
   return options;
 }
 
-export async function importContent(setName: string, cards: Card[]) {
-  await deleteContentRecords(setName);
-  await db.content.bulkPut(cards.map((item) => ({ ...item, setName })));
+export async function importContent(group: string, cards: Card[]) {
+  await deleteContentRecords(group);
+  await db.content.bulkPut(cards.map((item) => ({ ...item, group })));
 }
 
-export async function initializeContent(currentSet: string) {
-  const setCount = await getStoreCountForSet(currentSet);
+export async function initializeGroupContent(currentGroup: string) {
+  const groupCount = await getStoreCountForGroup(currentGroup);
 
-  if (setCount > 0) return getAllCardsForSet(currentSet);
+  if (groupCount > 0) return getAllCardsForGroup(currentGroup);
 
-  await fetchAndSeed(currentSet);
-  return getAllCardsForSet(currentSet);
+  await fetchAndSeed(currentGroup);
+  return getAllCardsForGroup(currentGroup);
 }
 
 export async function deleteAppDatabase() {

@@ -27,7 +27,7 @@ export function useLearningSession({
   const currentCard = useAppStore((state) => state.currentCard);
   const listening = useAppStore((state) => state.listening);
   const now = useAppStore((state) => state.now);
-  const currentSet = useAppStore((state) => state.currentSet);
+  const currentGroup = useAppStore((state) => state.currentGroup);
   const progress = useAppStore((state) => state.progress);
   const recognizedText = useAppStore((state) => state.recognizedText);
   const result = useAppStore((state) => state.result);
@@ -47,12 +47,12 @@ export function useLearningSession({
 
   const { pathname } = useLocation();
   const isLearnRoute = pathname === "/learn";
-  const currentSetProgress = progress[currentSet];
+  const currentGroupProgress = progress[currentGroup];
 
   const skippedCardsRef = useRef(new Set<string>());
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const transitionTimerRef = useRef<number | null>(null);
-  const progressRef = useRef(currentSetProgress);
+  const progressRef = useRef(currentGroupProgress);
   const cardsRef = useRef(cards);
   const currentCardRef = useRef(currentCard);
   const listeningRef = useRef(listening);
@@ -75,10 +75,10 @@ export function useLearningSession({
         [card.text]: updater({ ...progressRef.current[card.text] }),
       };
       progressRef.current = nextProgress;
-      setProgress({ [currentSet]: nextProgress });
+      setProgress({ [currentGroup]: nextProgress });
       return nextProgress[card.text];
     },
-    [setProgress],
+    [currentGroup, setProgress],
   );
 
   const selectNextCard = useCallback(() => {
@@ -245,12 +245,12 @@ export function useLearningSession({
   }, []);
 
   useEffect(() => {
-    progressRef.current = currentSetProgress;
+    progressRef.current = currentGroupProgress;
     cardsRef.current = cards;
     currentCardRef.current = currentCard;
     listeningRef.current = listening;
     wrongAttemptsRef.current = wrongAttempts;
-  }, [cards, currentCard, listening, currentSetProgress, wrongAttempts]);
+  }, [cards, currentCard, listening, currentGroupProgress, wrongAttempts]);
 
   useEffect(() => {
     return () => {

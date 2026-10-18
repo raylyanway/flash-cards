@@ -75,7 +75,7 @@ export function LibraryList() {
           .join(" · ");
 
         return (
-          <React.Fragment key={`${row.setName}:${row.text}`}>
+          <React.Fragment key={`${row.group}:${row.text}`}>
             <ListItem alignItems="flex-start" sx={{ px: 2, py: 1.5 }}>
               <ListItemText
                 primary={row.text}

@@ -25,12 +25,12 @@ import { SectionCard } from "../components/SectionCard";
 import {
   DEFAULT_CONTENT,
   deleteContent,
-  getAllCardsForSet,
-  getContentBaseName,
+  getAllCardsForGroup,
+  getContentGroupBaseName,
   getContentDisplayName,
   getContentOptions,
-  getDisplayNameForSet,
-  getUniqueContentNames,
+  getDisplayNameForGroup,
+  getUniqueContentGroups,
   importContent,
   setContentMetadata,
 } from "../db";
@@ -42,35 +42,37 @@ export function ContentScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const contentOptions = useAppStore((state) => state.contentOptions);
-  const currentSet = useAppStore((state) => state.currentSet);
+  const currentGroup = useAppStore((state) => state.currentGroup);
   const setContentOptions = useAppStore((state) => state.setContentOptions);
-  const setCurrentSet = useAppStore((state) => state.setCurrentSet);
-  const loadSetData = useAppStore((state) => state.loadSetData);
+  const setCurrentGroup = useAppStore((state) => state.setCurrentGroup);
+  const loadGroupData = useAppStore((state) => state.loadGroupData);
   const refreshContentOptions = useAppStore(
     (state) => state.refreshContentOptions,
   );
 
-  const isDefaultSet = DEFAULT_CONTENT.some((item) => item.key === currentSet);
+  const isDefaultGroup = DEFAULT_CONTENT.some(
+    (item) => item.key === currentGroup,
+  );
   const selectedLabel =
-    contentOptions.find((option) => option.key === currentSet)?.label ??
-    currentSet;
+    contentOptions.find((option) => option.key === currentGroup)?.label ??
+    currentGroup;
 
   const exportContent = async () => {
     try {
-      const allCards = await getAllCardsForSet(currentSet);
+      const allCards = await getAllCardsForGroup(currentGroup);
       if (!allCards.length) {
-        alert("Nothing to export for this content set.");
+        alert("Nothing to export for this content group.");
         return;
       }
       downloadCsv(
         createCsvFromCards(
           allCards.map((card) => {
             const exportedCard = { ...card };
-            delete exportedCard.setName;
+            delete exportedCard.group;
             return exportedCard;
           }),
         ),
-        `${currentSet}.csv`,
+        `${currentGroup}.csv`,
       );
     } catch (error) {
       console.error("exportContent failed:", error);
@@ -91,31 +93,31 @@ export function ContentScreen() {
     reader.onload = async (loadEvent) => {
       try {
         const data = parseCsv(String(loadEvent.target?.result || ""));
-        const setName = getContentBaseName(file.name);
-        if (!setName) {
+        const group = getContentGroupBaseName(file.name);
+        if (!group) {
           throw new Error(
             "Unable to infer content name from the uploaded file name.",
           );
         }
 
-        const existing = await getUniqueContentNames();
-        if (existing.includes(setName)) {
+        const existing = await getUniqueContentGroups();
+        if (existing.includes(group)) {
           const confirmed = confirm(
-            `A content named "${setName}" already exists. Overwrite it?`,
+            `A content named "${group}" already exists. Overwrite it?`,
           );
           if (!confirmed) return;
         }
 
-        const displayName = getDisplayNameForSet(setName);
-        await importContent(setName, data);
+        const displayName = getDisplayNameForGroup(group);
+        await importContent(group, data);
         await setContentMetadata({
-          setName,
+          group,
           displayName,
           importedAt: Date.now(),
         });
-        await refreshContentOptions(setName);
-        setCurrentSet(setName);
-        await loadSetData(setName);
+        await refreshContentOptions(group);
+        setCurrentGroup(group);
+        await loadGroupData(group);
         alert(`Content "${displayName}" imported successfully.`);
       } catch (error) {
         alert(`Failed to import content: ${(error as Error).message}`);
@@ -127,12 +129,12 @@ export function ContentScreen() {
   };
 
   const handleDeleteContent = async () => {
-    if (isDefaultSet) {
-      alert("Default content sets cannot be deleted.");
+    if (isDefaultGroup) {
+      alert("Default content groups cannot be deleted.");
       return;
     }
 
-    const displayName = await getContentDisplayName(currentSet);
+    const displayName = await getContentDisplayName(currentGroup);
     if (
       !confirm(
         `Delete content "${displayName}"? This will remove the content and its progress.`,
@@ -143,12 +145,12 @@ export function ContentScreen() {
 
     try {
       setIsDeleting(true);
-      await deleteContent(currentSet);
+      await deleteContent(currentGroup);
       const options = await getContentOptions();
-      const nextSet = options[0]?.key || "body-parts";
+      const nextGroup = options[0]?.key || "body-parts";
       setContentOptions(options);
-      setCurrentSet(nextSet);
-      await loadSetData(nextSet);
+      setCurrentGroup(nextGroup);
+      await loadGroupData(nextGroup);
       alert(`Content "${displayName}" deleted.`);
     } catch (error) {
       console.error("Failed to delete content:", error);
@@ -158,10 +160,10 @@ export function ContentScreen() {
     }
   };
 
-  const handleSetChange = async (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextSet = event.target.value;
-    setCurrentSet(nextSet);
-    await loadSetData(nextSet);
+  const handleGroupChange = async (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextGroup = event.target.value;
+    setCurrentGroup(nextGroup);
+    await loadGroupData(nextGroup);
   };
 
   return (
@@ -185,12 +187,12 @@ export function ContentScreen() {
                 </Typography>
               </Box>
               <FormControl sx={{ minWidth: 220 }} size="small">
-                <InputLabel id="content-set-select">Collection</InputLabel>
+                <InputLabel id="content-group-select">Collection</InputLabel>
                 <Select
-                  labelId="content-set-select"
+                  labelId="content-group-select"
                   label="Collection"
-                  value={currentSet}
-                  onChange={handleSetChange}
+                  value={currentGroup}
+                  onChange={handleGroupChange}
                 >
                   {contentOptions.map((option) => (
                     <MenuItem key={option.key} value={option.key}>
@@ -202,9 +204,9 @@ export function ContentScreen() {
             </Stack>
             <Chip
               label={
-                isDefaultSet ? "Built-in collection" : "Imported collection"
+                isDefaultGroup ? "Built-in collection" : "Imported collection"
               }
-              color={isDefaultSet ? "primary" : "success"}
+              color={isDefaultGroup ? "primary" : "success"}
               sx={{ mt: 2 }}
             />
           </CardContent>
@@ -252,7 +254,7 @@ export function ContentScreen() {
             variant="contained"
             color="error"
             startIcon={<DeleteRounded />}
-            disabled={isDefaultSet || isDeleting}
+            disabled={isDefaultGroup || isDeleting}
             onClick={handleDeleteContent}
           >
             {isDeleting ? "Deleting..." : "Delete collection"}

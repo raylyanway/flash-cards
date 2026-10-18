@@ -21,13 +21,13 @@ import { getCompletePercent, getNextReviewLabel } from "../utils/cardProgress";
 
 export function HomeScreen() {
   const cards = useAppStore((state) => state.cards);
-  const currentSet = useAppStore((state) => state.currentSet);
+  const currentGroup = useAppStore((state) => state.currentGroup);
   const contentOptions = useAppStore((state) => state.contentOptions);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
   const navigate = useNavigate();
 
-  const currentSetProgress = progress[currentSet];
+  const currentGroupProgress = progress[currentGroup];
 
   const options = useMemo(
     () => contentOptions.map((option) => option.key),
@@ -35,27 +35,28 @@ export function HomeScreen() {
   );
 
   const completePercent = useMemo(
-    () => getCompletePercent(cards, currentSetProgress),
-    [cards, currentSetProgress],
+    () => getCompletePercent(cards, currentGroupProgress),
+    [cards, currentGroupProgress],
   );
 
   const nextReviewLabel = useMemo(
-    () => getNextReviewLabel(currentSetProgress, now),
-    [now, currentSetProgress],
+    () => getNextReviewLabel(currentGroupProgress, now),
+    [now, currentGroupProgress],
   );
 
   const totalCards = cards.length;
   const learnedCount = useMemo(
-    () => Object.values(currentSetProgress).filter((p) => p.stage === 3).length,
-    [currentSetProgress],
+    () =>
+      Object.values(currentGroupProgress).filter((p) => p.stage === 3).length,
+    [currentGroupProgress],
   );
 
   const dueCount = useMemo(() => {
     const nowTs = Date.now();
-    return Object.values(currentSetProgress).filter(
+    return Object.values(currentGroupProgress).filter(
       (p) => p.stage < 3 && p.nextReview <= nowTs,
     ).length;
-  }, [currentSetProgress, now]);
+  }, [currentGroupProgress, now]);
 
   return (
     <>
@@ -73,17 +74,17 @@ export function HomeScreen() {
                 <Autocomplete
                   sx={{ flexGrow: 1 }}
                   options={options}
-                  value={currentSet}
+                  value={currentGroup}
                   onChange={(event, newValue) => {
                     if (newValue) {
-                      useAppStore.setState({ currentSet: newValue });
+                      useAppStore.setState({ currentGroup: newValue });
                     }
                   }}
                   size="small"
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="current set"
+                      label="current group"
                       variant="standard"
                     />
                   )}
