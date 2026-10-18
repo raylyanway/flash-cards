@@ -1,8 +1,8 @@
 import { BookRounded } from "@mui/icons-material";
-import * as React from "react";
-import { Outlet, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/PageHeader";
 import DashboardLayout from "./DashboardLayout";
+import { LibraryList } from "./LibraryList";
 
 const CONTENT_TABLES = ["content"];
 
@@ -22,7 +22,7 @@ export function LibraryScreen() {
         description="Browse your collections and keep your learning routine consistent."
       />
       <DashboardLayout selectedTable={selectedTable} tableNames={tableNames}>
-        <Outlet />
+        <LibraryList />
       </DashboardLayout>
     </>
   );
