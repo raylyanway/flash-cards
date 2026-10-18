@@ -175,11 +175,11 @@ export function useLearningSession({
 
       setResult("❌ Wrong");
       setResultClass("wrong");
-      setRecognizedText(
-        listeningRef.current
-          ? `🎤 Listening... (${getAttemptsText(nextAttempts)})`
-          : `Press Start Listening - ${getAttemptsText(nextAttempts)}`,
-      );
+      if (!listeningRef.current) {
+        setRecognizedText(
+          `Press Start Listening - ${getAttemptsText(nextAttempts)}`,
+        );
+      }
     },
     [scheduleNextCard, updateProgressForCard],
   );
@@ -212,9 +212,26 @@ export function useLearningSession({
     }
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setRecognizedText(`You said: ${transcript}`);
-      checkAnswerRef.current(transcript);
+      const transcript = Array.from(
+        { length: event.results.length },
+        (_, index) => event.results[index][0].transcript,
+      )
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+      if (transcript) setRecognizedText(`You said: ${transcript}`);
+
+      for (
+        let index = event.resultIndex;
+        index < event.results.length;
+        index++
+      ) {
+        const result = event.results[index];
+        if (result.isFinal) {
+          checkAnswerRef.current(result[0].transcript);
+        }
+      }
     };
     recognition.onerror = (event) => {
       if (event.error === "no-speech") return;

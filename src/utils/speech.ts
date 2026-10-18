@@ -12,8 +12,11 @@ export type SpeechRecognitionInstance = {
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
 type SpeechRecognitionEvent = {
+  resultIndex: number;
   results: {
+    length: number;
     [index: number]: {
+      isFinal: boolean;
       [index: number]: {
         transcript: string;
       };
@@ -40,7 +43,7 @@ export function createSpeechRecognition() {
 
   const recognition = new SpeechRecognition();
   recognition.lang = "ru-RU";
-  recognition.interimResults = false;
+  recognition.interimResults = true;
   recognition.maxAlternatives = 1;
   return recognition;
 }
