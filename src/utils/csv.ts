@@ -53,7 +53,7 @@ export function createCsvFromProgress(
   const headers = ["text", "stage", "nextReview", "correctCount"];
   return papaparse.unparse(
     cards.map((card) => {
-      const progressEntry = progressData[card.text] || {
+      const progressEntry = progressData[card.group ?? ""]?.[card.text] || {
         stage: 0,
         nextReview: 0,
         correctCount: 0,
