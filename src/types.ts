@@ -2,7 +2,7 @@ export type ThemePreference = "system" | "light" | "dark";
 
 export type Card = {
   text: string;
-  answers?: string[];
+  answers?: string | string[];
   group?: string;
   [key: string]: unknown;
 };

@@ -189,11 +189,13 @@ export function useLearningSession({
     const card = currentCardRef.current;
     if (!card) return;
 
-    const answers = (
-      Array.isArray(card.answers) && card.answers.length
-        ? card.answers
-        : [card.text]
-    ).map(normalizeAnswer);
+    const cardAnswers =
+      typeof card.answers === "string"
+        ? [card.answers]
+        : Array.isArray(card.answers) && card.answers.length > 0
+          ? card.answers
+          : [card.text];
+    const answers = cardAnswers.map(normalizeAnswer);
     if (answers.includes(normalizeAnswer(text))) {
       markCorrect(card);
     } else {
@@ -222,15 +224,17 @@ export function useLearningSession({
 
       if (transcript) setRecognizedText(`You said: ${transcript}`);
 
-      for (
-        let index = event.resultIndex;
-        index < event.results.length;
-        index++
-      ) {
-        const result = event.results[index];
-        if (result.isFinal) {
-          checkAnswerRef.current(result[0].transcript);
-        }
+      const finalTranscript = Array.from(
+        { length: event.results.length - event.resultIndex },
+        (_, index) => event.results[event.resultIndex + index],
+      )
+        .filter((result) => result.isFinal)
+        .map((result) => result[0].transcript)
+        .join(" ")
+        .trim();
+
+      if (finalTranscript) {
+        checkAnswerRef.current(finalTranscript);
       }
     };
     recognition.onerror = (event) => {

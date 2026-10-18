@@ -43,14 +43,16 @@ export function getStageClass(stage: number) {
 export function getAnswerText(card: Card) {
   return Array.isArray(card.answers)
     ? card.answers.join(", ")
-    : String(card.answers || card.text);
+    : card.answers || card.text;
 }
 
 export function normalizeAnswer(text: string) {
   return text
-    .toLowerCase()
-    .trim()
-    .replace(/[.,!?]/g, "");
+    .normalize("NFC")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function countStages(progress: GroupProgress) {
