@@ -75,7 +75,7 @@ export function useLearningSession({
         [card.text]: updater({ ...progressRef.current[card.text] }),
       };
       progressRef.current = nextProgress;
-      setProgress({ [currentGroup]: nextProgress });
+      await setProgress({ [currentGroup]: nextProgress });
       return nextProgress[card.text];
     },
     [currentGroup, setProgress],

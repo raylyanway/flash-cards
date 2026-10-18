@@ -5,8 +5,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { NavBar } from "../components/NavBar";
 import DialogsProvider from "../hooks/useDialogs/DialogsProvider";
 import NotificationsProvider from "../hooks/useNotifications/NotificationsProvider";
-import { AnalyticsScreen } from "../screens/AnalyticsScreen";
-import { ContentScreen } from "../screens/ContentScreen";
 import { HomeScreen } from "../screens/HomeScreen";
 import { LearnScreen } from "../screens/LearnScreen";
 import { LibraryScreen } from "../screens/library/LibraryScreen";
@@ -47,9 +45,7 @@ export function App() {
               <Routes>
                 <Route path="/" element={<HomeScreen />} />
                 <Route path="/learn" element={<LearnScreen />} />
-                <Route path="/analytics" element={<AnalyticsScreen />} />
                 <Route path="/settings" element={<SettingsScreen />} />
-                <Route path="/content" element={<ContentScreen />} />
                 <Route
                   path="/progress-setup"
                   element={<ProgressSetupScreen />}

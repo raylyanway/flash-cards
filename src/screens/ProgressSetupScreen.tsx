@@ -4,6 +4,7 @@ import {
   UploadRounded,
 } from "@mui/icons-material";
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -17,7 +18,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { type ChangeEvent, useRef } from "react";
+import { type ChangeEvent, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import type { Card as CardModel, GroupProgress } from "../types";
@@ -37,25 +38,42 @@ export function ProgressSetupScreen() {
   const setProgressSearch = useAppStore((state) => state.setProgressSearch);
   const setSetupBackup = useAppStore((state) => state.setSetupBackup);
   const navigate = useNavigate();
+  const [progressError, setProgressError] = useState<string | null>(null);
 
   const currentGroupProgress = progress[currentGroup];
+
+  const persistProgress = async (nextProgress: GroupProgress) => {
+    try {
+      await setProgress({ [currentGroup]: nextProgress });
+      setProgressError(null);
+      return true;
+    } catch (error) {
+      console.error("Failed to save progress:", error);
+      setProgressError(
+        error instanceof Error
+          ? `Unable to save progress: ${error.message}`
+          : "Unable to save progress.",
+      );
+      return false;
+    }
+  };
 
   const filteredCards = cards.filter((card) =>
     card.text.toLowerCase().includes(progressSearch.toLowerCase()),
   );
 
-  const closeProgressSetup = () => {
+  const closeProgressSetup = async () => {
     if (setupBackup) {
-      setProgress({ [currentGroup]: setupBackup });
+      if (!(await persistProgress(setupBackup))) return;
       setSetupBackup(null);
     }
-    navigate("/analytics");
+    navigate("/library");
   };
 
   const doneProgressSetup = async () => {
-    setProgress({ [currentGroup]: currentGroupProgress });
+    if (!(await persistProgress(currentGroupProgress))) return;
     setSetupBackup(null);
-    navigate("/analytics");
+    navigate("/library");
   };
 
   const exportProgress = () => {
@@ -106,7 +124,9 @@ export function ProgressSetupScreen() {
           ...currentGroupProgress,
           ...importedProgress,
         });
-        setProgress({ [currentGroup]: nextProgress });
+        if (!(await persistProgress(nextProgress))) {
+          throw new Error("Unable to save imported progress.");
+        }
         alert("Progress imported successfully!");
       } catch (error) {
         alert(`Failed to import progress: ${(error as Error).message}`);
@@ -117,7 +137,7 @@ export function ProgressSetupScreen() {
     reader.readAsText(file);
   };
 
-  const setAllStages = (stage: number) => {
+  const setAllStages = async (stage: number) => {
     const nextProgress: GroupProgress = {};
     for (const card of cards) {
       nextProgress[card.text] = {
@@ -126,28 +146,27 @@ export function ProgressSetupScreen() {
         correctCount: stage === 3 ? 3 : 0,
       };
     }
-    setProgress({ [currentGroup]: nextProgress });
+    await persistProgress(nextProgress);
   };
 
-  const setCardStage = (card: CardModel, stage: number) => {
-    setProgress({
-      [currentGroup]: {
-        ...currentGroupProgress,
-        [card.text]: {
-          ...currentGroupProgress[card.text],
-          stage,
-          nextReview: 0,
-          correctCount:
-            stage === 3
-              ? Math.max(currentGroupProgress[card.text]?.correctCount || 0, 3)
-              : currentGroupProgress[card.text]?.correctCount || 0,
-        },
+  const setCardStage = async (card: CardModel, stage: number) => {
+    await persistProgress({
+      ...currentGroupProgress,
+      [card.text]: {
+        ...currentGroupProgress[card.text],
+        stage,
+        nextReview: 0,
+        correctCount:
+          stage === 3
+            ? Math.max(currentGroupProgress[card.text]?.correctCount || 0, 3)
+            : currentGroupProgress[card.text]?.correctCount || 0,
       },
     });
   };
 
   return (
     <Stack spacing={3}>
+      {progressError && <Alert severity="error">{progressError}</Alert>}
       <Stack direction="row" spacing={1}>
         <Button
           variant="text"
@@ -173,7 +192,9 @@ export function ProgressSetupScreen() {
                   <Button
                     key={stage}
                     variant="outlined"
-                    onClick={() => setAllStages(stage)}
+                    onClick={() => {
+                      void setAllStages(stage);
+                    }}
                   >
                     {stage === 0
                       ? "New"
@@ -241,9 +262,12 @@ export function ProgressSetupScreen() {
                             labelId={`stage-${card.text}`}
                             value={cardProgress.stage}
                             label="Stage"
-                            onChange={(event) =>
-                              setCardStage(card, Number(event.target.value))
-                            }
+                            onChange={(event) => {
+                              void setCardStage(
+                                card,
+                                Number(event.target.value),
+                              );
+                            }}
                           >
                             <MenuItem value={0}>New</MenuItem>
                             <MenuItem value={1}>Learning x1</MenuItem>

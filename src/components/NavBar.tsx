@@ -1,13 +1,6 @@
-import {
-  AnalyticsRounded,
-  BookRounded,
-  HomeRounded,
-  SettingsRounded,
-  StorageRounded,
-} from "@mui/icons-material";
+import { BookRounded, HomeRounded, SettingsRounded } from "@mui/icons-material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MenuIcon from "@mui/icons-material/Menu";
-import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { MenuItem } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -21,7 +14,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAppStore } from "../store/useAppStore";
 import ColorModeIconDropdown from "./ColorModeIconDropdown";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
@@ -46,8 +38,6 @@ const NAV_ITEMS: Array<{
   path: string;
 }> = [
   { label: "Home", icon: HomeRounded, path: "/" },
-  { label: "Content", icon: StorageRounded, path: "/content" },
-  { label: "Analytics", icon: AnalyticsRounded, path: "/analytics" },
   { label: "Settings", icon: SettingsRounded, path: "/settings" },
   { label: "Library", icon: BookRounded, path: "/library" },
 ];
@@ -58,12 +48,10 @@ const isNavItemSelected = (pathname: string, targetPath: string) => {
   }
 
   if (targetPath === "/library") {
-    return pathname === "/library" || pathname.startsWith("/library/");
-  }
-
-  if (targetPath === "/progress-setup") {
     return (
-      pathname === "/progress-setup" || pathname.startsWith("/progress-setup/")
+      pathname === "/library" ||
+      pathname.startsWith("/library/") ||
+      pathname === "/progress-setup"
     );
   }
 
@@ -80,16 +68,10 @@ export function NavBar() {
   const activeLabel = activeNavItem?.label ?? "";
 
   const [open, setOpen] = React.useState(false);
-  const libraryNavOpen = useAppStore((s) => s.libraryNavOpen);
-  const setLibraryNavOpen = useAppStore((s) => s.setLibraryNavOpen);
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
   };
-
-  const showLibraryToggle = isNavItemSelected(pathname, "/library");
-
-  const handleNavToggle = () => setLibraryNavOpen(!libraryNavOpen);
 
   const handleClick = (path: string) => () => {
     navigate(path);
@@ -109,21 +91,6 @@ export function NavBar() {
     >
       <Container maxWidth="lg">
         <StyledToolbar variant="dense" disableGutters>
-          {showLibraryToggle ? (
-            <IconButton
-              size="small"
-              onClick={handleNavToggle}
-              aria-label={
-                libraryNavOpen
-                  ? "Close library navigation"
-                  : "Open library navigation"
-              }
-              sx={{ mr: 1 }}
-            >
-              {libraryNavOpen ? <MenuOpenIcon /> : <MenuIcon />}
-            </IconButton>
-          ) : null}
-
           <Box
             sx={{
               flexGrow: 1,

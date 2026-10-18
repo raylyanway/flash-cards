@@ -4,7 +4,9 @@ import {
   db,
   DEFAULT_CONTENT,
   getContentOptions,
+  getProgressForGroup,
   initializeGroupContent,
+  saveProgressForGroup,
 } from "../db";
 import type {
   Card,
@@ -63,7 +65,7 @@ export type AppActions = {
   setCurrentGroup: (group: string) => void;
   setListening: (listening: boolean) => void;
   setNow: (now: number) => void;
-  setProgress: (progress: ProgressMap) => void;
+  setProgress: (progress: ProgressMap) => Promise<void>;
   setProgressSearch: (search: string) => void;
   setRecognizedText: (text: string) => void;
   setResult: (result: string) => void;
@@ -132,13 +134,14 @@ export const useAppStore = create<AppStore>()(
       loadGroupData: async (group: string) => {
         const { progress } = get();
         const [storedProgress, loadedCards] = await Promise.all([
-          progress[group],
+          getProgressForGroup(group),
           initializeGroupContent(group),
         ]);
         const nextProgress = initializeMissingProgress(
           loadedCards,
-          storedProgress || {},
+          storedProgress || progress[group] || {},
         );
+        await saveProgressForGroup(group, nextProgress);
         set((prev) => ({
           cards: loadedCards,
           progress: { ...prev.progress, [group]: nextProgress },
@@ -164,8 +167,14 @@ export const useAppStore = create<AppStore>()(
       setCurrentGroup: (group) => set({ currentGroup: group }),
       setListening: (listening) => set({ listening }),
       setNow: (now) => set({ now }),
-      setProgress: (progress) =>
-        set((prev) => ({ progress: { ...prev.progress, ...progress } })),
+      setProgress: async (progress) => {
+        await Promise.all(
+          Object.entries(progress).map(([group, groupProgress]) =>
+            saveProgressForGroup(group, groupProgress),
+          ),
+        );
+        set((prev) => ({ progress: { ...prev.progress, ...progress } }));
+      },
       setProgressSearch: (progressSearch) => set({ progressSearch }),
       setRecognizedText: (recognizedText) => set({ recognizedText }),
       setResult: (result) => set({ result }),
@@ -187,23 +196,6 @@ export const useAppStore = create<AppStore>()(
         speechSupported: state.speechSupported,
       }),
       version: 1,
-      migrate: (persistedState, version) => {
-        if (
-          version === 0 &&
-          typeof persistedState === "object" &&
-          persistedState !== null &&
-          "currentSet" in persistedState
-        ) {
-          const { currentSet, ...rest } = persistedState;
-          return {
-            ...rest,
-            currentGroup:
-              typeof currentSet === "string" ? currentSet : DEFAULT_GROUP,
-          };
-        }
-
-        return persistedState;
-      },
       onRehydrateStorage: (state) => () => state.setHasHydrated(true),
     },
   ),
