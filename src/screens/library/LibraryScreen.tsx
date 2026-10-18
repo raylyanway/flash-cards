@@ -2,12 +2,13 @@ import { BookRounded } from "@mui/icons-material";
 import * as React from "react";
 import { Outlet, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/PageHeader";
-import { getIndexedDbTableNames } from "../../db";
 import DashboardLayout from "./DashboardLayout";
+
+const CONTENT_TABLES = ["content"];
 
 export function LibraryScreen() {
   const [searchParams] = useSearchParams();
-  const tableNames = React.useMemo(getIndexedDbTableNames, []);
+  const tableNames = CONTENT_TABLES;
   const selectedTable =
     tableNames.find((tableName) => tableName === searchParams.get("table")) ??
     tableNames[0] ??

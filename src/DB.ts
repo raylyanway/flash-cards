@@ -28,27 +28,8 @@ db.version(1).stores({
 
 export { db };
 
-export type IndexedDbRow = Record<string, unknown>;
-
-export function getIndexedDbTableNames() {
-  return db.tables.map((table) => table.name);
-}
-
-export async function getIndexedDbTableRows(tableName: string) {
-  const table = db.table<IndexedDbRow, string | number>(tableName);
-
-  return {
-    rows: await table.toArray(),
-    primaryKey: table.schema.primKey.keyPath,
-  };
-}
-
-export async function updateIndexedDbTableRow(
-  tableName: string,
-  row: IndexedDbRow,
-) {
-  await db.table<IndexedDbRow, string | number>(tableName).put(row);
-  return row;
+export function getContentRows() {
+  return db.content.toArray();
 }
 
 export const DEFAULT_CONTENT: ContentOption[] = [

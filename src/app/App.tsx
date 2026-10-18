@@ -12,7 +12,7 @@ import { LearnScreen } from "../screens/LearnScreen";
 import EmployeeCreate from "../screens/library/EmployeeCreate";
 import EmployeeEdit from "../screens/library/EmployeeEdit";
 import EmployeeShow from "../screens/library/EmployeeShow";
-import { LibraryGrid } from "../screens/library/LibraryGrid";
+import { LibraryList } from "../screens/library/LibraryList";
 import { LibraryScreen } from "../screens/library/LibraryScreen";
 import { ProgressSetupScreen } from "../screens/ProgressSetupScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
@@ -59,8 +59,8 @@ export function App() {
                   element={<ProgressSetupScreen />}
                 />
                 <Route path="/library" element={<LibraryScreen />}>
-                  <Route index element={<LibraryGrid />} />
-                  <Route path="employees" element={<LibraryGrid />} />
+                  <Route index element={<LibraryList />} />
+                  <Route path="employees" element={<LibraryList />} />
                   <Route
                     path="employees/:employeeId"
                     element={<EmployeeShow />}
@@ -70,7 +70,7 @@ export function App() {
                     path="employees/:employeeId/edit"
                     element={<EmployeeEdit />}
                   />
-                  <Route path="*" element={<LibraryGrid />} />
+                  <Route path="*" element={<LibraryList />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
