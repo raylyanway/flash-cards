@@ -8,7 +8,9 @@ import ListItemText from "@mui/material/ListItemText";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { getContentRows } from "../../db";
+import { useAppStore } from "../../store/useAppStore";
 import type { ContentRecord } from "../../types";
+import { getStageName } from "../../utils/cardProgress";
 
 function formatValue(value: unknown) {
   if (value === null || value === undefined) return "";
@@ -18,6 +20,7 @@ function formatValue(value: unknown) {
 }
 
 export function LibraryList() {
+  const progress = useAppStore((state) => state.progress);
   const [rows, setRows] = React.useState<ContentRecord[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
@@ -68,6 +71,7 @@ export function LibraryList() {
   return (
     <List aria-label="Content library" disablePadding>
       {rows.map((row) => {
+        const stage = progress[row.group]?.[row.text]?.stage ?? 0;
         const details = Object.entries(row)
           .filter(([field]) => field !== "text")
           .map(([field, value]) => `${field}: ${formatValue(value)}`)
@@ -76,8 +80,9 @@ export function LibraryList() {
 
         return (
           <React.Fragment key={`${row.group}:${row.text}`}>
-            <ListItem alignItems="flex-start" sx={{ px: 2, py: 1.5 }}>
+            <ListItem alignItems="flex-start" sx={{ px: 2, py: 1.5, gap: 2 }}>
               <ListItemText
+                sx={{ minWidth: 0 }}
                 primary={row.text}
                 secondary={details || undefined}
                 slotProps={{
@@ -85,6 +90,22 @@ export function LibraryList() {
                   secondary: { component: "div", sx: { mt: 0.5 } },
                 }}
               />
+              <Typography
+                variant="body2"
+                aria-label={`Progress status: ${getStageName(stage)}`}
+                sx={{
+                  flexShrink: 0,
+                  fontWeight: 600,
+                  color:
+                    stage === 3
+                      ? "success.main"
+                      : stage === 0
+                        ? "text.secondary"
+                        : "warning.main",
+                }}
+              >
+                {getStageName(stage)}
+              </Typography>
             </ListItem>
             <Divider component="li" />
           </React.Fragment>
