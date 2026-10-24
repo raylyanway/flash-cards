@@ -8,7 +8,6 @@ import NotificationsProvider from "../hooks/useNotifications/NotificationsProvid
 import { HomeScreen } from "../screens/HomeScreen";
 import { LearnScreen } from "../screens/LearnScreen";
 import { LibraryScreen } from "../screens/library/LibraryScreen";
-import { ProgressSetupScreen } from "../screens/ProgressSetupScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { useAppStore } from "../store/useAppStore";
 import { createAppTheme } from "../theme";
@@ -46,10 +45,6 @@ export function App() {
                 <Route path="/" element={<HomeScreen />} />
                 <Route path="/learn" element={<LearnScreen />} />
                 <Route path="/settings" element={<SettingsScreen />} />
-                <Route
-                  path="/progress-setup"
-                  element={<ProgressSetupScreen />}
-                />
                 <Route path="/library" element={<LibraryScreen />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

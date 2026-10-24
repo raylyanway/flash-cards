@@ -43,18 +43,6 @@ const NAV_ITEMS: Array<{
 ];
 
 const isNavItemSelected = (pathname: string, targetPath: string) => {
-  if (targetPath === "/") {
-    return pathname === "/";
-  }
-
-  if (targetPath === "/library") {
-    return (
-      pathname === "/library" ||
-      pathname.startsWith("/library/") ||
-      pathname === "/progress-setup"
-    );
-  }
-
   return pathname === targetPath;
 };
 

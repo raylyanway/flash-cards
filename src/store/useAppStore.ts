@@ -12,7 +12,6 @@ import type {
   Card,
   ContentOption,
   ProgressMap,
-  GroupProgress,
   ThemePreference,
 } from "../types";
 import { initializeMissingProgress } from "../utils/cardProgress";
@@ -43,11 +42,9 @@ export type AppState = {
   listening: boolean;
   now: number;
   progress: ProgressMap;
-  progressSearch: string;
   recognizedText: string;
   result: string;
   resultClass: string;
-  setupBackup: GroupProgress | null;
   skipEnabled: boolean;
   speechSupported: boolean;
   theme: ThemePreference;
@@ -66,11 +63,9 @@ export type AppActions = {
   setListening: (listening: boolean) => void;
   setNow: (now: number) => void;
   setProgress: (progress: ProgressMap) => Promise<void>;
-  setProgressSearch: (search: string) => void;
   setRecognizedText: (text: string) => void;
   setResult: (result: string) => void;
   setResultClass: (resultClass: string) => void;
-  setSetupBackup: (progress: GroupProgress | null) => void;
   setSkipEnabled: (enabled: boolean) => void;
   setSpeechSupported: (supported: boolean) => void;
   setTheme: (theme: ThemePreference) => void;
@@ -91,11 +86,9 @@ const DEFAULT_STATE: AppState = {
   listening: false,
   now: Date.now(),
   progress: {},
-  progressSearch: "",
   recognizedText: "Press Start Listening",
   result: "",
   resultClass: "",
-  setupBackup: null,
   skipEnabled: true,
   speechSupported: false,
   theme: DEFAULT_THEME,
@@ -175,11 +168,9 @@ export const useAppStore = create<AppStore>()(
         );
         set((prev) => ({ progress: { ...prev.progress, ...progress } }));
       },
-      setProgressSearch: (progressSearch) => set({ progressSearch }),
       setRecognizedText: (recognizedText) => set({ recognizedText }),
       setResult: (result) => set({ result }),
       setResultClass: (resultClass) => set({ resultClass }),
-      setSetupBackup: (setupBackup) => set({ setupBackup }),
       setSkipEnabled: (skipEnabled) => set({ skipEnabled }),
       setSpeechSupported: (speechSupported) => set({ speechSupported }),
       setTheme: (theme) => set({ theme }),
