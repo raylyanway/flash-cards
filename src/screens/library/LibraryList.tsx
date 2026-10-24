@@ -1,4 +1,5 @@
 import { FileDownloadRounded, FileUploadRounded } from "@mui/icons-material";
+import { Autocomplete, TextField } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -51,6 +52,7 @@ function formatRowDetails(row: LibraryRow) {
 
 export function LibraryList() {
   const progress = useAppStore((state) => state.progress);
+  const contentOptions = useAppStore((state) => state.contentOptions);
   const currentGroup = useAppStore((state) => state.currentGroup);
   const loadGroupData = useAppStore((state) => state.loadGroupData);
   const setProgress = useAppStore((state) => state.setProgress);
@@ -64,6 +66,22 @@ export function LibraryList() {
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
   const [isImporting, setIsImporting] = React.useState(false);
+  const [selectedGroup, setSelectedGroup] = React.useState("all");
+
+  const filteredRows = React.useMemo(
+    () =>
+      selectedGroup === "all"
+        ? rows
+        : rows.filter((row) => row.content.group === selectedGroup),
+    [rows, selectedGroup],
+  );
+  const groupFilterOptions = React.useMemo(
+    () => [{ key: "all", label: "All groups" }, ...contentOptions],
+    [contentOptions],
+  );
+  const selectedGroupOption =
+    groupFilterOptions.find((option) => option.key === selectedGroup) ??
+    groupFilterOptions[0];
 
   React.useEffect(() => {
     let active = true;
@@ -161,29 +179,43 @@ export function LibraryList() {
           p: 1,
         }}
       >
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            startIcon={<FileUploadRounded />}
-            disabled={isImporting}
-            onClick={() => importInputRef.current?.click()}
-          >
-            Import CSV
-          </Button>
-          <input
-            ref={importInputRef}
-            type="file"
-            hidden
-            accept=".csv,text/csv"
-            onChange={(event) => void handleImport(event)}
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+          <Autocomplete
+            size="small"
+            sx={{ minWidth: 220 }}
+            options={groupFilterOptions}
+            value={selectedGroupOption}
+            getOptionLabel={(option) => option.label}
+            isOptionEqualToValue={(option, value) => option.key === value.key}
+            onChange={(_, option) => setSelectedGroup(option?.key ?? "all")}
+            renderInput={(params) => (
+              <TextField {...params} label="Filter by group" />
+            )}
           />
-          <Button
-            variant="outlined"
-            startIcon={<FileDownloadRounded />}
-            onClick={exportLibrary}
-          >
-            Export CSV
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              startIcon={<FileUploadRounded />}
+              disabled={isImporting}
+              onClick={() => importInputRef.current?.click()}
+            >
+              Import CSV
+            </Button>
+            <input
+              ref={importInputRef}
+              type="file"
+              hidden
+              accept=".csv,text/csv"
+              onChange={(event) => void handleImport(event)}
+            />
+            <Button
+              variant="outlined"
+              startIcon={<FileDownloadRounded />}
+              onClick={exportLibrary}
+            >
+              Export CSV
+            </Button>
+          </Stack>
         </Stack>
       </Stack>
 
@@ -206,9 +238,13 @@ export function LibraryList() {
         <Typography sx={{ p: 2 }}>
           No library rows yet. Import a CSV file to add content.
         </Typography>
+      ) : filteredRows.length === 0 ? (
+        <Typography sx={{ p: 2 }}>
+          No library rows found for this group.
+        </Typography>
       ) : (
         <List aria-label="Content library" disablePadding>
-          {rows.map((row) => (
+          {filteredRows.map((row) => (
             <React.Fragment key={`${row.content.group}:${row.content.text}`}>
               <ListItem alignItems="flex-start" sx={{ px: 2, py: 1.5, gap: 2 }}>
                 <ListItemText
