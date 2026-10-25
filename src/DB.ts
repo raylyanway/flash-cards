@@ -226,6 +226,22 @@ export async function deleteContent(group: string) {
   ]);
 }
 
+export async function deleteLibraryRows(
+  rows: Array<{ group: string; text: string }>,
+) {
+  const builtInGroups = new Set(DEFAULT_CONTENT.map((content) => content.key));
+  if (rows.some((row) => builtInGroups.has(row.group))) {
+    throw new Error("Built-in library rows cannot be deleted.");
+  }
+
+  await db.transaction("rw", db.library, async () => {
+    await db.library
+      .where("[group+text]")
+      .anyOf(rows.map(({ group, text }) => [group, text]))
+      .delete();
+  });
+}
+
 export async function getContentDisplayName(group: string) {
   const metadata = await getContentMetadata(group);
   return metadata?.displayName || getDisplayNameForGroup(group);
