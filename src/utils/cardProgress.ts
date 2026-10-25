@@ -50,6 +50,7 @@ export function normalizeAnswer(text: string) {
   return text
     .normalize("NFC")
     .toLocaleLowerCase()
+    .replace(/\p{P}/gu, "")
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
