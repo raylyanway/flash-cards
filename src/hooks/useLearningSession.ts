@@ -16,6 +16,8 @@ import {
   type SpeechRecognitionInstance,
 } from "../utils/speech";
 
+const ANSWER_REVEAL_DELAY = 10_000;
+
 type UseLearningSessionParams = {
   nextDueTimestamp: number | null;
 };
@@ -57,9 +59,11 @@ export function useLearningSession({
   const currentCardRef = useRef(currentCard);
   const listeningRef = useRef(listening);
   const wrongAttemptsRef = useRef(wrongAttempts);
+  const sessionActiveRef = useRef(false);
 
   const stopListening = useCallback(() => {
     const recognition = recognitionRef.current;
+    listeningRef.current = false;
     setListening(false);
     try {
       recognition?.stop();
@@ -82,6 +86,8 @@ export function useLearningSession({
   );
 
   const selectNextCard = useCallback(() => {
+    if (!sessionActiveRef.current) return;
+
     const dueCards = cardsRef.current.filter((card) => {
       if (skippedCardsRef.current.has(card.text)) return false;
       const cardProgress = progressRef.current[card.text];
@@ -169,7 +175,7 @@ export function useLearningSession({
         setResultClass("wrong");
         setRecognizedText("Moving to another card...");
         setSkipEnabled(false);
-        scheduleNextCard(5000);
+        scheduleNextCard(ANSWER_REVEAL_DELAY);
         return;
       }
 
@@ -288,15 +294,30 @@ export function useLearningSession({
   }, [currentCard, isLearnRoute, nextDueTimestamp, now, selectNextCard]);
 
   const startLearningSession = () => {
+    sessionActiveRef.current = true;
     setResult("");
     setRecognizedText("");
     skippedCardsRef.current.clear();
     window.setTimeout(selectNextCard, 0);
   };
 
+  const stopLearningSession = () => {
+    sessionActiveRef.current = false;
+    if (transitionTimerRef.current) {
+      window.clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
+    }
+    stopListening();
+    setCurrentCard(null);
+    setResult("");
+    setResultClass("");
+    setSkipEnabled(false);
+  };
+
   const startListening = () => {
     const recognition = recognitionRef.current;
     if (!recognition) return;
+    listeningRef.current = true;
     setListening(true);
     setRecognizedText(`🎤 Listening... (${getAttemptsText(wrongAttempts)})`);
     try {
@@ -347,6 +368,7 @@ export function useLearningSession({
     speechSupported,
     startLearningSession,
     stopListening,
+    stopLearningSession,
     toggleListening,
   };
 }

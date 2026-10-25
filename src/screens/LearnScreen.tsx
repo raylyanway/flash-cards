@@ -3,9 +3,11 @@ import {
   PauseRounded,
   ReplayRounded,
   SkipNextRounded,
+  StopRounded,
 } from "@mui/icons-material";
 import { Button, Card, Chip, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLearningSession } from "../hooks/useLearningSession";
 import { useAppStore } from "../store/useAppStore";
 import {
@@ -15,6 +17,7 @@ import {
 } from "../utils/cardProgress";
 
 export function LearnScreen() {
+  const navigate = useNavigate();
   const cards = useAppStore((state) => state.cards);
   const currentCard = useAppStore((state) => state.currentCard);
   const currentGroup = useAppStore((state) => state.currentGroup);
@@ -117,6 +120,18 @@ export function LearnScreen() {
       </Stack>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+        <Button
+          variant="outlined"
+          color="error"
+          onClick={() => {
+            learning.stopLearningSession();
+            navigate("/");
+          }}
+          startIcon={<StopRounded />}
+          sx={{ flex: 1 }}
+        >
+          Stop learning
+        </Button>
         <Button
           variant={learning.listening ? "contained" : "outlined"}
           color={learning.listening ? "error" : "primary"}

@@ -137,6 +137,7 @@ export const useAppStore = create<AppStore>()(
         await saveProgressForGroup(group, nextProgress);
         set((prev) => ({
           cards: loadedCards,
+          currentGroup: group,
           progress: { ...prev.progress, [group]: nextProgress },
         }));
       },

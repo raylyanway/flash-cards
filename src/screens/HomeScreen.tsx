@@ -1,6 +1,7 @@
 import { HomeRounded, PlayArrowRounded } from "@mui/icons-material";
 import {
   Autocomplete,
+  Alert,
   Box,
   Button,
   Card,
@@ -12,7 +13,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MetricCard } from "../components/MetricCard";
 import { PageHeader } from "../components/PageHeader";
@@ -23,9 +24,12 @@ export function HomeScreen() {
   const cards = useAppStore((state) => state.cards);
   const currentGroup = useAppStore((state) => state.currentGroup);
   const contentOptions = useAppStore((state) => state.contentOptions);
+  const loadGroupData = useAppStore((state) => state.loadGroupData);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
   const navigate = useNavigate();
+  const [isLoadingGroup, setIsLoadingGroup] = useState(false);
+  const [groupLoadError, setGroupLoadError] = useState<string | null>(null);
 
   const currentGroupProgress = progress[currentGroup];
 
@@ -70,15 +74,30 @@ export function HomeScreen() {
         <Grid size={{ xs: 12 }}>
           <Card>
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+              {groupLoadError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {groupLoadError}
+                </Alert>
+              )}
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <Autocomplete
                   sx={{ flexGrow: 1 }}
                   options={options}
                   value={currentGroup}
+                  disabled={isLoadingGroup}
                   onChange={(event, newValue) => {
-                    if (newValue) {
-                      useAppStore.setState({ currentGroup: newValue });
-                    }
+                    if (!newValue || newValue === currentGroup) return;
+                    setIsLoadingGroup(true);
+                    setGroupLoadError(null);
+                    void loadGroupData(newValue)
+                      .catch((error: unknown) => {
+                        setGroupLoadError(
+                          error instanceof Error
+                            ? error.message
+                            : String(error),
+                        );
+                      })
+                      .finally(() => setIsLoadingGroup(false));
                   }}
                   size="small"
                   renderInput={(params) => (
@@ -93,6 +112,7 @@ export function HomeScreen() {
                   variant="contained"
                   startIcon={<PlayArrowRounded />}
                   onClick={() => navigate("/learn")}
+                  disabled={isLoadingGroup}
                   sx={{ minWidth: 180 }}
                 >
                   Start review
