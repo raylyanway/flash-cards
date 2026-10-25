@@ -4,13 +4,14 @@ import {
   db,
   DEFAULT_CONTENT,
   getContentOptions,
-  initializeContent,
+  getProgressForGroup,
+  initializeGroupContent,
+  saveProgressForGroup,
 } from "../db";
 import type {
   Card,
   ContentOption,
   ProgressMap,
-  SetProgress,
   ThemePreference,
 } from "../types";
 import { initializeMissingProgress } from "../utils/cardProgress";
@@ -29,7 +30,7 @@ const dbStorage: StateStorage = {
 };
 
 const DEFAULT_THEME: ThemePreference = "system";
-const DEFAULT_SET = "body-parts";
+const DEFAULT_GROUP = "body-parts";
 
 export type AppState = {
   _hasHydrated: boolean;
@@ -37,15 +38,13 @@ export type AppState = {
   contentOptions: ContentOption[];
   cards: Card[];
   currentCard: Card | null;
-  currentSet: string;
+  currentGroup: string;
   listening: boolean;
   now: number;
   progress: ProgressMap;
-  progressSearch: string;
   recognizedText: string;
   result: string;
   resultClass: string;
-  setupBackup: SetProgress | null;
   skipEnabled: boolean;
   speechSupported: boolean;
   theme: ThemePreference;
@@ -55,20 +54,18 @@ export type AppState = {
 
 export type AppActions = {
   initialize: () => Promise<void>;
-  loadSetData: (setName: string) => Promise<void>;
-  refreshContentOptions: (preferredSet?: string) => Promise<ContentOption[]>;
+  loadGroupData: (group: string) => Promise<void>;
+  refreshContentOptions: (preferredGroup?: string) => Promise<ContentOption[]>;
   setContentOptions: (options: ContentOption[]) => void;
   setCards: (cards: Card[]) => void;
   setCurrentCard: (card: Card | null) => void;
-  setCurrentSet: (setName: string) => void;
+  setCurrentGroup: (group: string) => void;
   setListening: (listening: boolean) => void;
   setNow: (now: number) => void;
-  setProgress: (progress: ProgressMap) => void;
-  setProgressSearch: (search: string) => void;
+  setProgress: (progress: ProgressMap) => Promise<void>;
   setRecognizedText: (text: string) => void;
   setResult: (result: string) => void;
   setResultClass: (resultClass: string) => void;
-  setSetupBackup: (progress: SetProgress | null) => void;
   setSkipEnabled: (enabled: boolean) => void;
   setSpeechSupported: (supported: boolean) => void;
   setTheme: (theme: ThemePreference) => void;
@@ -85,15 +82,13 @@ const DEFAULT_STATE: AppState = {
   contentOptions: DEFAULT_CONTENT,
   cards: [],
   currentCard: null,
-  currentSet: DEFAULT_SET,
+  currentGroup: DEFAULT_GROUP,
   listening: false,
   now: Date.now(),
   progress: {},
-  progressSearch: "",
   recognizedText: "Press Start Listening",
   result: "",
   resultClass: "",
-  setupBackup: null,
   skipEnabled: true,
   speechSupported: false,
   theme: DEFAULT_THEME,
@@ -113,44 +108,49 @@ export const useAppStore = create<AppStore>()(
       },
 
       initialize: async () => {
-        const { currentSet } = get();
-        const contentOptions = await get().refreshContentOptions(currentSet);
+        const { currentGroup } = get();
+        const contentOptions = await get().refreshContentOptions(currentGroup);
 
-        const setToLoad = contentOptions.some(
-          (option) => option.key === currentSet,
+        const groupToLoad = contentOptions.some(
+          (option) => option.key === currentGroup,
         )
-          ? currentSet
-          : contentOptions[0]?.key || DEFAULT_SET;
+          ? currentGroup
+          : contentOptions[0]?.key || DEFAULT_GROUP;
 
-        await get().loadSetData(setToLoad);
+        await get().loadGroupData(groupToLoad);
 
         set({
           initialized: true,
         });
       },
 
-      loadSetData: async (setName: string) => {
+      loadGroupData: async (group: string) => {
         const { progress } = get();
         const [storedProgress, loadedCards] = await Promise.all([
-          progress[setName],
-          initializeContent(setName),
+          getProgressForGroup(group),
+          initializeGroupContent(group),
         ]);
         const nextProgress = initializeMissingProgress(
           loadedCards,
-          storedProgress || {},
+          storedProgress || progress[group] || {},
         );
+        await saveProgressForGroup(group, nextProgress);
         set((prev) => ({
           cards: loadedCards,
-          progress: { ...prev.progress, [setName]: nextProgress },
+          currentGroup: group,
+          progress: { ...prev.progress, [group]: nextProgress },
         }));
       },
 
-      refreshContentOptions: async (preferredSet?: string) => {
-        const targetSet = preferredSet || get().currentSet;
+      refreshContentOptions: async (preferredGroup?: string) => {
+        const targetGroup = preferredGroup || get().currentGroup;
         const options = await getContentOptions();
         set({ contentOptions: options });
-        if (!options.some((option) => option.key === targetSet) && options[0]) {
-          set({ currentSet: options[0].key });
+        if (
+          !options.some((option) => option.key === targetGroup) &&
+          options[0]
+        ) {
+          set({ currentGroup: options[0].key });
         }
         return options;
       },
@@ -158,16 +158,20 @@ export const useAppStore = create<AppStore>()(
       setContentOptions: (contentOptions) => set({ contentOptions }),
       setCards: (cards) => set({ cards }),
       setCurrentCard: (currentCard) => set({ currentCard }),
-      setCurrentSet: (currentSet) => set({ currentSet }),
+      setCurrentGroup: (group) => set({ currentGroup: group }),
       setListening: (listening) => set({ listening }),
       setNow: (now) => set({ now }),
-      setProgress: (progress) =>
-        set((prev) => ({ progress: { ...prev.progress, ...progress } })),
-      setProgressSearch: (progressSearch) => set({ progressSearch }),
+      setProgress: async (progress) => {
+        await Promise.all(
+          Object.entries(progress).map(([group, groupProgress]) =>
+            saveProgressForGroup(group, groupProgress),
+          ),
+        );
+        set((prev) => ({ progress: { ...prev.progress, ...progress } }));
+      },
       setRecognizedText: (recognizedText) => set({ recognizedText }),
       setResult: (result) => set({ result }),
       setResultClass: (resultClass) => set({ resultClass }),
-      setSetupBackup: (setupBackup) => set({ setupBackup }),
       setSkipEnabled: (skipEnabled) => set({ skipEnabled }),
       setSpeechSupported: (speechSupported) => set({ speechSupported }),
       setTheme: (theme) => set({ theme }),
@@ -179,10 +183,11 @@ export const useAppStore = create<AppStore>()(
       storage: createJSONStorage(() => dbStorage),
       partialize: (state) => ({
         theme: state.theme,
-        currentSet: state.currentSet,
+        currentGroup: state.currentGroup,
         skipEnabled: state.skipEnabled,
         speechSupported: state.speechSupported,
       }),
+      version: 1,
       onRehydrateStorage: (state) => () => state.setHasHydrated(true),
     },
   ),

@@ -1,4 +1,4 @@
-import type { Card, SetProgress } from "../types";
+import type { Card, GroupProgress } from "../types";
 
 export const REVIEW_1_DELAY = 30 * 1000;
 export const REVIEW_2_DELAY = 60 * 1000;
@@ -6,7 +6,7 @@ export const MAX_WRONG_ATTEMPTS = 3;
 
 export function initializeMissingProgress(
   cards: Card[],
-  progress: SetProgress,
+  progress: GroupProgress,
 ) {
   const next = { ...progress };
   for (const card of cards) {
@@ -43,17 +43,62 @@ export function getStageClass(stage: number) {
 export function getAnswerText(card: Card) {
   return Array.isArray(card.answers)
     ? card.answers.join(", ")
-    : String(card.answers || card.text);
+    : card.answers || card.text;
 }
 
 export function normalizeAnswer(text: string) {
   return text
-    .toLowerCase()
-    .trim()
-    .replace(/[.,!?]/g, "");
+    .normalize("NFC")
+    .toLocaleLowerCase()
+    .replace(/\p{P}/gu, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-export function countStages(progress: SetProgress) {
+export function isAnswerMatch(text: string, answers: string[]) {
+  const normalizedText = Array.from(normalizeAnswer(text));
+  if (normalizedText.length === 0) return false;
+
+  return answers.some((answer) => {
+    const normalizedAnswer = Array.from(normalizeAnswer(answer));
+    const maxLength = Math.max(normalizedText.length, normalizedAnswer.length);
+    if (
+      normalizedAnswer.length === 0 ||
+      Math.abs(normalizedText.length - normalizedAnswer.length) * 5 > maxLength
+    ) {
+      return false;
+    }
+
+    let previousRow = Array.from(
+      { length: normalizedAnswer.length + 1 },
+      (_, index) => index,
+    );
+    for (let textIndex = 1; textIndex <= normalizedText.length; textIndex++) {
+      const currentRow = [textIndex];
+      for (
+        let answerIndex = 1;
+        answerIndex <= normalizedAnswer.length;
+        answerIndex++
+      ) {
+        currentRow[answerIndex] = Math.min(
+          currentRow[answerIndex - 1] + 1,
+          previousRow[answerIndex] + 1,
+          previousRow[answerIndex - 1] +
+            Number(
+              normalizedText[textIndex - 1] !==
+                normalizedAnswer[answerIndex - 1],
+            ),
+        );
+      }
+      previousRow = currentRow;
+    }
+
+    return previousRow[normalizedAnswer.length] * 5 <= maxLength;
+  });
+}
+
+export function countStages(progress: GroupProgress) {
   return Object.values(progress).reduce(
     (counts, item) => {
       if (item.stage === 3) counts.learnedCount += 1;
@@ -71,12 +116,12 @@ export function countStages(progress: SetProgress) {
   );
 }
 
-export function getCompletePercent(cards: Card[], progress: SetProgress) {
+export function getCompletePercent(cards: Card[], progress: GroupProgress) {
   if (cards.length === 0) return 0;
   return Math.round((countStages(progress).learnedCount * 100) / cards.length);
 }
 
-export function getNextDueTimestamp(cards: Card[], progress: SetProgress) {
+export function getNextDueTimestamp(cards: Card[], progress: GroupProgress) {
   let nextTime: number | null = null;
   for (const card of cards) {
     const cardProgress = progress[card.text];
@@ -88,7 +133,7 @@ export function getNextDueTimestamp(cards: Card[], progress: SetProgress) {
   return nextTime;
 }
 
-export function getNextReviewLabel(progress: SetProgress, now: number) {
+export function getNextReviewLabel(progress: GroupProgress, now: number) {
   let nearest: number | null = null;
   for (const item of Object.values(progress)) {
     if (item.stage < 3 && item.nextReview > now) {

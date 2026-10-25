@@ -1,6 +1,7 @@
 import { HomeRounded, PlayArrowRounded } from "@mui/icons-material";
 import {
   Autocomplete,
+  Alert,
   Box,
   Button,
   Card,
@@ -12,7 +13,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MetricCard } from "../components/MetricCard";
 import { PageHeader } from "../components/PageHeader";
@@ -21,13 +22,16 @@ import { getCompletePercent, getNextReviewLabel } from "../utils/cardProgress";
 
 export function HomeScreen() {
   const cards = useAppStore((state) => state.cards);
-  const currentSet = useAppStore((state) => state.currentSet);
+  const currentGroup = useAppStore((state) => state.currentGroup);
   const contentOptions = useAppStore((state) => state.contentOptions);
+  const loadGroupData = useAppStore((state) => state.loadGroupData);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
   const navigate = useNavigate();
+  const [isLoadingGroup, setIsLoadingGroup] = useState(false);
+  const [groupLoadError, setGroupLoadError] = useState<string | null>(null);
 
-  const currentSetProgress = progress[currentSet];
+  const currentGroupProgress = progress[currentGroup];
 
   const options = useMemo(
     () => contentOptions.map((option) => option.key),
@@ -35,27 +39,28 @@ export function HomeScreen() {
   );
 
   const completePercent = useMemo(
-    () => getCompletePercent(cards, currentSetProgress),
-    [cards, currentSetProgress],
+    () => getCompletePercent(cards, currentGroupProgress),
+    [cards, currentGroupProgress],
   );
 
   const nextReviewLabel = useMemo(
-    () => getNextReviewLabel(currentSetProgress, now),
-    [now, currentSetProgress],
+    () => getNextReviewLabel(currentGroupProgress, now),
+    [now, currentGroupProgress],
   );
 
   const totalCards = cards.length;
   const learnedCount = useMemo(
-    () => Object.values(currentSetProgress).filter((p) => p.stage === 3).length,
-    [currentSetProgress],
+    () =>
+      Object.values(currentGroupProgress).filter((p) => p.stage === 3).length,
+    [currentGroupProgress],
   );
 
   const dueCount = useMemo(() => {
     const nowTs = Date.now();
-    return Object.values(currentSetProgress).filter(
+    return Object.values(currentGroupProgress).filter(
       (p) => p.stage < 3 && p.nextReview <= nowTs,
     ).length;
-  }, [currentSetProgress, now]);
+  }, [currentGroupProgress, now]);
 
   return (
     <>
@@ -69,21 +74,36 @@ export function HomeScreen() {
         <Grid size={{ xs: 12 }}>
           <Card>
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+              {groupLoadError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {groupLoadError}
+                </Alert>
+              )}
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <Autocomplete
                   sx={{ flexGrow: 1 }}
                   options={options}
-                  value={currentSet}
+                  value={currentGroup}
+                  disabled={isLoadingGroup}
                   onChange={(event, newValue) => {
-                    if (newValue) {
-                      useAppStore.setState({ currentSet: newValue });
-                    }
+                    if (!newValue || newValue === currentGroup) return;
+                    setIsLoadingGroup(true);
+                    setGroupLoadError(null);
+                    void loadGroupData(newValue)
+                      .catch((error: unknown) => {
+                        setGroupLoadError(
+                          error instanceof Error
+                            ? error.message
+                            : String(error),
+                        );
+                      })
+                      .finally(() => setIsLoadingGroup(false));
                   }}
                   size="small"
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="current set"
+                      label="current group"
                       variant="standard"
                     />
                   )}
@@ -92,6 +112,7 @@ export function HomeScreen() {
                   variant="contained"
                   startIcon={<PlayArrowRounded />}
                   onClick={() => navigate("/learn")}
+                  disabled={isLoadingGroup}
                   sx={{ minWidth: 180 }}
                 >
                   Start review

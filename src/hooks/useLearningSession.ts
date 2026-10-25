@@ -5,8 +5,8 @@ import type { Card, ProgressEntry } from "../types";
 import {
   getAnswerText,
   getAttemptsText,
+  isAnswerMatch,
   MAX_WRONG_ATTEMPTS,
-  normalizeAnswer,
   REVIEW_1_DELAY,
   REVIEW_2_DELAY,
 } from "../utils/cardProgress";
@@ -15,6 +15,8 @@ import {
   speakWord,
   type SpeechRecognitionInstance,
 } from "../utils/speech";
+
+const ANSWER_REVEAL_DELAY = 10_000;
 
 type UseLearningSessionParams = {
   nextDueTimestamp: number | null;
@@ -27,7 +29,7 @@ export function useLearningSession({
   const currentCard = useAppStore((state) => state.currentCard);
   const listening = useAppStore((state) => state.listening);
   const now = useAppStore((state) => state.now);
-  const currentSet = useAppStore((state) => state.currentSet);
+  const currentGroup = useAppStore((state) => state.currentGroup);
   const progress = useAppStore((state) => state.progress);
   const recognizedText = useAppStore((state) => state.recognizedText);
   const result = useAppStore((state) => state.result);
@@ -47,19 +49,26 @@ export function useLearningSession({
 
   const { pathname } = useLocation();
   const isLearnRoute = pathname === "/learn";
-  const currentSetProgress = progress[currentSet];
+  const currentGroupProgress = progress[currentGroup];
 
   const skippedCardsRef = useRef(new Set<string>());
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const transitionTimerRef = useRef<number | null>(null);
-  const progressRef = useRef(currentSetProgress);
+  const progressRef = useRef(currentGroupProgress);
   const cardsRef = useRef(cards);
   const currentCardRef = useRef(currentCard);
   const listeningRef = useRef(listening);
   const wrongAttemptsRef = useRef(wrongAttempts);
+  const sessionActiveRef = useRef(false);
+  const isAnnouncingRef = useRef(false);
+  const resumeListeningAfterAnnouncementRef = useRef(false);
+  const announcementIdRef = useRef(0);
+  const startListeningRef = useRef<() => void>(() => undefined);
 
   const stopListening = useCallback(() => {
     const recognition = recognitionRef.current;
+    listeningRef.current = false;
+    resumeListeningAfterAnnouncementRef.current = false;
     setListening(false);
     try {
       recognition?.stop();
@@ -75,13 +84,44 @@ export function useLearningSession({
         [card.text]: updater({ ...progressRef.current[card.text] }),
       };
       progressRef.current = nextProgress;
-      setProgress({ [currentSet]: nextProgress });
+      await setProgress({ [currentGroup]: nextProgress });
       return nextProgress[card.text];
     },
-    [setProgress],
+    [currentGroup, setProgress],
+  );
+
+  const announceQuestion = useCallback(
+    (text: string) => {
+      const resumeListening = listeningRef.current;
+      const recognition = recognitionRef.current;
+      const announcementId = ++announcementIdRef.current;
+      resumeListeningAfterAnnouncementRef.current = resumeListening;
+      isAnnouncingRef.current = true;
+      listeningRef.current = false;
+      setListening(false);
+      try {
+        recognition?.stop();
+      } catch {
+        // Ignore speech API stop races.
+      }
+
+      speakWord(text, () => {
+        if (announcementId !== announcementIdRef.current) return;
+        isAnnouncingRef.current = false;
+        if (
+          resumeListeningAfterAnnouncementRef.current &&
+          sessionActiveRef.current
+        ) {
+          startListeningRef.current();
+        }
+      });
+    },
+    [setListening],
   );
 
   const selectNextCard = useCallback(() => {
+    if (!sessionActiveRef.current) return;
+
     const dueCards = cardsRef.current.filter((card) => {
       if (skippedCardsRef.current.has(card.text)) return false;
       const cardProgress = progressRef.current[card.text];
@@ -116,8 +156,8 @@ export function useLearningSession({
     setResultClass("");
     setSkipEnabled(true);
     setRecognizedText(`Press Start Listening - ${getAttemptsText(0)}`);
-    speakWord(nextCard.text);
-  }, [setCurrentCard, stopListening]);
+    announceQuestion(nextCard.text);
+  }, [announceQuestion, setCurrentCard, stopListening]);
 
   const scheduleNextCard = useCallback(
     (delay: number) => {
@@ -169,17 +209,17 @@ export function useLearningSession({
         setResultClass("wrong");
         setRecognizedText("Moving to another card...");
         setSkipEnabled(false);
-        scheduleNextCard(5000);
+        scheduleNextCard(ANSWER_REVEAL_DELAY);
         return;
       }
 
       setResult("❌ Wrong");
       setResultClass("wrong");
-      setRecognizedText(
-        listeningRef.current
-          ? `🎤 Listening... (${getAttemptsText(nextAttempts)})`
-          : `Press Start Listening - ${getAttemptsText(nextAttempts)}`,
-      );
+      if (!listeningRef.current) {
+        setRecognizedText(
+          `Press Start Listening - ${getAttemptsText(nextAttempts)}`,
+        );
+      }
     },
     [scheduleNextCard, updateProgressForCard],
   );
@@ -189,12 +229,13 @@ export function useLearningSession({
     const card = currentCardRef.current;
     if (!card) return;
 
-    const answers = (
-      Array.isArray(card.answers) && card.answers.length
-        ? card.answers
-        : [card.text]
-    ).map(normalizeAnswer);
-    if (answers.includes(normalizeAnswer(text))) {
+    const cardAnswers =
+      typeof card.answers === "string"
+        ? [card.answers]
+        : Array.isArray(card.answers) && card.answers.length > 0
+          ? card.answers
+          : [card.text];
+    if (isAnswerMatch(text, cardAnswers)) {
       markCorrect(card);
     } else {
       markWrong(card);
@@ -212,9 +253,30 @@ export function useLearningSession({
     }
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setRecognizedText(`You said: ${transcript}`);
-      checkAnswerRef.current(transcript);
+      if (isAnnouncingRef.current) return;
+
+      const transcript = Array.from(
+        { length: event.results.length },
+        (_, index) => event.results[index][0].transcript,
+      )
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+      if (transcript) setRecognizedText(`You said: ${transcript}`);
+
+      const finalTranscript = Array.from(
+        { length: event.results.length - event.resultIndex },
+        (_, index) => event.results[event.resultIndex + index],
+      )
+        .filter((result) => result.isFinal)
+        .map((result) => result[0].transcript)
+        .join(" ")
+        .trim();
+
+      if (finalTranscript) {
+        checkAnswerRef.current(finalTranscript);
+      }
     };
     recognition.onerror = (event) => {
       if (event.error === "no-speech") return;
@@ -245,12 +307,12 @@ export function useLearningSession({
   }, []);
 
   useEffect(() => {
-    progressRef.current = currentSetProgress;
+    progressRef.current = currentGroupProgress;
     cardsRef.current = cards;
     currentCardRef.current = currentCard;
     listeningRef.current = listening;
     wrongAttemptsRef.current = wrongAttempts;
-  }, [cards, currentCard, listening, currentSetProgress, wrongAttempts]);
+  }, [cards, currentCard, listening, currentGroupProgress, wrongAttempts]);
 
   useEffect(() => {
     return () => {
@@ -268,15 +330,36 @@ export function useLearningSession({
   }, [currentCard, isLearnRoute, nextDueTimestamp, now, selectNextCard]);
 
   const startLearningSession = () => {
+    sessionActiveRef.current = true;
     setResult("");
     setRecognizedText("");
     skippedCardsRef.current.clear();
     window.setTimeout(selectNextCard, 0);
   };
 
+  const stopLearningSession = () => {
+    sessionActiveRef.current = false;
+    if (transitionTimerRef.current) {
+      window.clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
+    }
+    stopListening();
+    setCurrentCard(null);
+    setResult("");
+    setResultClass("");
+    setSkipEnabled(false);
+  };
+
   const startListening = () => {
     const recognition = recognitionRef.current;
     if (!recognition) return;
+    if (isAnnouncingRef.current) {
+      resumeListeningAfterAnnouncementRef.current = true;
+      setRecognizedText("🔊 Speaking question...");
+      return;
+    }
+    listeningRef.current = true;
+    resumeListeningAfterAnnouncementRef.current = false;
     setListening(true);
     setRecognizedText(`🎤 Listening... (${getAttemptsText(wrongAttempts)})`);
     try {
@@ -285,6 +368,7 @@ export function useLearningSession({
       // Ignore duplicate start calls.
     }
   };
+  startListeningRef.current = startListening;
 
   const toggleListening = () => {
     if (listening) {
@@ -298,7 +382,7 @@ export function useLearningSession({
   };
 
   const repeatCurrentCard = () => {
-    if (currentCard) speakWord(currentCard.text);
+    if (currentCard) announceQuestion(currentCard.text);
   };
 
   const skipCurrentCard = async () => {
@@ -327,6 +411,7 @@ export function useLearningSession({
     speechSupported,
     startLearningSession,
     stopListening,
+    stopLearningSession,
     toggleListening,
   };
 }

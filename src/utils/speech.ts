@@ -12,8 +12,11 @@ export type SpeechRecognitionInstance = {
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
 type SpeechRecognitionEvent = {
+  resultIndex: number;
   results: {
+    length: number;
     [index: number]: {
+      isFinal: boolean;
       [index: number]: {
         transcript: string;
       };
@@ -40,7 +43,7 @@ export function createSpeechRecognition() {
 
   const recognition = new SpeechRecognition();
   recognition.lang = "ru-RU";
-  recognition.interimResults = false;
+  recognition.interimResults = true;
   recognition.maxAlternatives = 1;
   return recognition;
 }
@@ -61,16 +64,27 @@ function getEnglishVoice() {
   );
 }
 
-export function speakWord(text: string) {
-  if (!text || !("speechSynthesis" in window)) return;
+export function speakWord(text: string, onEnd?: () => void) {
+  if (!text || !("speechSynthesis" in window)) {
+    onEnd?.();
+    return;
+  }
 
   speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   const voice = getEnglishVoice();
+  let completed = false;
+  const finish = () => {
+    if (completed) return;
+    completed = true;
+    onEnd?.();
+  };
 
   if (voice) utterance.voice = voice;
   utterance.lang = "en-US";
   utterance.rate = 0.9;
   utterance.pitch = 1;
+  utterance.onend = finish;
+  utterance.onerror = finish;
   speechSynthesis.speak(utterance);
 }

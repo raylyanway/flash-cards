@@ -3,7 +3,10 @@ import type {
   ContentMetadata,
   ContentOption,
   ContentRecord,
-  ProgressRecord,
+  LibraryImportRow,
+  LibraryRecord,
+  LibraryRow,
+  ProgressMap,
   SettingRecord,
 } from "./types";
 
@@ -12,43 +15,105 @@ import { parseCsv } from "./utils/csv";
 
 const db = new Dexie("flashCardsDB") as Dexie & {
   uiStore: EntityTable<{ key: string; state: string }, "key">;
-  content: EntityTable<ContentRecord, "text">;
-  contentMetadata: EntityTable<ContentMetadata, "setName">;
-  progress: EntityTable<ProgressRecord, "setName">;
+  library: EntityTable<LibraryRecord>;
+  contentMetadata: EntityTable<ContentMetadata, "group">;
   settings: EntityTable<SettingRecord, "key">;
 };
 
 db.version(1).stores({
   uiStore: "key",
-  content: "text, setName",
-  contentMetadata: "setName",
-  progress: "setName",
+  library: "[group+text], group, text",
+  contentMetadata: "group",
   settings: "key",
 });
 
 export { db };
 
-export type IndexedDbRow = Record<string, unknown>;
-
-export function getIndexedDbTableNames() {
-  return db.tables.map((table) => table.name);
+function toContentRecord(record: LibraryRecord): ContentRecord {
+  return Object.fromEntries(
+    Object.entries(record).filter(([field]) => field !== "learningProgress"),
+  ) as ContentRecord;
 }
 
-export async function getIndexedDbTableRows(tableName: string) {
-  const table = db.table<IndexedDbRow, string | number>(tableName);
-
-  return {
-    rows: await table.toArray(),
-    primaryKey: table.schema.primKey.keyPath,
-  };
+export function getContentRows() {
+  return db.library.toArray().then((records) => records.map(toContentRecord));
 }
 
-export async function updateIndexedDbTableRow(
-  tableName: string,
-  row: IndexedDbRow,
+export async function getLibraryRows(
+  fallbackProgress: ProgressMap = {},
+): Promise<LibraryRow[]> {
+  const libraryRecords = await db.library.toArray();
+  return libraryRecords.map((record) => {
+    const content = toContentRecord(record);
+    const progress =
+      fallbackProgress[content.group]?.[content.text] ??
+      record.learningProgress;
+    return {
+      content,
+      progress,
+      isBuiltIn: DEFAULT_CONTENT.some((item) => item.key === content.group),
+    };
+  });
+}
+
+export async function getProgressForGroup(group: string) {
+  const records = await db.library.where("group").equals(group).toArray();
+  return Object.fromEntries(
+    records.map((record) => [record.text, record.learningProgress]),
+  );
+}
+
+export async function saveProgressForGroup(
+  group: string,
+  progress: ProgressMap[string],
 ) {
-  await db.table<IndexedDbRow, string | number>(tableName).put(row);
-  return row;
+  await db.transaction("rw", db.library, async () => {
+    const records = await db.library.where("group").equals(group).toArray();
+    await db.library.bulkPut(
+      records.map((record) => ({
+        ...record,
+        learningProgress: progress[record.text] ?? record.learningProgress,
+      })),
+    );
+  });
+}
+
+export async function importLibraryRows(rows: LibraryImportRow[]) {
+  const progressByGroup: ProgressMap = {};
+
+  await db.transaction("rw", db.library, async () => {
+    for (const row of rows) {
+      if (!progressByGroup[row.group]) {
+        const storedRows = await db.library
+          .where("group")
+          .equals(row.group)
+          .toArray();
+        progressByGroup[row.group] = Object.fromEntries(
+          storedRows.map((record) => [record.text, record.learningProgress]),
+        );
+      }
+
+      const existing = progressByGroup[row.group][row.card.text] ?? {
+        stage: 0,
+        nextReview: 0,
+        correctCount: 0,
+      };
+      progressByGroup[row.group][row.card.text] = {
+        ...existing,
+        ...row.progress,
+      };
+    }
+
+    await db.library.bulkPut(
+      rows.map(({ group, card }) => ({
+        ...card,
+        group,
+        learningProgress: progressByGroup[group][card.text],
+      })),
+    );
+  });
+
+  return progressByGroup;
 }
 
 export const DEFAULT_CONTENT: ContentOption[] = [
@@ -57,11 +122,11 @@ export const DEFAULT_CONTENT: ContentOption[] = [
   { key: "sentences", label: "Sentences" },
 ];
 
-async function getStoreCountForSet(setName: string) {
-  return db.content.where("setName").equals(setName).count();
+async function getStoreCountForGroup(group: string) {
+  return db.library.where("group").equals(group).count();
 }
 
-export function getContentBaseName(fileName: string) {
+export function getContentGroupBaseName(fileName: string) {
   let name = fileName;
   if (name.toLowerCase().endsWith(".gz")) name = name.slice(0, -3);
   if (name.toLowerCase().endsWith(".csv")) name = name.slice(0, -4);
@@ -82,10 +147,10 @@ async function decompressOrDecodeBuffer(buffer: ArrayBuffer) {
   return new Response(new Blob([buffer]).stream().pipeThrough(ds)).text();
 }
 
-async function resolveContentUrl(setName: string) {
+async function resolveContentUrl(group: string) {
   const tried: string[] = [];
   for (const suffix of [".csv.gz", ".csv"]) {
-    const url = `content/${setName}${suffix}`;
+    const url = `content/${group}${suffix}`;
     tried.push(url);
     try {
       const response = await fetch(url, { cache: "reload" });
@@ -97,78 +162,103 @@ async function resolveContentUrl(setName: string) {
   throw new Error(`Failed to fetch content data. Tried: ${tried.join(", ")}`);
 }
 
-async function fetchAndSeed(currentSet: string) {
-  const { response, url } = await resolveContentUrl(currentSet);
+async function fetchAndSeed(currentGroup: string) {
+  const { response, url } = await resolveContentUrl(currentGroup);
   const text = url.endsWith(".gz")
     ? await decompressOrDecodeBuffer(await response.arrayBuffer())
     : await response.text();
   const data = parseCsv(text);
 
-  await db.content.bulkPut(
-    data.map((item) => ({ ...item, setName: currentSet })),
+  await db.library.bulkPut(
+    data.map((item) => ({
+      ...item,
+      group: currentGroup,
+      learningProgress: { stage: 0, nextReview: 0, correctCount: 0 },
+    })),
   );
 }
 
-export async function getAllCardsForSet(currentSet: string): Promise<Card[]> {
-  const records = await db.content.toArray();
-  return records.filter(
-    (record) => !record.setName || record.setName === currentSet,
-  );
+export async function getAllCardsForGroup(
+  currentGroup: string,
+): Promise<Card[]> {
+  const records = await db.library
+    .where("group")
+    .equals(currentGroup)
+    .toArray();
+  return records.map(toContentRecord);
 }
 
-export function getDisplayNameForSet(setName: string) {
-  const defaultEntry = DEFAULT_CONTENT.find((item) => item.key === setName);
+export function getDisplayNameForGroup(group: string) {
+  const defaultEntry = DEFAULT_CONTENT.find((item) => item.key === group);
   if (defaultEntry) return defaultEntry.label;
 
-  return setName
+  return group
     .replace(/[-_]/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 async function getContentMetadata(
-  setName: string,
+  group: string,
 ): Promise<ContentMetadata | undefined> {
-  return db.contentMetadata.get(setName);
+  return db.contentMetadata.get(group);
 }
 
 export async function setContentMetadata(metadata: {
-  setName: string;
+  group: string;
   displayName: string;
   importedAt: number;
 }) {
   await db.contentMetadata.put(metadata);
 }
 
-async function deleteContentMetadata(setName: string) {
-  await db.contentMetadata.delete(setName);
+async function deleteContentMetadata(group: string) {
+  await db.contentMetadata.delete(group);
 }
 
-function deleteContentRecords(setName: string) {
-  return db.content.where("setName").equals(setName).delete();
+function deleteContentRecords(group: string) {
+  return db.library.where("group").equals(group).delete();
 }
 
-export async function deleteContent(setName: string) {
-  await deleteContentRecords(setName);
-  await deleteContentMetadata(setName);
+export async function deleteContent(group: string) {
+  await Promise.all([
+    deleteContentRecords(group),
+    deleteContentMetadata(group),
+  ]);
 }
 
-export async function getContentDisplayName(setName: string) {
-  const metadata = await getContentMetadata(setName);
-  return metadata?.displayName || getDisplayNameForSet(setName);
-}
-
-export async function getUniqueContentNames() {
-  const names = new Set(DEFAULT_CONTENT.map((item) => item.key));
-  const records = await db.content.toArray();
-  for (const record of records) {
-    if (record.setName) names.add(record.setName);
+export async function deleteLibraryRows(
+  rows: Array<{ group: string; text: string }>,
+) {
+  const builtInGroups = new Set(DEFAULT_CONTENT.map((content) => content.key));
+  if (rows.some((row) => builtInGroups.has(row.group))) {
+    throw new Error("Built-in library rows cannot be deleted.");
   }
 
-  return Array.from(names);
+  await db.transaction("rw", db.library, async () => {
+    await db.library
+      .where("[group+text]")
+      .anyOf(rows.map(({ group, text }) => [group, text]))
+      .delete();
+  });
+}
+
+export async function getContentDisplayName(group: string) {
+  const metadata = await getContentMetadata(group);
+  return metadata?.displayName || getDisplayNameForGroup(group);
+}
+
+export async function getUniqueContentGroups() {
+  const groups = new Set(DEFAULT_CONTENT.map((item) => item.key));
+  const records = await db.library.toArray();
+  for (const record of records) {
+    if (record.group) groups.add(record.group);
+  }
+
+  return Array.from(groups);
 }
 
 export async function getContentOptions() {
-  const storedNames = await getUniqueContentNames();
+  const storedGroups = await getUniqueContentGroups();
   const optionSet = new Set<string>();
   const options: ContentOption[] = [];
 
@@ -177,31 +267,50 @@ export async function getContentOptions() {
     options.push(content);
   }
 
-  for (const setName of storedNames) {
-    if (optionSet.has(setName)) continue;
-    optionSet.add(setName);
-    const metadata = await getContentMetadata(setName);
+  for (const group of storedGroups) {
+    if (optionSet.has(group)) continue;
+    optionSet.add(group);
+    const metadata = await getContentMetadata(group);
     options.push({
-      key: setName,
-      label: metadata?.displayName || getDisplayNameForSet(setName),
+      key: group,
+      label: metadata?.displayName || getDisplayNameForGroup(group),
     });
   }
 
   return options;
 }
 
-export async function importContent(setName: string, cards: Card[]) {
-  await deleteContentRecords(setName);
-  await db.content.bulkPut(cards.map((item) => ({ ...item, setName })));
+export async function importContent(group: string, cards: Card[]) {
+  await db.transaction("rw", db.library, async () => {
+    const existingRows = await db.library
+      .where("group")
+      .equals(group)
+      .toArray();
+    const existingProgress = new Map(
+      existingRows.map((record) => [record.text, record.learningProgress]),
+    );
+    await db.library.where("group").equals(group).delete();
+    await db.library.bulkPut(
+      cards.map((item) => ({
+        ...item,
+        group,
+        learningProgress: existingProgress.get(item.text) ?? {
+          stage: 0,
+          nextReview: 0,
+          correctCount: 0,
+        },
+      })),
+    );
+  });
 }
 
-export async function initializeContent(currentSet: string) {
-  const setCount = await getStoreCountForSet(currentSet);
+export async function initializeGroupContent(currentGroup: string) {
+  const groupCount = await getStoreCountForGroup(currentGroup);
 
-  if (setCount > 0) return getAllCardsForSet(currentSet);
+  if (groupCount > 0) return getAllCardsForGroup(currentGroup);
 
-  await fetchAndSeed(currentSet);
-  return getAllCardsForSet(currentSet);
+  await fetchAndSeed(currentGroup);
+  return getAllCardsForGroup(currentGroup);
 }
 
 export async function deleteAppDatabase() {

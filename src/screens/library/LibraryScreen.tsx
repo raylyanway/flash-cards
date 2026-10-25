@@ -1,28 +1,16 @@
 import { BookRounded } from "@mui/icons-material";
-import * as React from "react";
-import { Outlet, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/PageHeader";
-import { getIndexedDbTableNames } from "../../db";
-import DashboardLayout from "./DashboardLayout";
+import { LibraryList } from "./LibraryList";
 
 export function LibraryScreen() {
-  const [searchParams] = useSearchParams();
-  const tableNames = React.useMemo(getIndexedDbTableNames, []);
-  const selectedTable =
-    tableNames.find((tableName) => tableName === searchParams.get("table")) ??
-    tableNames[0] ??
-    "";
-
   return (
     <>
       <PageHeader
         icon={<BookRounded />}
         title="Study library"
-        description="Browse your collections and keep your learning routine consistent."
+        description="Browse every card, review its progress, and import or export your library."
       />
-      <DashboardLayout selectedTable={selectedTable} tableNames={tableNames}>
-        <Outlet />
-      </DashboardLayout>
+      <LibraryList />
     </>
   );
 }

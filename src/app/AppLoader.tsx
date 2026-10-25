@@ -13,14 +13,14 @@ export function AppLoader() {
       aria-live="polite"
       aria-busy="true"
     >
-      <Stack alignItems="center" spacing={2}>
+      <Stack spacing={2}>
         <CircularProgress size={46} />
-        <Box textAlign="center">
+        <Box>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
             Flash Cards
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Loading your study set...
+            Loading your study group...
           </Typography>
         </Box>
       </Stack>

@@ -71,7 +71,7 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               key={tableName}
               id={`table-${tableName}`}
-              title={tableName}
+              title={tableName === "content" ? "Content" : tableName}
               icon={<PersonIcon />}
               href={`/library?table=${encodeURIComponent(tableName)}`}
               selected={selectedTable === tableName}
