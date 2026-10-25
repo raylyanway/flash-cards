@@ -5,8 +5,8 @@ import type { Card, ProgressEntry } from "../types";
 import {
   getAnswerText,
   getAttemptsText,
+  isAnswerMatch,
   MAX_WRONG_ATTEMPTS,
-  normalizeAnswer,
   REVIEW_1_DELAY,
   REVIEW_2_DELAY,
 } from "../utils/cardProgress";
@@ -195,8 +195,7 @@ export function useLearningSession({
         : Array.isArray(card.answers) && card.answers.length > 0
           ? card.answers
           : [card.text];
-    const answers = cardAnswers.map(normalizeAnswer);
-    if (answers.includes(normalizeAnswer(text))) {
+    if (isAnswerMatch(text, cardAnswers)) {
       markCorrect(card);
     } else {
       markWrong(card);

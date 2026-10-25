@@ -55,6 +55,48 @@ export function normalizeAnswer(text: string) {
     .trim();
 }
 
+export function isAnswerMatch(text: string, answers: string[]) {
+  const normalizedText = Array.from(normalizeAnswer(text));
+  if (normalizedText.length === 0) return false;
+
+  return answers.some((answer) => {
+    const normalizedAnswer = Array.from(normalizeAnswer(answer));
+    const maxLength = Math.max(normalizedText.length, normalizedAnswer.length);
+    if (
+      normalizedAnswer.length === 0 ||
+      Math.abs(normalizedText.length - normalizedAnswer.length) * 5 > maxLength
+    ) {
+      return false;
+    }
+
+    let previousRow = Array.from(
+      { length: normalizedAnswer.length + 1 },
+      (_, index) => index,
+    );
+    for (let textIndex = 1; textIndex <= normalizedText.length; textIndex++) {
+      const currentRow = [textIndex];
+      for (
+        let answerIndex = 1;
+        answerIndex <= normalizedAnswer.length;
+        answerIndex++
+      ) {
+        currentRow[answerIndex] = Math.min(
+          currentRow[answerIndex - 1] + 1,
+          previousRow[answerIndex] + 1,
+          previousRow[answerIndex - 1] +
+            Number(
+              normalizedText[textIndex - 1] !==
+                normalizedAnswer[answerIndex - 1],
+            ),
+        );
+      }
+      previousRow = currentRow;
+    }
+
+    return previousRow[normalizedAnswer.length] * 5 <= maxLength;
+  });
+}
+
 export function countStages(progress: GroupProgress) {
   return Object.values(progress).reduce(
     (counts, item) => {
