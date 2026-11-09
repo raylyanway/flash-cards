@@ -1,5 +1,7 @@
 import {
+  CheckCircleRounded,
   CloseRounded,
+  ErrorOutlineRounded,
   MicRounded,
   PauseRounded,
   ReplayRounded,
@@ -22,6 +24,7 @@ import { useLearningSession } from "../hooks/useLearningSession";
 import { useAppStore } from "../store/useAppStore";
 import {
   countStages,
+  getAnswerText,
   getNextDueTimestamp,
   getStageName,
 } from "../utils/cardProgress";
@@ -53,6 +56,15 @@ export function LearnScreen() {
     nextDueTimestamp === null
       ? "All cards learned 🎉"
       : `Next review in ${Math.max(0, Math.ceil((nextDueTimestamp - now) / 1000))} sec`;
+  const currentStage = currentCard
+    ? (currentGroupProgress[currentCard.text]?.stage ?? 0)
+    : null;
+  const feedbackLabel =
+    learning.resultClass === "correct"
+      ? "Correct"
+      : learning.resultClass === "wrong"
+        ? "Wrong"
+        : null;
 
   return (
     <Stack spacing={3}>
@@ -95,61 +107,105 @@ export function LearnScreen() {
       <Card
         elevation={0}
         sx={{
-          borderRadius: 3,
-          p: { xs: 3, md: 4 },
-          minHeight: { xs: 200, sm: 240, md: 260 },
+          borderRadius: 2,
+          border: 1,
+          borderColor: "divider",
+          borderLeft: "4px solid",
+          borderLeftColor:
+            feedbackLabel === "Correct"
+              ? "success.main"
+              : feedbackLabel === "Wrong"
+                ? "error.main"
+                : "primary.main",
+          bgcolor: "background.paper",
+          p: { xs: 2, sm: 3, md: 4 },
+          minHeight: { xs: 260, sm: 290, md: 320 },
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background:
-            "linear-gradient(135deg, rgba(79,70,229,0.06), rgba(148,163,184,0.04))",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          gap: 3,
         }}
       >
-        <Stack spacing={1.5}>
+        <Stack
+          direction="row"
+          spacing={1}
+          useFlexGap
+          sx={{ alignItems: "center", flexWrap: "wrap" }}
+        >
+          {currentStage !== null && (
+            <Chip
+              size="small"
+              color="primary"
+              variant="outlined"
+              label={getStageName(currentStage)}
+            />
+          )}
+          {feedbackLabel && (
+            <Chip
+              size="small"
+              color={feedbackLabel === "Correct" ? "success" : "error"}
+              icon={
+                feedbackLabel === "Correct" ? (
+                  <CheckCircleRounded />
+                ) : (
+                  <ErrorOutlineRounded />
+                )
+              }
+              label={feedbackLabel}
+            />
+          )}
+          {currentStage === null && (
+            <Typography variant="overline" color="text.secondary">
+              No cards are due
+            </Typography>
+          )}
+        </Stack>
+
+        <Stack
+          spacing={1}
+          sx={{
+            alignItems: "center",
+            justifyContent: "center",
+            flex: 1,
+            textAlign: "center",
+            py: 1,
+          }}
+        >
           <Typography variant="overline" color="text.secondary">
-            {currentCard
-              ? getStageName(currentGroupProgress[currentCard.text]?.stage || 0)
-              : "No cards are due"}
+            Translate this
           </Typography>
           <Typography
             component="h2"
             sx={{
+              width: "100%",
               fontWeight: 800,
-              letterSpacing: -0.06,
-              // Card groups range from single words to full sentences, so the
-              // prompt scales down on small screens instead of overflowing.
               fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3.25rem" },
               lineHeight: 1.15,
-              wordBreak: "break-word",
+              overflowWrap: "anywhere",
             }}
           >
             {currentCard?.text || "🎉 Great job!"}
           </Typography>
+          {learning.answerRevealed && currentCard && (
+            <Stack spacing={0.25} sx={{ mt: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Answer
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                {getAnswerText(currentCard)}
+              </Typography>
+            </Stack>
+          )}
         </Stack>
       </Card>
 
-      <Stack spacing={1.5}>
+      <Stack spacing={1}>
         <Typography
-          variant="body1"
+          variant="body2"
           color="text.secondary"
-          sx={{ minHeight: 24 }}
+          sx={{ minHeight: 20 }}
         >
           {currentCard ? learning.recognizedText : waitingMessage}
-        </Typography>
-        <Typography
-          variant="body1"
-          sx={{
-            minHeight: 24,
-            color:
-              learning.resultClass === "correct"
-                ? "success.main"
-                : learning.resultClass === "wrong"
-                  ? "error.main"
-                  : "text.secondary",
-            fontWeight: 600,
-          }}
-        >
-          {learning.result}
         </Typography>
       </Stack>
 
