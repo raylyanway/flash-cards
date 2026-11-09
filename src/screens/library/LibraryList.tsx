@@ -301,7 +301,7 @@ export function LibraryList() {
       const importedRows = parseLibraryCsv(await file.text());
       if (
         !window.confirm(
-          `Import ${importedRows.length} library rows? Matching cards and their progress will be overwritten; other rows will be kept.`,
+          `Import ${importedRows.length} library rows? Matching imported cards and supplied progress values will be updated. Built-in collections cannot be imported; other existing rows will be kept.`,
         )
       ) {
         return;
@@ -470,8 +470,9 @@ export function LibraryList() {
               </Typography>
             </Box>
             <Typography variant="caption" color="text.secondary">
-              Existing group and text matches update on import; supplied
-              progress values replace existing values.
+              Built-in collections cannot be replaced by imports. Existing group
+              and text matches update; supplied progress values replace existing
+              values.
             </Typography>
           </Stack>
         </DialogContent>

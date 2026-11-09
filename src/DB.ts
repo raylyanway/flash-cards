@@ -79,6 +79,11 @@ export async function saveProgressForGroup(
 }
 
 export async function importLibraryRows(rows: LibraryImportRow[]) {
+  assertNoBuiltInGroups(
+    rows.map((row) => row.group),
+    "imported or overwritten",
+  );
+
   const progressByGroup: ProgressMap = {};
 
   await db.transaction("rw", db.library, async () => {
@@ -120,6 +125,18 @@ export const DEFAULT_CONTENT: ContentOption[] = [
   { key: "food", label: "Food" },
   { key: "sentences", label: "Sentences" },
 ];
+
+function assertNoBuiltInGroups(groups: Iterable<string>, action: string) {
+  const builtInGroups = new Set(DEFAULT_CONTENT.map(({ key }) => key));
+  const attemptedGroups = [
+    ...new Set([...groups].filter((group) => builtInGroups.has(group))),
+  ];
+  if (attemptedGroups.length > 0) {
+    throw new Error(
+      `Built-in collections cannot be ${action}: ${attemptedGroups.join(", ")}.`,
+    );
+  }
+}
 
 async function getStoreCountForGroup(group: string) {
   return db.library.where("group").equals(group).count();
@@ -219,6 +236,7 @@ function deleteContentRecords(group: string) {
 }
 
 export async function deleteContent(group: string) {
+  assertNoBuiltInGroups([group], "deleted");
   await Promise.all([
     deleteContentRecords(group),
     deleteContentMetadata(group),
@@ -228,10 +246,10 @@ export async function deleteContent(group: string) {
 export async function deleteLibraryRows(
   rows: Array<{ group: string; text: string }>,
 ) {
-  const builtInGroups = new Set(DEFAULT_CONTENT.map((content) => content.key));
-  if (rows.some((row) => builtInGroups.has(row.group))) {
-    throw new Error("Built-in library rows cannot be deleted.");
-  }
+  assertNoBuiltInGroups(
+    rows.map((row) => row.group),
+    "deleted",
+  );
 
   await db.transaction("rw", db.library, async () => {
     await db.library
@@ -280,6 +298,7 @@ export async function getContentOptions() {
 }
 
 export async function importContent(group: string, cards: Card[]) {
+  assertNoBuiltInGroups([group], "imported or replaced");
   await db.transaction("rw", db.library, async () => {
     const existingRows = await db.library
       .where("group")

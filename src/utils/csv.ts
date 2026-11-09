@@ -82,12 +82,13 @@ export function createCsvFromProgress(
 export function createCsvFromLibrary(rows: LibraryRow[]) {
   const contentFields = new Set<string>();
   for (const row of rows) {
-    Object.keys(row.content).forEach((key) => contentFields.add(key));
+    Object.keys(row.content).forEach((key) => {
+      if (key !== "isBuiltIn") contentFields.add(key);
+    });
   }
 
   const preferredOrder = [
     "group",
-    "isBuiltIn",
     "text",
     "answers",
     "progressStage",
@@ -96,7 +97,6 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
   const headers = [
     ...preferredOrder.filter(
       (key) =>
-        key === "isBuiltIn" ||
         key === "progressStage" ||
         key === "progressNextReview" ||
         contentFields.has(key),
@@ -105,10 +105,9 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
   ];
 
   return papaparse.unparse(
-    rows.map(({ content, progress, isBuiltIn }) => {
+    rows.map(({ content, progress }) => {
       const row: Record<string, unknown> = {
         ...content,
-        isBuiltIn,
         progressStage: progress.stage,
         progressNextReview: progress.nextReview,
       };
