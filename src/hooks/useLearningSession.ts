@@ -63,6 +63,7 @@ export function useLearningSession({
   const listeningRef = useRef(listening);
   const wrongAttemptsRef = useRef(wrongAttempts);
   const sessionActiveRef = useRef(false);
+  const hasStartedListeningRef = useRef(false);
   const isAnnouncingRef = useRef(false);
   const resumeListeningAfterAnnouncementRef = useRef(false);
   const announcementIdRef = useRef(0);
@@ -94,8 +95,7 @@ export function useLearningSession({
   );
 
   const announceQuestion = useCallback(
-    (text: string) => {
-      const resumeListening = listeningRef.current;
+    (text: string, resumeListening = listeningRef.current) => {
       const recognition = recognitionRef.current;
       const announcementId = ++announcementIdRef.current;
       resumeListeningAfterAnnouncementRef.current = resumeListening;
@@ -142,6 +142,7 @@ export function useLearningSession({
 
     if (dueCards.length === 0) {
       stopListening();
+      hasStartedListeningRef.current = false;
       setAnswerRevealed(false);
       setLastSpokenAnswer("");
       answerRevealedAfterWrongRef.current = false;
@@ -160,12 +161,13 @@ export function useLearningSession({
     setLastSpokenAnswer("");
     answerRevealedAfterWrongRef.current = false;
     setCurrentCard(nextCard);
+    wrongAttemptsRef.current = 0;
     setWrongAttempts(0);
     setResult("");
     setResultClass("");
     setSkipEnabled(true);
     setRecognizedText(`Press Start Listening - ${getAttemptsText(0)}`);
-    announceQuestion(nextCard.text);
+    announceQuestion(nextCard.text, hasStartedListeningRef.current);
   }, [announceQuestion, setCurrentCard, stopListening]);
 
   const scheduleNextCard = useCallback(
@@ -218,6 +220,11 @@ export function useLearningSession({
       const nextAttempts = wrongAttemptsRef.current + 1;
       wrongAttemptsRef.current = nextAttempts;
       setWrongAttempts(nextAttempts);
+      setRecognizedText(
+        listeningRef.current
+          ? `🎤 Listening... (${getAttemptsText(nextAttempts)})`
+          : `Press Start Listening - ${getAttemptsText(nextAttempts)}`,
+      );
       await updateProgressForCard(card, (entry) => ({
         ...entry,
         stage: entry.stage > 0 ? entry.stage - 1 : entry.stage,
@@ -238,11 +245,6 @@ export function useLearningSession({
 
       setResult("❌ Wrong");
       setResultClass("wrong");
-      if (!listeningRef.current) {
-        setRecognizedText(
-          `Press Start Listening - ${getAttemptsText(nextAttempts)}`,
-        );
-      }
     },
     [
       setAnswerRevealed,
@@ -303,6 +305,7 @@ export function useLearningSession({
     recognition.onerror = (event) => {
       if (event.error === "no-speech" || event.error === "aborted") return;
       console.log("Speech error:", event.error);
+      hasStartedListeningRef.current = false;
       listeningRef.current = false;
       resumeListeningAfterAnnouncementRef.current = false;
       setListening(false);
@@ -379,6 +382,9 @@ export function useLearningSession({
 
   const startLearningSession = () => {
     sessionActiveRef.current = true;
+    hasStartedListeningRef.current = false;
+    wrongAttemptsRef.current = 0;
+    setWrongAttempts(0);
     setAnswerRevealed(false);
     setLastSpokenAnswer("");
     answerRevealedAfterWrongRef.current = false;
@@ -390,6 +396,7 @@ export function useLearningSession({
 
   const stopLearningSession = () => {
     sessionActiveRef.current = false;
+    hasStartedListeningRef.current = false;
     setAnswerRevealed(false);
     setLastSpokenAnswer("");
     answerRevealedAfterWrongRef.current = false;
@@ -407,6 +414,7 @@ export function useLearningSession({
   const startListening = () => {
     const recognition = recognitionRef.current;
     if (!recognition) return;
+    hasStartedListeningRef.current = true;
     if (isAnnouncingRef.current) {
       resumeListeningAfterAnnouncementRef.current = true;
       setRecognizedText("🔊 Speaking question...");
@@ -418,7 +426,9 @@ export function useLearningSession({
     setResult("");
     setResultClass("");
     setListening(true);
-    setRecognizedText(`🎤 Listening... (${getAttemptsText(wrongAttempts)})`);
+    setRecognizedText(
+      `🎤 Listening... (${getAttemptsText(wrongAttemptsRef.current)})`,
+    );
     try {
       recognition.start();
     } catch {
