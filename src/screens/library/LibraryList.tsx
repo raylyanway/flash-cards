@@ -492,12 +492,16 @@ export function LibraryList() {
       </Dialog>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 1 }}>
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 1 }}>
           {error}
         </Alert>
       )}
       {message && (
-        <Alert severity="success" sx={{ mb: 1 }}>
+        <Alert
+          severity="success"
+          onClose={() => setMessage(null)}
+          sx={{ mb: 1 }}
+        >
           {message}
         </Alert>
       )}
