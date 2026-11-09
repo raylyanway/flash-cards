@@ -20,6 +20,8 @@ type UseLearningSessionParams = {
   nextDueTimestamp: number | null;
 };
 
+const CORRECT_ANSWER_DISPLAY_DELAY = 3_000;
+
 export function useLearningSession({
   nextDueTimestamp,
 }: UseLearningSessionParams) {
@@ -154,6 +156,9 @@ export function useLearningSession({
         progressRef.current[a.text].stage - progressRef.current[b.text].stage,
     );
     const nextCard = dueCards[0];
+    setAnswerRevealed(false);
+    setLastSpokenAnswer("");
+    answerRevealedAfterWrongRef.current = false;
     setCurrentCard(nextCard);
     setWrongAttempts(0);
     setResult("");
@@ -189,12 +194,23 @@ export function useLearningSession({
         }
         return nextEntry;
       });
+      setAnswerRevealed(true);
+      answerRevealedAfterWrongRef.current = true;
       setResult("✅ Correct");
       setResultClass("correct");
-      setLastSpokenAnswer("");
-      scheduleNextCard(1500);
+      setRecognizedText("Moving to the next card...");
+      stopListening();
+      scheduleNextCard(CORRECT_ANSWER_DISPLAY_DELAY);
     },
-    [scheduleNextCard, updateProgressForCard],
+    [
+      scheduleNextCard,
+      setAnswerRevealed,
+      setRecognizedText,
+      setResult,
+      setResultClass,
+      stopListening,
+      updateProgressForCard,
+    ],
   );
 
   const markWrong = useCallback(
@@ -269,16 +285,6 @@ export function useLearningSession({
 
     recognition.onresult = (event) => {
       if (isAnnouncingRef.current) return;
-
-      const transcript = Array.from(
-        { length: event.results.length },
-        (_, index) => event.results[index][0].transcript,
-      )
-        .filter(Boolean)
-        .join(" ")
-        .trim();
-
-      if (transcript) setRecognizedText(`You said: ${transcript}`);
 
       const finalTranscript = Array.from(
         { length: event.results.length - event.resultIndex },
