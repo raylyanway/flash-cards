@@ -8,12 +8,12 @@ import { Autocomplete, TextField } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -105,8 +105,6 @@ export function LibraryList() {
   ).length;
   const allFilteredSelected =
     filteredRows.length > 0 && selectedFilteredCount === filteredRows.length;
-  const someFilteredSelected =
-    selectedFilteredCount > 0 && !allFilteredSelected;
   const removableRows = selectedRows.filter((row) => !row.isBuiltIn);
 
   const toggleRowSelection = (row: LibraryRow, checked: boolean) => {
@@ -468,36 +466,41 @@ export function LibraryList() {
         </Typography>
       ) : (
         <List aria-label="Content library" disablePadding>
-          <ListItem sx={{ px: 2, py: 0.5 }}>
-            <Checkbox
-              checked={allFilteredSelected}
-              indeterminate={someFilteredSelected}
-              onChange={(event) =>
-                toggleFilteredSelection(event.target.checked)
-              }
-              slotProps={{
-                input: { "aria-label": "Select all filtered rows" },
-              }}
-            />
-            <Typography variant="body2" color="text.secondary">
-              Select all filtered rows
-            </Typography>
+          <ListItem sx={{ justifyContent: "flex-end", px: 2, py: 0.5 }}>
+            <Button
+              size="small"
+              onClick={() => toggleFilteredSelection(!allFilteredSelected)}
+            >
+              {allFilteredSelected ? "Deselect all" : "Select all"}
+            </Button>
           </ListItem>
           {filteredRows.map((row) => (
             <React.Fragment key={`${row.content.group}:${row.content.text}`}>
-              <ListItem alignItems="flex-start" sx={{ px: 2, py: 1.5, gap: 2 }}>
-                <Checkbox
-                  checked={selectedRowKeys.has(getRowKey(row))}
-                  onChange={(event) =>
-                    toggleRowSelection(row, event.target.checked)
-                  }
-                  slotProps={{
-                    input: {
-                      "aria-label": `Select ${row.content.text}`,
-                    },
-                  }}
-                  sx={{ alignSelf: "center" }}
-                />
+              <ListItemButton
+                component="button"
+                type="button"
+                role="checkbox"
+                aria-checked={selectedRowKeys.has(getRowKey(row))}
+                aria-label={`Select ${row.content.text}`}
+                selected={selectedRowKeys.has(getRowKey(row))}
+                onClick={() =>
+                  toggleRowSelection(row, !selectedRowKeys.has(getRowKey(row)))
+                }
+                sx={(theme) => ({
+                  alignItems: "flex-start",
+                  px: 2,
+                  py: 1.5,
+                  gap: 2,
+                  borderLeft: "3px solid",
+                  borderColor: selectedRowKeys.has(getRowKey(row))
+                    ? "primary.main"
+                    : "transparent",
+                  "&.Mui-selected": { bgcolor: "action.selected" },
+                  "&.Mui-selected:hover": {
+                    bgcolor: theme.palette.action.hover,
+                  },
+                })}
+              >
                 <ListItemText
                   sx={{ minWidth: 0 }}
                   primary={row.content.text}
@@ -524,7 +527,7 @@ export function LibraryList() {
                   }
                   sx={{ flexShrink: 0 }}
                 />
-              </ListItem>
+              </ListItemButton>
               <Divider component="li" />
             </React.Fragment>
           ))}
