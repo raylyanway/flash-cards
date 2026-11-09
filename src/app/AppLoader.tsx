@@ -1,8 +1,26 @@
 import { AutoStoriesRounded, TranslateRounded } from "@mui/icons-material";
 import { Box, Stack, Typography } from "@mui/material";
+import { useState } from "react";
 import { useAppStore } from "../store/useAppStore";
 
 export function AppLoader() {
+  const [animationElapsed] = useState(() => {
+    const timelineTime = Number(
+      document.timeline.currentTime ?? performance.now(),
+    );
+    const bootAnimation = document
+      .querySelector(".boot-card-back-left")
+      ?.getAnimations()[0];
+    if (bootAnimation?.startTime == null) return 0;
+    const animationStartTime = Number(bootAnimation.startTime);
+    if (
+      !Number.isFinite(timelineTime) ||
+      !Number.isFinite(animationStartTime)
+    ) {
+      return 0;
+    }
+    return Math.max(0, timelineTime - animationStartTime);
+  });
   const themePreference = useAppStore((state) => state.theme);
   const isDark =
     themePreference === "dark" ||
@@ -78,6 +96,7 @@ export function AppLoader() {
               opacity: 0.72,
               transform: "rotate(8deg)",
               animation: "trailRight 3s ease-in-out infinite",
+              animationDelay: `${-animationElapsed}ms`,
               "@keyframes trailRight": {
                 "0%, 100%": { transform: "translate(0, 0) rotate(8deg)" },
                 "50%": { transform: "translate(7px, -4px) rotate(11deg)" },
@@ -96,6 +115,7 @@ export function AppLoader() {
               opacity: 0.6,
               transform: "rotate(-8deg)",
               animation: "trailLeft 3s ease-in-out infinite",
+              animationDelay: `${-animationElapsed}ms`,
               "@keyframes trailLeft": {
                 "0%, 100%": { transform: "translate(0, 0) rotate(-8deg)" },
                 "50%": { transform: "translate(-7px, 3px) rotate(-11deg)" },
@@ -121,6 +141,7 @@ export function AppLoader() {
                 ? "0 18px 44px rgba(0, 0, 0, 0.3)"
                 : "0 18px 44px rgba(24, 52, 58, 0.12)",
               animation: "cardLift 2.8s ease-in-out infinite",
+              animationDelay: `${-animationElapsed}ms`,
               "@keyframes cardLift": {
                 "0%, 100%": { transform: "translateY(0) rotate(-1deg)" },
                 "50%": { transform: "translateY(-5px) rotate(1deg)" },
@@ -194,6 +215,7 @@ export function AppLoader() {
                 borderRadius: "50%",
                 bgcolor: index === 1 ? colors.secondary : colors.primary,
                 animation: `loadingDot 1.1s ease-in-out ${index * 0.16}s infinite`,
+                animationDelay: `${-animationElapsed + index * 160}ms`,
                 "@keyframes loadingDot": {
                   "0%, 80%, 100%": { opacity: 0.35, transform: "scale(0.8)" },
                   "40%": { opacity: 1, transform: "scale(1.15)" },
