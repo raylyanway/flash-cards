@@ -135,6 +135,7 @@ export function AppLoader() {
                   width: 30,
                   height: 30,
                   display: "grid",
+                  flex: "none",
                   placeItems: "center",
                   borderRadius: "10px",
                   bgcolor: colors.primarySoft,
@@ -147,7 +148,7 @@ export function AppLoader() {
                 variant="caption"
                 sx={{ color: colors.muted, fontWeight: 700 }}
               >
-                ENGLISH / RUSSIAN
+                EN / RU
               </Typography>
               <TranslateRounded
                 sx={{
