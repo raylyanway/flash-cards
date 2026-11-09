@@ -15,11 +15,13 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { deleteLibraryRows, getLibraryRows, importLibraryRows } from "../../db";
@@ -345,77 +347,130 @@ export function LibraryList() {
           p: 1,
         }}
       >
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-          <Autocomplete
-            size="small"
-            sx={{ minWidth: 220 }}
-            options={groupFilterOptions}
-            value={selectedGroupOption}
-            getOptionLabel={(option) => option.label}
-            isOptionEqualToValue={(option, value) => option.key === value.key}
-            onChange={(_, option) => {
-              setSelectedGroup(option?.key ?? "all");
-              setSelectedRowKeys(new Set());
-            }}
-            renderInput={(params) => (
-              <TextField {...params} label="Filter by group" />
-            )}
+        <Autocomplete
+          size="small"
+          sx={{ minWidth: 220, width: { xs: "100%", sm: 220 } }}
+          options={groupFilterOptions}
+          value={selectedGroupOption}
+          getOptionLabel={(option) => option.label}
+          isOptionEqualToValue={(option, value) => option.key === value.key}
+          onChange={(_, option) => {
+            setSelectedGroup(option?.key ?? "all");
+            setSelectedRowKeys(new Set());
+          }}
+          renderInput={(params) => (
+            <TextField {...params} label="Filter by group" />
+          )}
+        />
+        <Stack
+          direction="row"
+          spacing={1}
+          useFlexGap
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+            ml: { sm: "auto" },
+          }}
+        >
+          {selectedRows.length > 0 && (
+            <>
+              <Tooltip title="Reset progress">
+                <span>
+                  <IconButton
+                    aria-label="Reset selected progress"
+                    size="small"
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 1,
+                    }}
+                    disabled={isImporting || isUpdatingSelection}
+                    onClick={() => void resetSelectedProgress()}
+                  >
+                    <RestartAltRounded fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip
+                title={
+                  removableRows.length === 0
+                    ? "Built-in cards cannot be removed"
+                    : "Remove selected imported cards"
+                }
+              >
+                <span>
+                  <IconButton
+                    aria-label="Remove selected imported cards"
+                    size="small"
+                    color="error"
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      border: 1,
+                      borderColor: "error.main",
+                      borderRadius: 1,
+                    }}
+                    disabled={
+                      removableRows.length === 0 ||
+                      isImporting ||
+                      isUpdatingSelection
+                    }
+                    onClick={() => void removeSelectedRows()}
+                  >
+                    <DeleteOutlineRounded fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </>
+          )}
+          <Tooltip title="Import CSV">
+            <span>
+              <IconButton
+                aria-label="Import CSV"
+                size="small"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                }}
+                disabled={isImporting || isUpdatingSelection}
+                onClick={() => setIsImportDialogOpen(true)}
+              >
+                <FileUploadRounded fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <input
+            ref={importInputRef}
+            type="file"
+            hidden
+            accept=".csv,text/csv"
+            onChange={(event) => void handleImport(event)}
           />
-          <Stack
-            direction="row"
-            spacing={1}
-            useFlexGap
-            sx={{ flexWrap: "wrap" }}
-          >
-            {selectedRows.length > 0 && (
-              <>
-                <Button
-                  variant="outlined"
-                  startIcon={<RestartAltRounded />}
-                  disabled={isImporting || isUpdatingSelection}
-                  onClick={() => void resetSelectedProgress()}
-                >
-                  Reset progress
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<DeleteOutlineRounded />}
-                  disabled={
-                    removableRows.length === 0 ||
-                    isImporting ||
-                    isUpdatingSelection
-                  }
-                  onClick={() => void removeSelectedRows()}
-                >
-                  Remove
-                </Button>
-              </>
-            )}
-            <Button
-              variant="outlined"
-              startIcon={<FileUploadRounded />}
-              disabled={isImporting || isUpdatingSelection}
-              onClick={() => setIsImportDialogOpen(true)}
-            >
-              Import CSV
-            </Button>
-            <input
-              ref={importInputRef}
-              type="file"
-              hidden
-              accept=".csv,text/csv"
-              onChange={(event) => void handleImport(event)}
-            />
-            <Button
-              variant="outlined"
-              startIcon={<FileDownloadRounded />}
-              disabled={isImporting || isUpdatingSelection}
-              onClick={exportLibrary}
-            >
-              Export
-            </Button>
-          </Stack>
+          <Tooltip title="Export selected or filtered cards">
+            <span>
+              <IconButton
+                aria-label="Export selected or filtered cards"
+                size="small"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                }}
+                disabled={isImporting || isUpdatingSelection}
+                onClick={exportLibrary}
+              >
+                <FileDownloadRounded fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
         </Stack>
       </Stack>
 
