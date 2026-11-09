@@ -32,7 +32,7 @@ export function AppLoader() {
         border: "rgba(8, 127, 140, 0.18)",
         dot: "rgba(8, 127, 140, 0.13)",
       };
-  const loaderFontFamily = '"DM Sans", "Noto Sans", sans-serif';
+  const loaderFontFamily = '"Noto Sans", sans-serif';
 
   return (
     <Box
@@ -141,7 +141,7 @@ export function AppLoader() {
                   color: colors.primary,
                 }}
               >
-                <AutoStoriesRounded fontSize="small" />
+                <AutoStoriesRounded sx={{ width: 20, height: 20 }} />
               </Box>
               <Typography
                 variant="caption"
@@ -150,7 +150,13 @@ export function AppLoader() {
                 ENGLISH / RUSSIAN
               </Typography>
               <TranslateRounded
-                sx={{ ml: "auto !important", color: colors.secondary }}
+                sx={{
+                  ml: "auto !important",
+                  width: 24,
+                  height: 24,
+                  flex: "none",
+                  color: colors.secondary,
+                }}
               />
             </Stack>
             <Box>

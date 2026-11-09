@@ -40,7 +40,7 @@ export function createAppTheme(mode: "light" | "dark") {
       borderRadius: 10,
     },
     typography: {
-      fontFamily: '"DM Sans", "Noto Sans", sans-serif',
+      fontFamily: '"Noto Sans", sans-serif',
       h1: { fontWeight: 800, letterSpacing: "-0.04em" },
       h2: { fontWeight: 800, letterSpacing: "-0.035em" },
       h3: { fontWeight: 800, letterSpacing: "-0.03em" },
