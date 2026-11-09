@@ -491,6 +491,7 @@ export function LibraryList() {
                   px: 2,
                   py: 1.5,
                   gap: 2,
+                  width: "100%",
                   borderLeft: "3px solid",
                   borderColor: selectedRowKeys.has(getRowKey(row))
                     ? "primary.main"
