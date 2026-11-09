@@ -1,8 +1,10 @@
 import {
+  AutoStoriesRounded,
   DeleteOutlineRounded,
   FileDownloadRounded,
   FileUploadRounded,
   RestartAltRounded,
+  ScheduleRounded,
 } from "@mui/icons-material";
 import { Autocomplete, TextField } from "@mui/material";
 import Alert from "@mui/material/Alert";
@@ -19,7 +21,6 @@ import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -53,16 +54,20 @@ function formatReviewDate(timestamp: number) {
   });
 }
 
-function formatRowDetails(row: LibraryRow) {
-  const contentDetails = Object.entries(row.content)
-    .filter(([field]) => field !== "text")
+function getStageColor(
+  stage: number,
+): "default" | "warning" | "info" | "success" {
+  if (stage === 1) return "warning";
+  if (stage === 2) return "info";
+  if (stage >= 3) return "success";
+  return "default";
+}
+
+function formatExtraDetails(row: LibraryRow) {
+  return Object.entries(row.content)
+    .filter(([field]) => !["group", "text", "answers"].includes(field))
     .map(([field, value]) => `${field}: ${formatValue(value)}`)
     .filter((detail) => !detail.endsWith(": "));
-  const progressDetails = [
-    `stage: ${row.progress.stage} (${getStageName(row.progress.stage)})`,
-    `nextReview: ${formatReviewDate(row.progress.nextReview)}`,
-  ];
-  return [...contentDetails, ...progressDetails].join(" · ");
 }
 
 export function LibraryList() {
@@ -586,64 +591,123 @@ export function LibraryList() {
               {allFilteredSelected ? "Deselect all" : "Select all"}
             </Button>
           </ListItem>
-          {filteredRows.map((row) => (
-            <React.Fragment key={`${row.content.group}:${row.content.text}`}>
-              <ListItemButton
-                component="button"
-                type="button"
-                role="checkbox"
-                aria-checked={selectedRowKeys.has(getRowKey(row))}
-                aria-label={`Select ${row.content.text}`}
-                selected={selectedRowKeys.has(getRowKey(row))}
-                onClick={() =>
-                  toggleRowSelection(row, !selectedRowKeys.has(getRowKey(row)))
-                }
-                sx={(theme) => ({
-                  alignItems: "flex-start",
-                  px: 2,
-                  py: 1.5,
-                  gap: 2,
-                  width: "100%",
-                  borderLeft: "3px solid",
-                  borderColor: selectedRowKeys.has(getRowKey(row))
-                    ? "primary.main"
-                    : "transparent",
-                  "&.Mui-selected": { bgcolor: "action.selected" },
-                  "&.Mui-selected:hover": {
-                    bgcolor: theme.palette.action.hover,
-                  },
-                })}
-              >
-                <ListItemText
-                  sx={{ minWidth: 0 }}
-                  primary={row.content.text}
-                  secondary={formatRowDetails(row)}
-                  slotProps={{
-                    primary: {
-                      component: "div",
-                      sx: { fontWeight: 500, overflowWrap: "anywhere" },
-                    },
-                    secondary: {
-                      component: "div",
-                      sx: { mt: 0.5, overflowWrap: "anywhere" },
-                    },
-                  }}
-                />
-                <Chip
-                  size="small"
-                  color={row.isBuiltIn ? "primary" : "default"}
-                  label={row.isBuiltIn ? "Built-in" : "Imported"}
-                  aria-label={
-                    row.isBuiltIn
-                      ? "Built-in collection"
-                      : "Imported collection"
+          {filteredRows.map((row) => {
+            const answers = formatValue(row.content.answers);
+            const extraDetails = formatExtraDetails(row);
+
+            return (
+              <React.Fragment key={`${row.content.group}:${row.content.text}`}>
+                <ListItemButton
+                  component="button"
+                  type="button"
+                  role="checkbox"
+                  aria-checked={selectedRowKeys.has(getRowKey(row))}
+                  aria-label={`Select ${row.content.text}`}
+                  selected={selectedRowKeys.has(getRowKey(row))}
+                  onClick={() =>
+                    toggleRowSelection(
+                      row,
+                      !selectedRowKeys.has(getRowKey(row)),
+                    )
                   }
-                  sx={{ flexShrink: 0 }}
-                />
-              </ListItemButton>
-              <Divider component="li" />
-            </React.Fragment>
-          ))}
+                  sx={(theme) => ({
+                    alignItems: "flex-start",
+                    px: 2,
+                    py: 1.5,
+                    gap: 1.5,
+                    width: "100%",
+                    borderLeft: "3px solid",
+                    borderColor: selectedRowKeys.has(getRowKey(row))
+                      ? "primary.main"
+                      : "transparent",
+                    "&.Mui-selected": { bgcolor: "action.selected" },
+                    "&.Mui-selected:hover": {
+                      bgcolor: theme.palette.action.hover,
+                    },
+                  })}
+                >
+                  <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      component="div"
+                      variant="subtitle1"
+                      sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
+                    >
+                      {row.content.text}
+                    </Typography>
+                    {answers && (
+                      <Typography
+                        component="div"
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ overflowWrap: "anywhere" }}
+                      >
+                        {answers}
+                      </Typography>
+                    )}
+                    <Stack
+                      direction="row"
+                      spacing={0.75}
+                      useFlexGap
+                      sx={{ flexWrap: "wrap", pt: 0.25 }}
+                    >
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={row.content.group}
+                        aria-label={`Group: ${row.content.group}`}
+                      />
+                      <Chip
+                        size="small"
+                        color={getStageColor(row.progress.stage)}
+                        variant={
+                          row.progress.stage === 0 ? "outlined" : "filled"
+                        }
+                        label={getStageName(row.progress.stage)}
+                        aria-label={`Progress: ${getStageName(row.progress.stage)}`}
+                      />
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        icon={<ScheduleRounded />}
+                        label={formatReviewDate(row.progress.nextReview)}
+                        aria-label={`Next review: ${formatReviewDate(row.progress.nextReview)}`}
+                      />
+                    </Stack>
+                    {extraDetails.length > 0 && (
+                      <Typography
+                        component="div"
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ overflowWrap: "anywhere" }}
+                      >
+                        {extraDetails.join(" · ")}
+                      </Typography>
+                    )}
+                  </Stack>
+                  <Chip
+                    size="small"
+                    color={row.isBuiltIn ? "primary" : "default"}
+                    variant={row.isBuiltIn ? "filled" : "outlined"}
+                    icon={
+                      row.isBuiltIn ? (
+                        <AutoStoriesRounded />
+                      ) : (
+                        <FileUploadRounded />
+                      )
+                    }
+                    label={row.isBuiltIn ? "Built-in" : "Imported"}
+                    aria-label={
+                      row.isBuiltIn
+                        ? "Built-in collection"
+                        : "Imported collection"
+                    }
+                    sx={{ flexShrink: 0, mt: 0.25 }}
+                  />
+                </ListItemButton>
+                <Divider component="li" />
+              </React.Fragment>
+            );
+          })}
         </List>
       )}
     </>
