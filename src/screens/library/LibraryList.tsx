@@ -1,21 +1,28 @@
 import {
+  AutoStoriesRounded,
   DeleteOutlineRounded,
   FileDownloadRounded,
   FileUploadRounded,
   RestartAltRounded,
+  ScheduleRounded,
 } from "@mui/icons-material";
 import { Autocomplete, TextField } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
+import ListItemButton from "@mui/material/ListItemButton";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { deleteLibraryRows, getLibraryRows, importLibraryRows } from "../../db";
@@ -47,17 +54,20 @@ function formatReviewDate(timestamp: number) {
   });
 }
 
-function formatRowDetails(row: LibraryRow) {
-  const contentDetails = Object.entries(row.content)
-    .filter(([field]) => field !== "text")
+function getStageColor(
+  stage: number,
+): "default" | "warning" | "info" | "success" {
+  if (stage === 1) return "warning";
+  if (stage === 2) return "info";
+  if (stage >= 3) return "success";
+  return "default";
+}
+
+function formatExtraDetails(row: LibraryRow) {
+  return Object.entries(row.content)
+    .filter(([field]) => !["group", "text", "answers"].includes(field))
     .map(([field, value]) => `${field}: ${formatValue(value)}`)
     .filter((detail) => !detail.endsWith(": "));
-  const progressDetails = [
-    `stage: ${row.progress.stage} (${getStageName(row.progress.stage)})`,
-    `nextReview: ${formatReviewDate(row.progress.nextReview)}`,
-    `correctCount: ${row.progress.correctCount}`,
-  ];
-  return [...contentDetails, ...progressDetails].join(" · ");
 }
 
 export function LibraryList() {
@@ -72,6 +82,7 @@ export function LibraryList() {
 
   const importInputRef = React.useRef<HTMLInputElement | null>(null);
   const [rows, setRows] = React.useState<LibraryRow[]>([]);
+  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
@@ -105,8 +116,6 @@ export function LibraryList() {
   ).length;
   const allFilteredSelected =
     filteredRows.length > 0 && selectedFilteredCount === filteredRows.length;
-  const someFilteredSelected =
-    selectedFilteredCount > 0 && !allFilteredSelected;
   const removableRows = selectedRows.filter((row) => !row.isBuiltIn);
 
   const toggleRowSelection = (row: LibraryRow, checked: boolean) => {
@@ -157,31 +166,20 @@ export function LibraryList() {
   const exportLibrary = () => {
     try {
       setError(null);
-      if (!rows.length) {
+      const rowsToExport =
+        selectedRows.length > 0 ? selectedRows : filteredRows;
+      if (!rowsToExport.length) {
         setError("There is no library data to export.");
         return;
       }
+      const exportScope = selectedRows.length > 0 ? "selected" : selectedGroup;
       downloadCsv(
-        createCsvFromLibrary(rows),
-        `library-${new Date().toISOString().slice(0, 10)}.csv`,
+        createCsvFromLibrary(rowsToExport),
+        `library-${exportScope}-${new Date().toISOString().slice(0, 10)}.csv`,
       );
     } catch (exportError) {
-      console.error("Failed to export library:", exportError);
-      setError("Unable to export the library. See console for details.");
-    }
-  };
-
-  const exportSelectedRows = () => {
-    try {
-      setError(null);
-      if (selectedRows.length === 0) return;
-      downloadCsv(
-        createCsvFromLibrary(selectedRows),
-        `library-selected-${new Date().toISOString().slice(0, 10)}.csv`,
-      );
-    } catch (exportError) {
-      console.error("Failed to export selected library rows:", exportError);
-      setError("Unable to export the selected rows. See console for details.");
+      console.error("Failed to export library rows:", exportError);
+      setError("Unable to export library rows. See console for details.");
     }
   };
 
@@ -208,7 +206,6 @@ export function LibraryList() {
         nextProgress[group][row.content.text] = {
           stage: 0,
           nextReview: 0,
-          correctCount: 0,
         };
       }
 
@@ -311,7 +308,7 @@ export function LibraryList() {
       const importedRows = parseLibraryCsv(await file.text());
       if (
         !window.confirm(
-          `Import ${importedRows.length} library rows? Matching cards and their progress will be overwritten; other rows will be kept.`,
+          `Import ${importedRows.length} library rows? Matching imported cards and supplied progress values will be updated. Built-in collections cannot be imported; other existing rows will be kept.`,
         )
       ) {
         return;
@@ -355,101 +352,216 @@ export function LibraryList() {
           p: 1,
         }}
       >
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-          <Autocomplete
-            size="small"
-            sx={{ minWidth: 220 }}
-            options={groupFilterOptions}
-            value={selectedGroupOption}
-            getOptionLabel={(option) => option.label}
-            isOptionEqualToValue={(option, value) => option.key === value.key}
-            onChange={(_, option) => {
-              setSelectedGroup(option?.key ?? "all");
-              setSelectedRowKeys(new Set());
-            }}
-            renderInput={(params) => (
-              <TextField {...params} label="Filter by group" />
-            )}
+        <Autocomplete
+          size="small"
+          sx={{ minWidth: 220, width: { xs: "100%", sm: 220 } }}
+          options={groupFilterOptions}
+          value={selectedGroupOption}
+          getOptionLabel={(option) => option.label}
+          isOptionEqualToValue={(option, value) => option.key === value.key}
+          onChange={(_, option) => {
+            setSelectedGroup(option?.key ?? "all");
+            setSelectedRowKeys(new Set());
+          }}
+          renderInput={(params) => (
+            <TextField {...params} label="Filter by group" />
+          )}
+        />
+        <Stack
+          direction="row"
+          spacing={1}
+          useFlexGap
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+            ml: { sm: "auto" },
+          }}
+        >
+          {selectedRows.length > 0 && (
+            <>
+              <Tooltip title="Reset progress">
+                <span>
+                  <IconButton
+                    aria-label="Reset selected progress"
+                    size="small"
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 1,
+                    }}
+                    disabled={isImporting || isUpdatingSelection}
+                    onClick={() => void resetSelectedProgress()}
+                  >
+                    <RestartAltRounded fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip
+                title={
+                  removableRows.length === 0
+                    ? "Built-in cards cannot be removed"
+                    : "Remove selected imported cards"
+                }
+              >
+                <span>
+                  <IconButton
+                    aria-label="Remove selected imported cards"
+                    size="small"
+                    color="error"
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      border: 1,
+                      borderColor: "error.main",
+                      borderRadius: 1,
+                    }}
+                    disabled={
+                      removableRows.length === 0 ||
+                      isImporting ||
+                      isUpdatingSelection
+                    }
+                    onClick={() => void removeSelectedRows()}
+                  >
+                    <DeleteOutlineRounded fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </>
+          )}
+          <Tooltip title="Import CSV">
+            <span>
+              <IconButton
+                aria-label="Import CSV"
+                size="small"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                }}
+                disabled={isImporting || isUpdatingSelection}
+                onClick={() => setIsImportDialogOpen(true)}
+              >
+                <FileUploadRounded fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <input
+            ref={importInputRef}
+            type="file"
+            hidden
+            accept=".csv,text/csv"
+            onChange={(event) => void handleImport(event)}
           />
-          <Stack
-            direction="row"
-            spacing={1}
-            useFlexGap
-            sx={{ flexWrap: "wrap" }}
-          >
-            {selectedRows.length > 0 && (
-              <>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ alignSelf: "center", whiteSpace: "nowrap" }}
-                >
-                  {selectedRows.length} selected
-                </Typography>
-                <Button
-                  variant="outlined"
-                  startIcon={<RestartAltRounded />}
-                  disabled={isImporting || isUpdatingSelection}
-                  onClick={() => void resetSelectedProgress()}
-                >
-                  Reset progress
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<FileDownloadRounded />}
-                  disabled={isImporting || isUpdatingSelection}
-                  onClick={exportSelectedRows}
-                >
-                  Export selected
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<DeleteOutlineRounded />}
-                  disabled={
-                    removableRows.length === 0 ||
-                    isImporting ||
-                    isUpdatingSelection
-                  }
-                  onClick={() => void removeSelectedRows()}
-                >
-                  Remove
-                </Button>
-              </>
-            )}
-            <Button
-              variant="outlined"
-              startIcon={<FileUploadRounded />}
-              disabled={isImporting || isUpdatingSelection}
-              onClick={() => importInputRef.current?.click()}
-            >
-              Import CSV
-            </Button>
-            <input
-              ref={importInputRef}
-              type="file"
-              hidden
-              accept=".csv,text/csv"
-              onChange={(event) => void handleImport(event)}
-            />
-            <Button
-              variant="outlined"
-              startIcon={<FileDownloadRounded />}
-              onClick={exportLibrary}
-            >
-              Export CSV
-            </Button>
-          </Stack>
+          <Tooltip title="Export selected or filtered cards">
+            <span>
+              <IconButton
+                aria-label="Export selected or filtered cards"
+                size="small"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                }}
+                disabled={isImporting || isUpdatingSelection}
+                onClick={exportLibrary}
+              >
+                <FileDownloadRounded fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
         </Stack>
       </Stack>
 
+      <Dialog
+        open={isImportDialogOpen}
+        onClose={() => setIsImportDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Import a library CSV</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Required headers: group and text. Every row needs both values.
+            </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              useFlexGap
+              sx={{ flexWrap: "wrap" }}
+            >
+              <Chip color="primary" label="group · required" size="small" />
+              <Chip color="primary" label="text · required" size="small" />
+            </Stack>
+            <Typography variant="body2" color="text.secondary">
+              Optional: answers, progressStage (0–3), progressNextReview (ms),
+              and custom card fields.
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Use plain text for one answer, or a quoted JSON array for several.
+            </Typography>
+            <Box
+              sx={{
+                bgcolor: "action.hover",
+                borderRadius: 1,
+                px: 1.5,
+                py: 1,
+                overflowX: "auto",
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                Example
+              </Typography>
+              <Typography
+                component="pre"
+                variant="body2"
+                sx={{ fontFamily: "monospace", mb: 0, whiteSpace: "pre" }}
+              >
+                {
+                  'group,text,answers\nbody-parts,arm,arm\nbody-parts,leg,"[""leg"",""lower limb""]"'
+                }
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Built-in collections cannot be replaced by imports. Existing group
+              and text matches update; supplied progress values replace existing
+              values.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setIsImportDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            startIcon={<FileUploadRounded />}
+            onClick={() => {
+              setIsImportDialogOpen(false);
+              importInputRef.current?.click();
+            }}
+          >
+            Choose CSV
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {error && (
-        <Alert severity="error" sx={{ mb: 1 }}>
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 1 }}>
           {error}
         </Alert>
       )}
       {message && (
-        <Alert severity="success" sx={{ mb: 1 }}>
+        <Alert
+          severity="success"
+          onClose={() => setMessage(null)}
+          sx={{ mb: 1 }}
+        >
           {message}
         </Alert>
       )}
@@ -468,66 +580,134 @@ export function LibraryList() {
         </Typography>
       ) : (
         <List aria-label="Content library" disablePadding>
-          <ListItem sx={{ px: 2, py: 0.5 }}>
-            <Checkbox
-              checked={allFilteredSelected}
-              indeterminate={someFilteredSelected}
-              onChange={(event) =>
-                toggleFilteredSelection(event.target.checked)
-              }
-              slotProps={{
-                input: { "aria-label": "Select all filtered rows" },
-              }}
-            />
+          <ListItem sx={{ justifyContent: "space-between", px: 2, py: 0.5 }}>
             <Typography variant="body2" color="text.secondary">
-              Select all filtered rows
+              {selectedFilteredCount} / {filteredRows.length} selected
             </Typography>
+            <Button
+              size="small"
+              onClick={() => toggleFilteredSelection(!allFilteredSelected)}
+            >
+              {allFilteredSelected ? "Deselect all" : "Select all"}
+            </Button>
           </ListItem>
-          {filteredRows.map((row) => (
-            <React.Fragment key={`${row.content.group}:${row.content.text}`}>
-              <ListItem alignItems="flex-start" sx={{ px: 2, py: 1.5, gap: 2 }}>
-                <Checkbox
-                  checked={selectedRowKeys.has(getRowKey(row))}
-                  onChange={(event) =>
-                    toggleRowSelection(row, event.target.checked)
+          {filteredRows.map((row) => {
+            const answers = formatValue(row.content.answers);
+            const extraDetails = formatExtraDetails(row);
+
+            return (
+              <React.Fragment key={`${row.content.group}:${row.content.text}`}>
+                <ListItemButton
+                  component="button"
+                  type="button"
+                  role="checkbox"
+                  aria-checked={selectedRowKeys.has(getRowKey(row))}
+                  aria-label={`Select ${row.content.text}`}
+                  selected={selectedRowKeys.has(getRowKey(row))}
+                  onClick={() =>
+                    toggleRowSelection(
+                      row,
+                      !selectedRowKeys.has(getRowKey(row)),
+                    )
                   }
-                  slotProps={{
-                    input: {
-                      "aria-label": `Select ${row.content.text}`,
+                  sx={(theme) => ({
+                    alignItems: "flex-start",
+                    px: 2,
+                    py: 1.5,
+                    gap: 1.5,
+                    width: "100%",
+                    borderLeft: "3px solid",
+                    borderColor: selectedRowKeys.has(getRowKey(row))
+                      ? "primary.main"
+                      : "transparent",
+                    "&.Mui-selected": { bgcolor: "action.selected" },
+                    "&.Mui-selected:hover": {
+                      bgcolor: theme.palette.action.hover,
                     },
-                  }}
-                  sx={{ alignSelf: "center" }}
-                />
-                <ListItemText
-                  sx={{ minWidth: 0 }}
-                  primary={row.content.text}
-                  secondary={formatRowDetails(row)}
-                  slotProps={{
-                    primary: {
-                      component: "div",
-                      sx: { fontWeight: 500, overflowWrap: "anywhere" },
-                    },
-                    secondary: {
-                      component: "div",
-                      sx: { mt: 0.5, overflowWrap: "anywhere" },
-                    },
-                  }}
-                />
-                <Chip
-                  size="small"
-                  color={row.isBuiltIn ? "primary" : "default"}
-                  label={row.isBuiltIn ? "Built-in" : "Imported"}
-                  aria-label={
-                    row.isBuiltIn
-                      ? "Built-in collection"
-                      : "Imported collection"
-                  }
-                  sx={{ flexShrink: 0 }}
-                />
-              </ListItem>
-              <Divider component="li" />
-            </React.Fragment>
-          ))}
+                  })}
+                >
+                  <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      component="div"
+                      variant="subtitle1"
+                      sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
+                    >
+                      {row.content.text}
+                    </Typography>
+                    {answers && (
+                      <Typography
+                        component="div"
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ overflowWrap: "anywhere" }}
+                      >
+                        {answers}
+                      </Typography>
+                    )}
+                    <Stack
+                      direction="row"
+                      spacing={0.75}
+                      useFlexGap
+                      sx={{ flexWrap: "wrap", pt: 0.25 }}
+                    >
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={row.content.group}
+                        aria-label={`Group: ${row.content.group}`}
+                      />
+                      <Chip
+                        size="small"
+                        color={getStageColor(row.progress.stage)}
+                        variant={
+                          row.progress.stage === 0 ? "outlined" : "filled"
+                        }
+                        label={getStageName(row.progress.stage)}
+                        aria-label={`Progress: ${getStageName(row.progress.stage)}`}
+                      />
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        icon={<ScheduleRounded />}
+                        label={formatReviewDate(row.progress.nextReview)}
+                        aria-label={`Next review: ${formatReviewDate(row.progress.nextReview)}`}
+                      />
+                    </Stack>
+                    {extraDetails.length > 0 && (
+                      <Typography
+                        component="div"
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ overflowWrap: "anywhere" }}
+                      >
+                        {extraDetails.join(" · ")}
+                      </Typography>
+                    )}
+                  </Stack>
+                  <Chip
+                    size="small"
+                    color={row.isBuiltIn ? "primary" : "default"}
+                    variant={row.isBuiltIn ? "filled" : "outlined"}
+                    icon={
+                      row.isBuiltIn ? (
+                        <AutoStoriesRounded />
+                      ) : (
+                        <FileUploadRounded />
+                      )
+                    }
+                    label={row.isBuiltIn ? "Built-in" : "Imported"}
+                    aria-label={
+                      row.isBuiltIn
+                        ? "Built-in collection"
+                        : "Imported collection"
+                    }
+                    sx={{ flexShrink: 0, mt: 0.25 }}
+                  />
+                </ListItemButton>
+                <Divider component="li" />
+              </React.Fragment>
+            );
+          })}
         </List>
       )}
     </>

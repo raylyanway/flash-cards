@@ -1,7 +1,7 @@
 import { HomeRounded, PlayArrowRounded } from "@mui/icons-material";
 import {
-  Autocomplete,
   Alert,
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -75,7 +75,11 @@ export function HomeScreen() {
           <Card>
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               {groupLoadError && (
-                <Alert severity="error" sx={{ mb: 2 }}>
+                <Alert
+                  severity="error"
+                  onClose={() => setGroupLoadError(null)}
+                  sx={{ mb: 2 }}
+                >
                   {groupLoadError}
                 </Alert>
               )}

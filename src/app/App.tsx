@@ -37,8 +37,8 @@ export function App() {
             <Box
               component="main"
               sx={{
-                pt: { xs: 14, sm: 18 },
-                pb: { xs: 8, sm: 12 },
+                pt: { xs: 12 },
+                pb: { xs: 8 },
               }}
             >
               <Routes>

@@ -10,7 +10,6 @@ export type Card = {
 export type ProgressEntry = {
   stage: number;
   nextReview: number;
-  correctCount: number;
 };
 
 export type ProgressMap = Record<string, Record<string, ProgressEntry>>;

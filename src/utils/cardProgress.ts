@@ -11,7 +11,7 @@ export function initializeMissingProgress(
   const next = { ...progress };
   for (const card of cards) {
     if (!next[card.text]) {
-      next[card.text] = { stage: 0, nextReview: 0, correctCount: 0 };
+      next[card.text] = { stage: 0, nextReview: 0 };
     }
   }
   return next;
