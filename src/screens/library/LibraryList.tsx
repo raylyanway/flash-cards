@@ -375,13 +375,6 @@ export function LibraryList() {
           >
             {selectedRows.length > 0 && (
               <>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ alignSelf: "center", whiteSpace: "nowrap" }}
-                >
-                  {selectedRows.length} selected
-                </Typography>
                 <Button
                   variant="outlined"
                   startIcon={<RestartAltRounded />}
@@ -464,7 +457,10 @@ export function LibraryList() {
         </Typography>
       ) : (
         <List aria-label="Content library" disablePadding>
-          <ListItem sx={{ justifyContent: "flex-end", px: 2, py: 0.5 }}>
+          <ListItem sx={{ justifyContent: "space-between", px: 2, py: 0.5 }}>
+            <Typography variant="body2" color="text.secondary">
+              {selectedFilteredCount} / {filteredRows.length} selected
+            </Typography>
             <Button
               size="small"
               onClick={() => toggleFilteredSelection(!allFilteredSelected)}
