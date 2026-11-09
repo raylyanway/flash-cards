@@ -10,6 +10,10 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -71,6 +75,7 @@ export function LibraryList() {
 
   const importInputRef = React.useRef<HTMLInputElement | null>(null);
   const [rows, setRows] = React.useState<LibraryRow[]>([]);
+  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
@@ -391,7 +396,7 @@ export function LibraryList() {
               variant="outlined"
               startIcon={<FileUploadRounded />}
               disabled={isImporting || isUpdatingSelection}
-              onClick={() => importInputRef.current?.click()}
+              onClick={() => setIsImportDialogOpen(true)}
             >
               Import CSV
             </Button>
@@ -413,6 +418,77 @@ export function LibraryList() {
           </Stack>
         </Stack>
       </Stack>
+
+      <Dialog
+        open={isImportDialogOpen}
+        onClose={() => setIsImportDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Import a library CSV</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Required headers: group and text. Every row needs both values.
+            </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              useFlexGap
+              sx={{ flexWrap: "wrap" }}
+            >
+              <Chip color="primary" label="group · required" size="small" />
+              <Chip color="primary" label="text · required" size="small" />
+            </Stack>
+            <Typography variant="body2" color="text.secondary">
+              Optional: answers, progressStage (0–3), progressNextReview (ms),
+              and custom card fields.
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Use plain text for one answer, or a quoted JSON array for several.
+            </Typography>
+            <Box
+              sx={{
+                bgcolor: "action.hover",
+                borderRadius: 1,
+                px: 1.5,
+                py: 1,
+                overflowX: "auto",
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                Example
+              </Typography>
+              <Typography
+                component="pre"
+                variant="body2"
+                sx={{ fontFamily: "monospace", mb: 0, whiteSpace: "pre" }}
+              >
+                {
+                  'group,text,answers\nbody-parts,arm,arm\nbody-parts,leg,"[""leg"",""lower limb""]"'
+                }
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Existing group and text matches update on import; supplied
+              progress values replace existing values.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setIsImportDialogOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            startIcon={<FileUploadRounded />}
+            onClick={() => {
+              setIsImportDialogOpen(false);
+              importInputRef.current?.click();
+            }}
+          >
+            Choose CSV
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {error && (
         <Alert severity="error" sx={{ mb: 1 }}>
