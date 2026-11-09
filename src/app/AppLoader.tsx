@@ -32,6 +32,7 @@ export function AppLoader() {
         border: "rgba(8, 127, 140, 0.18)",
         dot: "rgba(8, 127, 140, 0.13)",
       };
+  const loaderFontFamily = '"DM Sans", "Noto Sans", sans-serif';
 
   return (
     <Box
@@ -47,6 +48,11 @@ export function AppLoader() {
         px: 2,
         bgcolor: colors.background,
         color: colors.text,
+        fontFamily: loaderFontFamily,
+        "& .MuiTypography-root": {
+          fontFamily: loaderFontFamily,
+          lineHeight: 1.2,
+        },
         backgroundImage: `radial-gradient(${colors.dot} 1px, transparent 1px)`,
         backgroundSize: "28px 28px",
       }}
@@ -66,7 +72,7 @@ export function AppLoader() {
             sx={{
               position: "absolute",
               inset: "16px 12px 10px 28px",
-              borderRadius: 2,
+              borderRadius: "16px",
               bgcolor: colors.secondary,
               opacity: 0.72,
               transform: "rotate(8deg)",
@@ -84,7 +90,7 @@ export function AppLoader() {
             sx={{
               position: "absolute",
               inset: "12px 30px 12px 10px",
-              borderRadius: 2,
+              borderRadius: "16px",
               bgcolor: colors.primary,
               opacity: 0.6,
               transform: "rotate(-8deg)",
@@ -108,7 +114,7 @@ export function AppLoader() {
               p: 2,
               border: "1px solid",
               borderColor: colors.border,
-              borderRadius: 2,
+              borderRadius: "16px",
               bgcolor: colors.paper,
               boxShadow: isDark
                 ? "0 18px 44px rgba(0, 0, 0, 0.3)"
@@ -130,7 +136,7 @@ export function AppLoader() {
                   height: 30,
                   display: "grid",
                   placeItems: "center",
-                  borderRadius: 1,
+                  borderRadius: "10px",
                   bgcolor: colors.primarySoft,
                   color: colors.primary,
                 }}
@@ -150,7 +156,7 @@ export function AppLoader() {
             <Box>
               <Typography
                 variant="h5"
-                sx={{ color: colors.text, fontWeight: 800 }}
+                sx={{ color: colors.text, fontSize: 30, fontWeight: 800 }}
               >
                 hello
               </Typography>
@@ -162,7 +168,7 @@ export function AppLoader() {
         </Box>
 
         <Stack spacing={0.5} sx={{ alignItems: "center" }}>
-          <Typography variant="h5" sx={{ color: colors.text, fontWeight: 750 }}>
+          <Typography variant="h5" sx={{ color: colors.text, fontWeight: 800 }}>
             Flash Cards
           </Typography>
           <Typography variant="body2" sx={{ color: colors.muted }}>
