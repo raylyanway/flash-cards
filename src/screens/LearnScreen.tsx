@@ -1,4 +1,5 @@
 import {
+  ArrowForwardRounded,
   AutoStoriesRounded,
   CheckCircleRounded,
   CloseRounded,
@@ -232,11 +233,10 @@ export function LearnScreen() {
                 : "primary.main",
           bgcolor: "background.paper",
           p: { xs: 2, sm: 3, md: 4 },
-          minHeight: { xs: 260, sm: 290, md: 320 },
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          gap: 3,
+          minHeight: { xs: 300, sm: 320, md: 340 },
+          display: "grid",
+          gridTemplateRows: "auto minmax(0, 1fr) 88px",
+          gap: { xs: 1.5, sm: 2 },
         }}
       >
         <Stack
@@ -275,11 +275,11 @@ export function LearnScreen() {
         </Stack>
 
         <Stack
-          spacing={1}
+          spacing={0}
           sx={{
             alignItems: "center",
             justifyContent: "center",
-            flex: 1,
+            minWidth: 0,
             textAlign: "center",
             py: 1,
           }}
@@ -296,44 +296,169 @@ export function LearnScreen() {
           >
             {currentCard?.text || "🎉 Great job!"}
           </Typography>
-          {learning.lastSpokenAnswer && (
-            <Box
-              sx={{
-                width: "fit-content",
-                maxWidth: "100%",
-                px: 1.5,
-                py: 1,
-                border: 1,
-                borderColor:
-                  feedbackLabel === "Correct"
-                    ? "success.main"
-                    : feedbackLabel === "Wrong"
-                      ? "error.main"
-                      : "divider",
-                borderRadius: 1,
-                bgcolor: "action.hover",
-                textAlign: "center",
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                You said
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{ fontWeight: 600, overflowWrap: "anywhere" }}
-              >
-                {learning.lastSpokenAnswer}
-              </Typography>
-            </Box>
-          )}
-          {learning.answerRevealed && currentCard && (
-            <Stack sx={{ mt: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                {getAnswerText(currentCard)}
-              </Typography>
-            </Stack>
-          )}
         </Stack>
+
+        <Box
+          sx={{
+            height: 88,
+            minWidth: 0,
+            display: "grid",
+            placeItems: "center",
+            overflow: "hidden",
+            borderTop: "1px solid",
+            borderColor:
+              learning.lastSpokenAnswer || learning.answerRevealed
+                ? "divider"
+                : "transparent",
+            pt: 1,
+          }}
+        >
+          <Stack spacing={0.25} sx={{ width: "100%", alignItems: "center" }}>
+            {learning.lastSpokenAnswer && currentCard ? (
+              learning.answerRevealed ? (
+                <Box
+                  sx={{
+                    width: "100%",
+                    maxWidth: 600,
+                    mx: "auto",
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+                    alignItems: "center",
+                    gap: { xs: 1, sm: 2.5 },
+                  }}
+                >
+                  <Stack
+                    spacing={0.5}
+                    sx={{ minWidth: 0, textAlign: "center" }}
+                  >
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      sx={{ alignItems: "center", justifyContent: "center" }}
+                    >
+                      <MicRounded
+                        sx={{ fontSize: 15, color: "text.secondary" }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        You said
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        color:
+                          feedbackLabel === "Correct"
+                            ? "success.main"
+                            : feedbackLabel === "Wrong"
+                              ? "error.main"
+                              : "text.primary",
+                        fontWeight: 600,
+                        overflowWrap: "anywhere",
+                        display: "-webkit-box",
+                        WebkitBoxOrient: "vertical",
+                        WebkitLineClamp: 2,
+                        overflow: "hidden",
+                      }}
+                    >
+                      {learning.lastSpokenAnswer}
+                    </Typography>
+                  </Stack>
+                  <ArrowForwardRounded
+                    aria-hidden="true"
+                    sx={{ color: "text.disabled", fontSize: 20 }}
+                  />
+                  <Stack
+                    spacing={0.5}
+                    sx={{ minWidth: 0, textAlign: "center" }}
+                  >
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      sx={{ alignItems: "center", justifyContent: "center" }}
+                    >
+                      <CheckCircleRounded
+                        sx={{ fontSize: 15, color: "success.main" }}
+                      />
+                      <Typography variant="caption" color="success.main">
+                        Correct answer
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        color: "success.main",
+                        fontWeight: 700,
+                        overflowWrap: "anywhere",
+                        display: "-webkit-box",
+                        WebkitBoxOrient: "vertical",
+                        WebkitLineClamp: 2,
+                        overflow: "hidden",
+                      }}
+                    >
+                      {getAnswerText(currentCard)}
+                    </Typography>
+                  </Stack>
+                </Box>
+              ) : (
+                <Stack
+                  spacing={0.5}
+                  sx={{
+                    maxWidth: 600,
+                    alignItems: "center",
+                    textAlign: "center",
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    sx={{ alignItems: "center", justifyContent: "center" }}
+                  >
+                    <MicRounded
+                      sx={{ fontSize: 15, color: "text.secondary" }}
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                      You said
+                    </Typography>
+                  </Stack>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color:
+                        feedbackLabel === "Correct"
+                          ? "success.main"
+                          : feedbackLabel === "Wrong"
+                            ? "error.main"
+                            : "text.primary",
+                      fontWeight: 600,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {learning.lastSpokenAnswer}
+                  </Typography>
+                </Stack>
+              )
+            ) : learning.answerRevealed && currentCard ? (
+              <Stack spacing={0.25} sx={{ alignItems: "center" }}>
+                <Typography variant="caption" color="text.secondary">
+                  Correct answer
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    overflowWrap: "anywhere",
+                    display: "-webkit-box",
+                    WebkitBoxOrient: "vertical",
+                    WebkitLineClamp: 2,
+                    overflow: "hidden",
+                  }}
+                >
+                  {getAnswerText(currentCard)}
+                </Typography>
+              </Stack>
+            ) : null}
+          </Stack>
+        </Box>
       </Card>
 
       <Stack spacing={1}>

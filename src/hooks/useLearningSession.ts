@@ -196,7 +196,7 @@ export function useLearningSession({
         }
         return nextEntry;
       });
-      setAnswerRevealed(true);
+      setAnswerRevealed(false);
       answerRevealedAfterWrongRef.current = true;
       setResult("✅ Correct");
       setResultClass("correct");
@@ -456,7 +456,9 @@ export function useLearningSession({
     if (!currentCard) return;
 
     if (!answerRevealed) {
-      answerRevealedAfterWrongRef.current = false;
+      if (resultClass !== "correct") {
+        answerRevealedAfterWrongRef.current = false;
+      }
       setAnswerRevealed(true);
       setResult(`Answer: ${getAnswerText(currentCard)}`);
       setResultClass("skipped");
