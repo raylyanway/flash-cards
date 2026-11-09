@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import type { Card, ProgressEntry } from "../types";
@@ -15,8 +15,6 @@ import {
   speakWord,
   type SpeechRecognitionInstance,
 } from "../utils/speech";
-
-const ANSWER_REVEAL_DELAY = 10_000;
 
 type UseLearningSessionParams = {
   nextDueTimestamp: number | null;
@@ -50,8 +48,10 @@ export function useLearningSession({
   const { pathname } = useLocation();
   const isLearnRoute = pathname === "/learn";
   const currentGroupProgress = progress[currentGroup];
+  const [answerRevealed, setAnswerRevealed] = useState(false);
 
   const skippedCardsRef = useRef(new Set<string>());
+  const answerRevealedAfterWrongRef = useRef(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const transitionTimerRef = useRef<number | null>(null);
   const progressRef = useRef(currentGroupProgress);
@@ -84,6 +84,8 @@ export function useLearningSession({
         [card.text]: updater({ ...progressRef.current[card.text] }),
       };
       progressRef.current = nextProgress;
+      setAnswerRevealed(false);
+      answerRevealedAfterWrongRef.current = false;
       await setProgress({ [currentGroup]: nextProgress });
       return nextProgress[card.text];
     },
@@ -205,11 +207,13 @@ export function useLearningSession({
 
       if (nextAttempts >= MAX_WRONG_ATTEMPTS) {
         skippedCardsRef.current.add(card.text);
+        answerRevealedAfterWrongRef.current = true;
+        setAnswerRevealed(true);
         setResult(`❌ Wrong - correct answer: ${getAnswerText(card)}`);
         setResultClass("wrong");
-        setRecognizedText("Moving to another card...");
-        setSkipEnabled(false);
-        scheduleNextCard(ANSWER_REVEAL_DELAY);
+        setRecognizedText("Answer revealed. Press Skip to continue.");
+        setSkipEnabled(true);
+        stopListening();
         return;
       }
 
@@ -221,7 +225,15 @@ export function useLearningSession({
         );
       }
     },
-    [scheduleNextCard, updateProgressForCard],
+    [
+      setAnswerRevealed,
+      setRecognizedText,
+      setResult,
+      setResultClass,
+      setSkipEnabled,
+      stopListening,
+      updateProgressForCard,
+    ],
   );
 
   const checkAnswerRef = useRef<(text: string) => void>(() => undefined);
@@ -279,9 +291,35 @@ export function useLearningSession({
       }
     };
     recognition.onerror = (event) => {
-      if (event.error === "no-speech") return;
+      if (event.error === "no-speech" || event.error === "aborted") return;
       console.log("Speech error:", event.error);
-      setRecognizedText(`Error: ${event.error}`);
+      listeningRef.current = false;
+      resumeListeningAfterAnnouncementRef.current = false;
+      setListening(false);
+
+      if (event.error === "network") {
+        setRecognizedText(
+          "Speech recognition is unavailable in this browser session. Try opening the app in Chrome or Edge.",
+        );
+        return;
+      }
+
+      if (
+        event.error === "not-allowed" ||
+        event.error === "service-not-allowed"
+      ) {
+        setRecognizedText(
+          "Microphone access is blocked. Allow it in your browser settings and try again.",
+        );
+        return;
+      }
+
+      if (event.error === "audio-capture") {
+        setRecognizedText("No microphone was found. Check your input device.");
+        return;
+      }
+
+      setRecognizedText(`Speech recognition error: ${event.error}`);
     };
     recognition.onend = () => {
       if (listeningRef.current) {
@@ -331,6 +369,8 @@ export function useLearningSession({
 
   const startLearningSession = () => {
     sessionActiveRef.current = true;
+    setAnswerRevealed(false);
+    answerRevealedAfterWrongRef.current = false;
     setResult("");
     setRecognizedText("");
     skippedCardsRef.current.clear();
@@ -339,6 +379,8 @@ export function useLearningSession({
 
   const stopLearningSession = () => {
     sessionActiveRef.current = false;
+    setAnswerRevealed(false);
+    answerRevealedAfterWrongRef.current = false;
     if (transitionTimerRef.current) {
       window.clearTimeout(transitionTimerRef.current);
       transitionTimerRef.current = null;
@@ -387,21 +429,34 @@ export function useLearningSession({
 
   const skipCurrentCard = async () => {
     if (!currentCard) return;
-    await updateProgressForCard(currentCard, (entry) => ({
-      ...entry,
-      stage: entry.stage > 0 ? entry.stage - 1 : entry.stage,
-      nextReview: Date.now(),
-    }));
+
+    if (!answerRevealed) {
+      answerRevealedAfterWrongRef.current = false;
+      setAnswerRevealed(true);
+      setResult(`Answer: ${getAnswerText(currentCard)}`);
+      setResultClass("skipped");
+      setRecognizedText("Answer revealed. Press Skip to continue.");
+      setSkipEnabled(true);
+      stopListening();
+      return;
+    }
+
+    if (!answerRevealedAfterWrongRef.current) {
+      await updateProgressForCard(currentCard, (entry) => ({
+        ...entry,
+        stage: entry.stage > 0 ? entry.stage - 1 : entry.stage,
+        nextReview: Date.now(),
+      }));
+    }
     skippedCardsRef.current.add(currentCard.text);
-    setResult(`⏭ Skipped - correct answer: ${getAnswerText(currentCard)}`);
-    setResultClass("skipped");
     setSkipEnabled(false);
     setRecognizedText("Moving to another card...");
-    scheduleNextCard(5000);
+    selectNextCard();
   };
 
   return {
     listening,
+    answerRevealed,
     recognizedText,
     repeatCurrentCard,
     result,

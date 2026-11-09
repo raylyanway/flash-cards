@@ -4,6 +4,7 @@ import {
   ReplayRounded,
   SkipNextRounded,
   StopRounded,
+  VisibilityRounded,
 } from "@mui/icons-material";
 import { Button, Card, Chip, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo } from "react";
@@ -136,7 +137,9 @@ export function LearnScreen() {
           variant={learning.listening ? "contained" : "outlined"}
           color={learning.listening ? "error" : "primary"}
           onClick={learning.toggleListening}
-          disabled={!learning.speechSupported || !currentCard}
+          disabled={
+            !learning.speechSupported || !currentCard || learning.answerRevealed
+          }
           startIcon={learning.listening ? <PauseRounded /> : <MicRounded />}
           sx={{ flex: 1 }}
         >
@@ -155,10 +158,16 @@ export function LearnScreen() {
           variant="outlined"
           onClick={learning.skipCurrentCard}
           disabled={!currentCard || !learning.skipEnabled}
-          startIcon={<SkipNextRounded />}
+          startIcon={
+            learning.answerRevealed ? (
+              <SkipNextRounded />
+            ) : (
+              <VisibilityRounded />
+            )
+          }
           sx={{ flex: 1 }}
         >
-          Skip
+          {learning.answerRevealed ? "Skip" : "Show answer"}
         </Button>
       </Stack>
     </Stack>
