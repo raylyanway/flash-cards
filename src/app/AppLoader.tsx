@@ -52,6 +52,7 @@ export function AppLoader() {
         "& .MuiTypography-root": {
           fontFamily: loaderFontFamily,
           lineHeight: 1.2,
+          letterSpacing: 0,
         },
         backgroundImage: `radial-gradient(${colors.dot} 1px, transparent 1px)`,
         backgroundSize: "28px 28px",
