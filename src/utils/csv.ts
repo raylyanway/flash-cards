@@ -62,19 +62,17 @@ export function createCsvFromProgress(
   progressData: ProgressMap,
   cards: Card[],
 ) {
-  const headers = ["text", "stage", "nextReview", "correctCount"];
+  const headers = ["text", "stage", "nextReview"];
   return papaparse.unparse(
     cards.map((card) => {
       const progressEntry = progressData[card.group ?? ""]?.[card.text] || {
         stage: 0,
         nextReview: 0,
-        correctCount: 0,
       };
       return {
         text: card.text,
         stage: progressEntry.stage,
         nextReview: progressEntry.nextReview,
-        correctCount: progressEntry.correctCount,
       };
     }),
     { columns: headers },
@@ -94,7 +92,6 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
     "answers",
     "progressStage",
     "progressNextReview",
-    "progressCorrectCount",
   ];
   const headers = [
     ...preferredOrder.filter(
@@ -102,7 +99,6 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
         key === "isBuiltIn" ||
         key === "progressStage" ||
         key === "progressNextReview" ||
-        key === "progressCorrectCount" ||
         contentFields.has(key),
     ),
     ...[...contentFields].filter((key) => !preferredOrder.includes(key)),
@@ -115,7 +111,6 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
         isBuiltIn,
         progressStage: progress.stage,
         progressNextReview: progress.nextReview,
-        progressCorrectCount: progress.correctCount,
       };
       return Object.fromEntries(
         headers.map((key) => [key, serializeLibraryCell(row[key]) ?? ""]),
@@ -191,7 +186,6 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
     const progressFields = [
       ["stage", "progressStage"],
       ["nextReview", "progressNextReview"],
-      ["correctCount", "progressCorrectCount"],
     ] as const;
     for (const [field, csvField] of progressFields) {
       const value = row[csvField];

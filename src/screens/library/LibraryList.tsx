@@ -55,7 +55,6 @@ function formatRowDetails(row: LibraryRow) {
   const progressDetails = [
     `stage: ${row.progress.stage} (${getStageName(row.progress.stage)})`,
     `nextReview: ${formatReviewDate(row.progress.nextReview)}`,
-    `correctCount: ${row.progress.correctCount}`,
   ];
   return [...contentDetails, ...progressDetails].join(" · ");
 }
@@ -206,7 +205,6 @@ export function LibraryList() {
         nextProgress[group][row.content.text] = {
           stage: 0,
           nextReview: 0,
-          correctCount: 0,
         };
       }
 

@@ -172,7 +172,7 @@ export function useLearningSession({
   const markCorrect = useCallback(
     async (card: Card) => {
       await updateProgressForCard(card, (entry) => {
-        const nextEntry = { ...entry, correctCount: entry.correctCount + 1 };
+        const nextEntry = { ...entry };
         if (nextEntry.stage === 0) {
           nextEntry.stage = 1;
           nextEntry.nextReview = Date.now() + REVIEW_1_DELAY;

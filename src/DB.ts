@@ -96,7 +96,6 @@ export async function importLibraryRows(rows: LibraryImportRow[]) {
       const existing = progressByGroup[row.group][row.card.text] ?? {
         stage: 0,
         nextReview: 0,
-        correctCount: 0,
       };
       progressByGroup[row.group][row.card.text] = {
         ...existing,
@@ -173,7 +172,7 @@ async function fetchAndSeed(currentGroup: string) {
     data.map((item) => ({
       ...item,
       group: currentGroup,
-      learningProgress: { stage: 0, nextReview: 0, correctCount: 0 },
+      learningProgress: { stage: 0, nextReview: 0 },
     })),
   );
 }
@@ -297,7 +296,6 @@ export async function importContent(group: string, cards: Card[]) {
         learningProgress: existingProgress.get(item.text) ?? {
           stage: 0,
           nextReview: 0,
-          correctCount: 0,
         },
       })),
     );
