@@ -1,12 +1,21 @@
 import {
+  CloseRounded,
   MicRounded,
   PauseRounded,
   ReplayRounded,
   SkipNextRounded,
-  StopRounded,
   VisibilityRounded,
 } from "@mui/icons-material";
-import { Button, Card, Chip, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  Chip,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLearningSession } from "../hooks/useLearningSession";
@@ -47,7 +56,11 @@ export function LearnScreen() {
 
   return (
     <Stack spacing={3}>
-      <Stack direction="row">
+      <Stack
+        direction="row"
+        spacing={1.5}
+        sx={{ alignItems: "center", width: "100%" }}
+      >
         <Typography variant="overline" color="text.secondary">
           Learning session
         </Typography>
@@ -57,6 +70,26 @@ export function LearnScreen() {
           variant="outlined"
           sx={{ fontWeight: 700 }}
         />
+        <Box sx={{ flex: 1 }} />
+        <Tooltip title="Stop learning">
+          <IconButton
+            aria-label="Stop learning"
+            color="error"
+            onClick={() => {
+              learning.stopLearningSession();
+              navigate("/");
+            }}
+            sx={{
+              width: 40,
+              height: 40,
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+            }}
+          >
+            <CloseRounded />
+          </IconButton>
+        </Tooltip>
       </Stack>
 
       <Card
@@ -121,18 +154,6 @@ export function LearnScreen() {
       </Stack>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-        <Button
-          variant="outlined"
-          color="error"
-          onClick={() => {
-            learning.stopLearningSession();
-            navigate("/");
-          }}
-          startIcon={<StopRounded />}
-          sx={{ flex: 1 }}
-        >
-          Stop learning
-        </Button>
         <Button
           variant={learning.listening ? "contained" : "outlined"}
           color={learning.listening ? "error" : "primary"}
