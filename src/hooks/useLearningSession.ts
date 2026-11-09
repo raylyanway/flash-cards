@@ -49,6 +49,7 @@ export function useLearningSession({
   const isLearnRoute = pathname === "/learn";
   const currentGroupProgress = progress[currentGroup];
   const [answerRevealed, setAnswerRevealed] = useState(false);
+  const [lastSpokenAnswer, setLastSpokenAnswer] = useState("");
 
   const skippedCardsRef = useRef(new Set<string>());
   const answerRevealedAfterWrongRef = useRef(false);
@@ -84,8 +85,6 @@ export function useLearningSession({
         [card.text]: updater({ ...progressRef.current[card.text] }),
       };
       progressRef.current = nextProgress;
-      setAnswerRevealed(false);
-      answerRevealedAfterWrongRef.current = false;
       await setProgress({ [currentGroup]: nextProgress });
       return nextProgress[card.text];
     },
@@ -141,6 +140,9 @@ export function useLearningSession({
 
     if (dueCards.length === 0) {
       stopListening();
+      setAnswerRevealed(false);
+      setLastSpokenAnswer("");
+      answerRevealedAfterWrongRef.current = false;
       setCurrentCard(null);
       setResult("");
       setSkipEnabled(false);
@@ -189,6 +191,7 @@ export function useLearningSession({
       });
       setResult("✅ Correct");
       setResultClass("correct");
+      setLastSpokenAnswer("");
       scheduleNextCard(1500);
     },
     [scheduleNextCard, updateProgressForCard],
@@ -287,6 +290,7 @@ export function useLearningSession({
         .trim();
 
       if (finalTranscript) {
+        setLastSpokenAnswer(finalTranscript);
         checkAnswerRef.current(finalTranscript);
       }
     };
@@ -370,6 +374,7 @@ export function useLearningSession({
   const startLearningSession = () => {
     sessionActiveRef.current = true;
     setAnswerRevealed(false);
+    setLastSpokenAnswer("");
     answerRevealedAfterWrongRef.current = false;
     setResult("");
     setRecognizedText("");
@@ -380,6 +385,7 @@ export function useLearningSession({
   const stopLearningSession = () => {
     sessionActiveRef.current = false;
     setAnswerRevealed(false);
+    setLastSpokenAnswer("");
     answerRevealedAfterWrongRef.current = false;
     if (transitionTimerRef.current) {
       window.clearTimeout(transitionTimerRef.current);
@@ -402,6 +408,9 @@ export function useLearningSession({
     }
     listeningRef.current = true;
     resumeListeningAfterAnnouncementRef.current = false;
+    setLastSpokenAnswer("");
+    setResult("");
+    setResultClass("");
     setListening(true);
     setRecognizedText(`🎤 Listening... (${getAttemptsText(wrongAttempts)})`);
     try {
@@ -457,6 +466,7 @@ export function useLearningSession({
   return {
     listening,
     answerRevealed,
+    lastSpokenAnswer,
     recognizedText,
     repeatCurrentCard,
     result,

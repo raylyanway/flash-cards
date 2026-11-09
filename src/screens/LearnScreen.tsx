@@ -183,6 +183,36 @@ export function LearnScreen() {
           >
             {currentCard?.text || "🎉 Great job!"}
           </Typography>
+          {learning.lastSpokenAnswer && (
+            <Box
+              sx={{
+                width: "fit-content",
+                maxWidth: "100%",
+                px: 1.5,
+                py: 1,
+                border: 1,
+                borderColor:
+                  feedbackLabel === "Correct"
+                    ? "success.main"
+                    : feedbackLabel === "Wrong"
+                      ? "error.main"
+                      : "divider",
+                borderRadius: 1,
+                bgcolor: "action.hover",
+                textAlign: "center",
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                You said
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: 600, overflowWrap: "anywhere" }}
+              >
+                {learning.lastSpokenAnswer}
+              </Typography>
+            </Box>
+          )}
           {learning.answerRevealed && currentCard && (
             <Stack sx={{ mt: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
