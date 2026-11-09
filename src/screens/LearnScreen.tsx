@@ -1,4 +1,5 @@
 import {
+  AutoStoriesRounded,
   CheckCircleRounded,
   CloseRounded,
   ErrorOutlineRounded,
@@ -65,43 +66,155 @@ export function LearnScreen() {
       : learning.resultClass === "wrong"
         ? "Wrong"
         : null;
+  const progressStages = [
+    {
+      key: "new",
+      label: "New",
+      count: stageCounts.newCount,
+      color: "text.disabled",
+    },
+    {
+      key: "review1",
+      label: "Review ×1",
+      count: stageCounts.review1Count,
+      color: "warning.main",
+    },
+    {
+      key: "review2",
+      label: "Review ×2",
+      count: stageCounts.review2Count,
+      color: "primary.main",
+    },
+    {
+      key: "learned",
+      label: "Learned",
+      count: stageCounts.learnedCount,
+      color: "success.main",
+    },
+  ];
+  const progressTotal = progressStages.reduce(
+    (total, stage) => total + stage.count,
+    0,
+  );
+  const masteredPercent =
+    cards.length === 0
+      ? 0
+      : Math.round((stageCounts.learnedCount * 100) / cards.length);
 
   return (
     <Stack spacing={3}>
       <Stack
-        direction="row"
         spacing={1.5}
-        sx={{ alignItems: "center", width: "100%" }}
+        component="section"
+        aria-label="Learning progress by stage"
+        sx={{ width: "100%" }}
       >
-        <Typography variant="overline" color="text.secondary">
-          Learning session
-        </Typography>
-        <Chip
-          label={`${stageCounts.learnedCount} / ${cards.length} learned`}
-          color="primary"
-          variant="outlined"
-          sx={{ fontWeight: 700 }}
-        />
-        <Box sx={{ flex: 1 }} />
-        <Tooltip title="Stop learning">
-          <IconButton
-            aria-label="Stop learning"
-            color="error"
-            onClick={() => {
-              learning.stopLearningSession();
-              navigate("/");
-            }}
-            sx={{
-              width: 40,
-              height: 40,
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-            }}
-          >
-            <CloseRounded />
-          </IconButton>
-        </Tooltip>
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{ alignItems: "center", width: "100%" }}
+        >
+          <AutoStoriesRounded color="primary" />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 750 }}>
+              Learning path
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {cards.length} cards across four stages
+            </Typography>
+          </Box>
+          <Chip
+            size="small"
+            color="success"
+            variant="outlined"
+            label={`${masteredPercent}% mastered`}
+            sx={{ fontWeight: 700 }}
+          />
+          <Tooltip title="Stop learning">
+            <IconButton
+              aria-label="Stop learning"
+              color="error"
+              onClick={() => {
+                learning.stopLearningSession();
+                navigate("/");
+              }}
+              sx={{
+                width: 40,
+                height: 40,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+              }}
+            >
+              <CloseRounded />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+
+        <Box
+          role="img"
+          aria-label={progressStages
+            .map(({ label, count }) => `${label}: ${count}`)
+            .join(", ")}
+          sx={{
+            display: "flex",
+            gap: 0.5,
+            height: 10,
+            overflow: "hidden",
+            borderRadius: 999,
+            bgcolor: "action.hover",
+          }}
+        >
+          {progressStages.map(
+            (stage) =>
+              stage.count > 0 && (
+                <Box
+                  key={stage.key}
+                  sx={{
+                    flexGrow: stage.count,
+                    flexBasis: 0,
+                    minWidth: 0,
+                    bgcolor: stage.color,
+                    borderRadius: 999,
+                  }}
+                />
+              ),
+          )}
+          {progressTotal === 0 && <Box sx={{ flex: 1, bgcolor: "divider" }} />}
+        </Box>
+
+        <Stack
+          direction="row"
+          spacing={{ xs: 1.5, sm: 3 }}
+          useFlexGap
+          sx={{ flexWrap: "wrap", rowGap: 1 }}
+        >
+          {progressStages.map((stage) => (
+            <Stack
+              key={stage.key}
+              direction="row"
+              spacing={0.75}
+              sx={{ alignItems: "center" }}
+            >
+              <Box
+                aria-hidden="true"
+                sx={{
+                  width: 8,
+                  height: 8,
+                  flex: "none",
+                  borderRadius: "50%",
+                  bgcolor: stage.color,
+                }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {stage.label}
+              </Typography>
+              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                {stage.count}
+              </Typography>
+            </Stack>
+          ))}
+        </Stack>
       </Stack>
 
       <Card
