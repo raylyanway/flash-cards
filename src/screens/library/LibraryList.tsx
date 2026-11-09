@@ -154,31 +154,20 @@ export function LibraryList() {
   const exportLibrary = () => {
     try {
       setError(null);
-      if (!rows.length) {
+      const rowsToExport =
+        selectedRows.length > 0 ? selectedRows : filteredRows;
+      if (!rowsToExport.length) {
         setError("There is no library data to export.");
         return;
       }
+      const exportScope = selectedRows.length > 0 ? "selected" : selectedGroup;
       downloadCsv(
-        createCsvFromLibrary(rows),
-        `library-${new Date().toISOString().slice(0, 10)}.csv`,
+        createCsvFromLibrary(rowsToExport),
+        `library-${exportScope}-${new Date().toISOString().slice(0, 10)}.csv`,
       );
     } catch (exportError) {
-      console.error("Failed to export library:", exportError);
-      setError("Unable to export the library. See console for details.");
-    }
-  };
-
-  const exportSelectedRows = () => {
-    try {
-      setError(null);
-      if (selectedRows.length === 0) return;
-      downloadCsv(
-        createCsvFromLibrary(selectedRows),
-        `library-selected-${new Date().toISOString().slice(0, 10)}.csv`,
-      );
-    } catch (exportError) {
-      console.error("Failed to export selected library rows:", exportError);
-      setError("Unable to export the selected rows. See console for details.");
+      console.error("Failed to export library rows:", exportError);
+      setError("Unable to export library rows. See console for details.");
     }
   };
 
@@ -385,14 +374,6 @@ export function LibraryList() {
                 </Button>
                 <Button
                   variant="outlined"
-                  startIcon={<FileDownloadRounded />}
-                  disabled={isImporting || isUpdatingSelection}
-                  onClick={exportSelectedRows}
-                >
-                  Export selected
-                </Button>
-                <Button
-                  variant="outlined"
                   color="error"
                   startIcon={<DeleteOutlineRounded />}
                   disabled={
@@ -424,9 +405,10 @@ export function LibraryList() {
             <Button
               variant="outlined"
               startIcon={<FileDownloadRounded />}
+              disabled={isImporting || isUpdatingSelection}
               onClick={exportLibrary}
             >
-              Export CSV
+              Export
             </Button>
           </Stack>
         </Stack>
