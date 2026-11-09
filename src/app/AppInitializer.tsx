@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { useTheme } from "../hooks/useTheme";
 import { useAppStore } from "../store/useAppStore";
 import { AppLoader } from "./AppLoader";
@@ -13,6 +13,12 @@ export function AppInitializer({ children }: AppInitializerProps) {
   const setNow = useAppStore((state) => state.setNow);
   const _hasHydrated = useAppStore((s) => s._hasHydrated);
   const startupAttempted = useRef(false);
+  const [minimumLoaderElapsed, setMinimumLoaderElapsed] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setMinimumLoaderElapsed(true), 900);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!_hasHydrated || initialized || startupAttempted.current) {
@@ -32,7 +38,7 @@ export function AppInitializer({ children }: AppInitializerProps) {
     return () => window.clearInterval(timer);
   }, [setNow]);
 
-  if (!initialized) return <AppLoader />;
+  if (!initialized || !minimumLoaderElapsed) return <AppLoader />;
 
   return <>{children}</>;
 }
