@@ -171,9 +171,6 @@ export function LearnScreen() {
             py: 1,
           }}
         >
-          <Typography variant="overline" color="text.secondary">
-            Translate this
-          </Typography>
           <Typography
             component="h2"
             sx={{
@@ -187,10 +184,7 @@ export function LearnScreen() {
             {currentCard?.text || "🎉 Great job!"}
           </Typography>
           {learning.answerRevealed && currentCard && (
-            <Stack spacing={0.25} sx={{ mt: 1 }}>
-              <Typography variant="caption" color="text.secondary">
-                Answer
-              </Typography>
+            <Stack sx={{ mt: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 {getAnswerText(currentCard)}
               </Typography>
