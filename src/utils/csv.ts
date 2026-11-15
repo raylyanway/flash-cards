@@ -7,6 +7,7 @@ import type {
   ParseOptions,
   ProgressMap,
 } from "../types";
+import { MASTERED_STAGE } from "./cardProgress";
 
 export function downloadCsv(csvText: string, fileName: string) {
   const blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
@@ -198,7 +199,7 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
       }
       progress[field] = Number(value);
     }
-    if (progress.stage !== undefined && progress.stage > 3) {
+    if (progress.stage !== undefined && progress.stage > MASTERED_STAGE) {
       throw new Error(`CSV row ${index + 2} has an invalid stage value.`);
     }
 
