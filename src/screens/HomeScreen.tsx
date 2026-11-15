@@ -18,7 +18,11 @@ import { useNavigate } from "react-router-dom";
 import { MetricCard } from "../components/MetricCard";
 import { PageHeader } from "../components/PageHeader";
 import { useAppStore } from "../store/useAppStore";
-import { getCompletePercent, getNextReviewLabel } from "../utils/cardProgress";
+import {
+  getCompletePercent,
+  getNextReviewLabel,
+  MASTERED_STAGE,
+} from "../utils/cardProgress";
 
 export function HomeScreen() {
   const cards = useAppStore((state) => state.cards);
@@ -51,14 +55,16 @@ export function HomeScreen() {
   const totalCards = cards.length;
   const learnedCount = useMemo(
     () =>
-      Object.values(currentGroupProgress).filter((p) => p.stage === 3).length,
+      Object.values(currentGroupProgress).filter(
+        (p) => p.stage === MASTERED_STAGE,
+      ).length,
     [currentGroupProgress],
   );
 
   const dueCount = useMemo(() => {
     const nowTs = Date.now();
     return Object.values(currentGroupProgress).filter(
-      (p) => p.stage < 3 && p.nextReview <= nowTs,
+      (p) => p.stage < MASTERED_STAGE && p.nextReview <= nowTs,
     ).length;
   }, [currentGroupProgress, now]);
 
