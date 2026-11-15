@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStageBadgeColor, StatusBadge } from "../components/StatusBadge";
 import { useLearningSession } from "../hooks/useLearningSession";
@@ -44,10 +44,6 @@ export function LearnScreen() {
     [cards, currentGroupProgress],
   );
   const learning = useLearningSession({ nextDueTimestamp });
-
-  useEffect(() => {
-    learning.startLearningSession();
-  }, []);
 
   const waitingMessage =
     nextDueTimestamp === null
