@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
-import type { ProgressEntry } from "../types";
-import { REVIEW_1_DELAY, REVIEW_2_DELAY } from "../utils/cardProgress";
+import { gradeProgress, MASTERED_STAGE } from "../utils/cardProgress";
 import { speakWord } from "../utils/speech";
 
 type UseLearningSessionParams = {
@@ -45,7 +44,7 @@ export function useLearningSession({
       const cardProgress = progressRef.current[card.text];
       return Boolean(
         cardProgress &&
-        cardProgress.stage < 3 &&
+        cardProgress.stage < MASTERED_STAGE &&
         cardProgress.nextReview <= Date.now(),
       );
     });
@@ -119,31 +118,13 @@ export function useLearningSession({
   const gradeAnswer = async (correct: boolean) => {
     if (!currentCard || !answerRevealed || gradingRef.current) return;
     gradingRef.current = true;
-    const updateEntry = (entry: ProgressEntry): ProgressEntry => {
-      if (!correct) {
-        return {
-          ...entry,
-          stage: Math.max(0, entry.stage - 1),
-          nextReview: Date.now() + REVIEW_1_DELAY,
-        };
-      }
-      const stage = Math.min(3, entry.stage + 1);
-      return {
-        ...entry,
-        stage,
-        nextReview:
-          stage === 1
-            ? Date.now() + REVIEW_1_DELAY
-            : stage === 2
-              ? Date.now() + REVIEW_2_DELAY
-              : 0,
-      };
-    };
     const nextProgress = {
       ...progressRef.current,
-      [currentCard.text]: updateEntry({
-        ...progressRef.current[currentCard.text],
-      }),
+      [currentCard.text]: gradeProgress(
+        progressRef.current[currentCard.text],
+        correct,
+        Date.now(),
+      ),
     };
     progressRef.current = nextProgress;
     setResultClass(correct ? "correct" : "wrong");
