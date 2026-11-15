@@ -23,6 +23,7 @@ import {
   getAnswerText,
   getNextDueTimestamp,
   getStageName,
+  LEARNING_STAGES,
 } from "../utils/cardProgress";
 
 export function LearnScreen() {
@@ -49,7 +50,7 @@ export function LearnScreen() {
 
   const waitingMessage =
     nextDueTimestamp === null
-      ? "All cards learned 🎉"
+      ? "All cards mastered 🎉"
       : `Next review in ${Math.max(0, Math.ceil((nextDueTimestamp - now) / 1000))} sec`;
   const currentStage = currentCard
     ? (currentGroupProgress[currentCard.text]?.stage ?? 0)
@@ -60,32 +61,15 @@ export function LearnScreen() {
       : learning.resultClass === "wrong"
         ? "Wrong"
         : null;
-  const progressStages = [
-    {
-      key: "new",
-      label: "New",
-      count: stageCounts.newCount,
-      color: "text.disabled",
-    },
-    {
-      key: "review1",
-      label: "Review ×1",
-      count: stageCounts.review1Count,
-      color: "warning.main",
-    },
-    {
-      key: "review2",
-      label: "Review ×2",
-      count: stageCounts.review2Count,
-      color: "primary.main",
-    },
-    {
-      key: "learned",
-      label: "Learned",
-      count: stageCounts.learnedCount,
-      color: "success.main",
-    },
-  ];
+  const progressStages = LEARNING_STAGES.map((stage, index) => {
+    const color = getStageBadgeColor(index);
+    return {
+      key: stage.label,
+      label: stage.label,
+      count: stageCounts[index],
+      color: color === "default" ? "grey.600" : `${color}.main`,
+    };
+  });
   const progressTotal = progressStages.reduce(
     (total, stage) => total + stage.count,
     0,
