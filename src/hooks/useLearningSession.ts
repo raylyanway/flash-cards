@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import { gradeProgress, MASTERED_STAGE } from "../utils/cardProgress";
 import { speakWord } from "../utils/speech";
@@ -20,7 +19,6 @@ export function useLearningSession({
   const progress = useAppStore((state) => state.progress);
   const setCurrentCard = useAppStore((state) => state.setCurrentCard);
   const setProgress = useAppStore((state) => state.setProgress);
-  const { pathname } = useLocation();
   const currentGroupProgress = progress[currentGroup];
   const [answerRevealed, setAnswerRevealed] = useState(false);
   const [resultClass, setResultClass] = useState<"" | "correct" | "wrong">("");
@@ -66,11 +64,13 @@ export function useLearningSession({
   }, [cards, currentGroupProgress]);
 
   useEffect(() => {
-    if (pathname !== "/learn" || currentCard) return;
+    if (currentCard) return;
     if (nextDueTimestamp !== null && nextDueTimestamp <= now) selectNextCard();
-  }, [currentCard, pathname, nextDueTimestamp, now, selectNextCard]);
+  }, [currentCard, nextDueTimestamp, now, selectNextCard]);
 
   useEffect(() => {
+    sessionActiveRef.current = true;
+    selectNextCard();
     return () => {
       sessionActiveRef.current = false;
       if (transitionTimerRef.current !== null) {
@@ -78,12 +78,7 @@ export function useLearningSession({
       }
       stopSpeaking();
     };
-  }, [stopSpeaking]);
-
-  const startLearningSession = () => {
-    sessionActiveRef.current = true;
-    selectNextCard();
-  };
+  }, [selectNextCard, stopSpeaking]);
 
   const stopLearningSession = () => {
     sessionActiveRef.current = false;
@@ -144,7 +139,6 @@ export function useLearningSession({
     gradeAnswer,
     pronounceCurrentCard,
     revealAnswer,
-    startLearningSession,
     stopLearningSession,
   };
 }
