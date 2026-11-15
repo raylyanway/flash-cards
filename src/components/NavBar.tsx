@@ -74,10 +74,10 @@ export function NavBar() {
         color: "text.primary",
         bgcolor: "transparent",
         backgroundImage: "none",
-        mt: "1.5rem",
+        mt: (theme) => theme.spacing(2),
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <StyledToolbar variant="dense" disableGutters>
           <Box
             sx={{

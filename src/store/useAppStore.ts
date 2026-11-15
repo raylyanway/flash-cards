@@ -39,16 +39,9 @@ export type AppState = {
   cards: Card[];
   currentCard: Card | null;
   currentGroup: string;
-  listening: boolean;
   now: number;
   progress: ProgressMap;
-  recognizedText: string;
-  result: string;
-  resultClass: string;
-  skipEnabled: boolean;
-  speechSupported: boolean;
   theme: ThemePreference;
-  wrongAttempts: number;
   libraryNavOpen: boolean;
 };
 
@@ -60,16 +53,9 @@ export type AppActions = {
   setCards: (cards: Card[]) => void;
   setCurrentCard: (card: Card | null) => void;
   setCurrentGroup: (group: string) => void;
-  setListening: (listening: boolean) => void;
   setNow: (now: number) => void;
   setProgress: (progress: ProgressMap) => Promise<void>;
-  setRecognizedText: (text: string) => void;
-  setResult: (result: string) => void;
-  setResultClass: (resultClass: string) => void;
-  setSkipEnabled: (enabled: boolean) => void;
-  setSpeechSupported: (supported: boolean) => void;
   setTheme: (theme: ThemePreference) => void;
-  setWrongAttempts: (attempts: number) => void;
   setLibraryNavOpen: (open: boolean) => void;
   setHasHydrated: (hydrated: boolean) => void;
 };
@@ -83,16 +69,9 @@ const DEFAULT_STATE: AppState = {
   cards: [],
   currentCard: null,
   currentGroup: DEFAULT_GROUP,
-  listening: false,
   now: Date.now(),
   progress: {},
-  recognizedText: "Press Start Listening",
-  result: "",
-  resultClass: "",
-  skipEnabled: true,
-  speechSupported: false,
   theme: DEFAULT_THEME,
-  wrongAttempts: 0,
   libraryNavOpen: false,
 };
 
@@ -159,7 +138,6 @@ export const useAppStore = create<AppStore>()(
       setCards: (cards) => set({ cards }),
       setCurrentCard: (currentCard) => set({ currentCard }),
       setCurrentGroup: (group) => set({ currentGroup: group }),
-      setListening: (listening) => set({ listening }),
       setNow: (now) => set({ now }),
       setProgress: async (progress) => {
         await Promise.all(
@@ -169,13 +147,7 @@ export const useAppStore = create<AppStore>()(
         );
         set((prev) => ({ progress: { ...prev.progress, ...progress } }));
       },
-      setRecognizedText: (recognizedText) => set({ recognizedText }),
-      setResult: (result) => set({ result }),
-      setResultClass: (resultClass) => set({ resultClass }),
-      setSkipEnabled: (skipEnabled) => set({ skipEnabled }),
-      setSpeechSupported: (speechSupported) => set({ speechSupported }),
       setTheme: (theme) => set({ theme }),
-      setWrongAttempts: (wrongAttempts) => set({ wrongAttempts }),
       setLibraryNavOpen: (libraryNavOpen: boolean) => set({ libraryNavOpen }),
     }),
     {
@@ -184,8 +156,6 @@ export const useAppStore = create<AppStore>()(
       partialize: (state) => ({
         theme: state.theme,
         currentGroup: state.currentGroup,
-        skipEnabled: state.skipEnabled,
-        speechSupported: state.speechSupported,
       }),
       version: 1,
       onRehydrateStorage: (state) => () => state.setHasHydrated(true),

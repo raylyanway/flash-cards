@@ -1,7 +1,7 @@
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import Container from "@mui/material/Container";
 import { useMemo } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useMatch } from "react-router-dom";
 import { NavBar } from "../components/NavBar";
 import DialogsProvider from "../hooks/useDialogs/DialogsProvider";
 import NotificationsProvider from "../hooks/useNotifications/NotificationsProvider";
@@ -14,6 +14,7 @@ import { createAppTheme } from "../theme";
 
 export function App() {
   const themePreference = useAppStore((state) => state.theme);
+  const isLearning = Boolean(useMatch("/learn"));
 
   const mode = useMemo(() => {
     if (themePreference === "system") {
@@ -32,13 +33,13 @@ export function App() {
       <CssBaseline enableColorScheme />
       <NotificationsProvider>
         <DialogsProvider>
-          <NavBar />
-          <Container maxWidth="lg">
+          {!isLearning && <NavBar />}
+          <Container maxWidth="md">
             <Box
               component="main"
               sx={{
-                pt: { xs: 12 },
-                pb: { xs: 8 },
+                pt: { xs: isLearning ? 2 : 11 },
+                pb: { xs: 2 },
               }}
             >
               <Routes>

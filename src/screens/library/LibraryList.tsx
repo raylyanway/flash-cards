@@ -25,10 +25,11 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
+import { getStageBadgeColor, StatusBadge } from "../../components/StatusBadge";
 import { deleteLibraryRows, getLibraryRows, importLibraryRows } from "../../db";
 import { useAppStore } from "../../store/useAppStore";
 import type { LibraryRow, ProgressMap } from "../../types";
-import { getStageName } from "../../utils/cardProgress";
+import { getStageName, MASTERED_STAGE } from "../../utils/cardProgress";
 import {
   createCsvFromLibrary,
   downloadCsv,
@@ -52,15 +53,6 @@ function formatReviewDate(timestamp: number) {
     dateStyle: "short",
     timeStyle: "medium",
   });
-}
-
-function getStageColor(
-  stage: number,
-): "default" | "warning" | "info" | "success" {
-  if (stage === 1) return "warning";
-  if (stage === 2) return "info";
-  if (stage >= 3) return "success";
-  return "default";
 }
 
 function formatExtraDetails(row: LibraryRow) {
@@ -501,8 +493,8 @@ export function LibraryList() {
               <Chip color="primary" label="text · required" size="small" />
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              Optional: answers, progressStage (0–3), progressNextReview (ms),
-              and custom card fields.
+              Optional: answers, progressStage (0–{MASTERED_STAGE}),
+              progressNextReview (ms), and custom card fields.
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Use plain text for one answer, or a quoted JSON array for several.
@@ -656,14 +648,10 @@ export function LibraryList() {
                         label={row.content.group}
                         aria-label={`Group: ${row.content.group}`}
                       />
-                      <Chip
-                        size="small"
-                        color={getStageColor(row.progress.stage)}
-                        variant={
-                          row.progress.stage === 0 ? "outlined" : "filled"
-                        }
+                      <StatusBadge
+                        color={getStageBadgeColor(row.progress.stage)}
                         label={getStageName(row.progress.stage)}
-                        aria-label={`Progress: ${getStageName(row.progress.stage)}`}
+                        ariaLabel={`Progress: ${getStageName(row.progress.stage)}`}
                       />
                       <Chip
                         size="small"
