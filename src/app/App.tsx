@@ -34,12 +34,12 @@ export function App() {
       <NotificationsProvider>
         <DialogsProvider>
           {!isLearning && <NavBar />}
-          <Container maxWidth="lg">
+          <Container maxWidth="md">
             <Box
               component="main"
               sx={{
-                pt: { xs: isLearning ? 3 : 12 },
-                pb: { xs: 8 },
+                pt: { xs: isLearning ? 2 : 11 },
+                pb: { xs: 2 },
               }}
             >
               <Routes>
