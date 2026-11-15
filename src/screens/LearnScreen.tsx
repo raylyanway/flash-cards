@@ -8,12 +8,14 @@ import {
 import {
   Box,
   Card,
+  Collapse,
   IconButton,
   Stack,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStageBadgeColor, StatusBadge } from "../components/StatusBadge";
 import { useLearningSession } from "../hooks/useLearningSession";
@@ -29,6 +31,7 @@ import {
 
 export function LearnScreen() {
   const navigate = useNavigate();
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const cards = useAppStore((state) => state.cards);
   const currentCard = useAppStore((state) => state.currentCard);
   const currentGroup = useAppStore((state) => state.currentGroup);
@@ -58,6 +61,12 @@ export function LearnScreen() {
       : learning.resultClass === "wrong"
         ? "Wrong"
         : null;
+  const [lastFeedbackLabel, setLastFeedbackLabel] = useState<string | null>(
+    null,
+  );
+  useEffect(() => {
+    if (feedbackLabel) setLastFeedbackLabel(feedbackLabel);
+  }, [feedbackLabel]);
   const progressStages = LEARNING_STAGES.map((stage, index) => {
     const color = getStageBadgeColor(index);
     return {
@@ -171,17 +180,40 @@ export function LearnScreen() {
           sx={{ alignItems: "center", flexWrap: "wrap", gridColumn: "1 / -1" }}
         >
           {currentStage !== null && (
-            <StatusBadge
-              color={getStageBadgeColor(currentStage)}
-              label={getStageName(currentStage)}
-            />
+            <Box
+              sx={{
+                display: "inline-flex",
+                "& .MuiChip-root": {
+                  transition: "background-color 450ms ease, color 450ms ease",
+                  "@media (prefers-reduced-motion: reduce)": {
+                    transition: "none",
+                  },
+                },
+              }}
+            >
+              <StatusBadge
+                color={getStageBadgeColor(currentStage)}
+                label={getStageName(currentStage)}
+              />
+            </Box>
           )}
-          {feedbackLabel && (
-            <StatusBadge
-              color={feedbackLabel === "Correct" ? "success" : "error"}
-              label={feedbackLabel}
-            />
-          )}
+          <Collapse
+            orientation="horizontal"
+            in={Boolean(feedbackLabel)}
+            timeout={reduceMotion ? 0 : 450}
+            unmountOnExit
+          >
+            {(feedbackLabel || lastFeedbackLabel) && (
+              <StatusBadge
+                color={
+                  (feedbackLabel || lastFeedbackLabel) === "Correct"
+                    ? "success"
+                    : "error"
+                }
+                label={feedbackLabel || lastFeedbackLabel || ""}
+              />
+            )}
+          </Collapse>
           {currentStage === null && (
             <Typography variant="overline" color="text.secondary">
               No cards are due
@@ -312,7 +344,12 @@ export function LearnScreen() {
             )}
           </Stack>
         )}
-        {learning.answerRevealed && currentCard && (
+        <Collapse
+          key={currentCard?.text ?? "no-card"}
+          in={Boolean(learning.answerRevealed && currentCard)}
+          timeout={reduceMotion ? 0 : 300}
+          unmountOnExit
+        >
           <Stack
             spacing={0.25}
             sx={{
@@ -322,6 +359,12 @@ export function LearnScreen() {
               borderTop: 1,
               borderColor: "divider",
               pt: 1,
+              animation: "answerEnter 300ms ease-out both",
+              "@keyframes answerEnter": {
+                from: { opacity: 0, transform: "translateY(6px)" },
+                to: { opacity: 1, transform: "translateY(0)" },
+              },
+              "@media (prefers-reduced-motion: reduce)": { animation: "none" },
             }}
           >
             <Typography variant="caption" color="text.secondary">
@@ -335,10 +378,10 @@ export function LearnScreen() {
                 maxWidth: "100%",
               }}
             >
-              {getAnswerText(currentCard)}
+              {currentCard && getAnswerText(currentCard)}
             </Typography>
           </Stack>
-        )}
+        </Collapse>
       </Card>
     </Stack>
   );
