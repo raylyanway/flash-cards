@@ -94,6 +94,28 @@ export function getNextDueTimestamp(cards: Card[], progress: GroupProgress) {
   return nextTime;
 }
 
+export function formatReviewWait(milliseconds: number) {
+  let seconds = Math.max(0, Math.ceil(milliseconds / SECOND));
+  const units = [
+    { seconds: DAY / SECOND, label: "day" },
+    { seconds: HOUR / SECOND, label: "hr" },
+    { seconds: MINUTE / SECOND, label: "min" },
+    { seconds: 1, label: "sec" },
+  ];
+  const parts: string[] = [];
+  for (const unit of units) {
+    const value = Math.floor(seconds / unit.seconds);
+    if (value > 0) {
+      parts.push(
+        `${value} ${unit.label}${unit.label === "day" && value !== 1 ? "s" : ""}`,
+      );
+      seconds %= unit.seconds;
+    }
+    if (parts.length === 2) break;
+  }
+  return parts.join(" ") || "0 sec";
+}
+
 export function getNextReviewLabel(progress: GroupProgress, now: number) {
   let nearest: number | null = null;
   for (const item of Object.values(progress)) {
@@ -104,5 +126,5 @@ export function getNextReviewLabel(progress: GroupProgress, now: number) {
     }
   }
   if (nearest === null) return "Ready now";
-  return `${Math.max(0, Math.ceil((nearest - now) / 1000))} sec`;
+  return formatReviewWait(nearest - now);
 }
