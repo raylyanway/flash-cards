@@ -1,7 +1,47 @@
-import type { Card, GroupProgress } from "../types";
+import type { Card, GroupProgress, ProgressEntry } from "../types";
 
-export const REVIEW_1_DELAY = 30 * 1000;
-export const REVIEW_2_DELAY = 60 * 1000;
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+export const LEARNING_STAGES = [
+  { label: "New", delay: 0 },
+  { label: "1m", delay: MINUTE },
+  { label: "10m", delay: 10 * MINUTE },
+  { label: "1h", delay: HOUR },
+  { label: "6h", delay: 6 * HOUR },
+  { label: "1d", delay: DAY },
+  { label: "2d", delay: 2 * DAY },
+  { label: "3d", delay: 3 * DAY },
+  { label: "5d", delay: 5 * DAY },
+  { label: "7d", delay: 7 * DAY },
+  { label: "10d", delay: 10 * DAY },
+  { label: "14d", delay: 14 * DAY },
+  { label: "18d", delay: 18 * DAY },
+  { label: "24d", delay: 24 * DAY },
+  { label: "30d", delay: 30 * DAY },
+  { label: "Mastered", delay: 0 },
+] as const;
+
+export const MASTERED_STAGE = LEARNING_STAGES.length - 1;
+
+export function gradeProgress(
+  entry: ProgressEntry,
+  correct: boolean,
+  now: number,
+): ProgressEntry {
+  const stage = correct
+    ? Math.min(MASTERED_STAGE, entry.stage + 1)
+    : Math.max(0, entry.stage - 1);
+  const delay =
+    stage === 0 ? LEARNING_STAGES[1].delay : LEARNING_STAGES[stage].delay;
+  return {
+    ...entry,
+    stage,
+    nextReview: stage === MASTERED_STAGE ? 0 : now + delay,
+  };
+}
 
 export function initializeMissingProgress(
   cards: Card[],
@@ -17,26 +57,7 @@ export function initializeMissingProgress(
 }
 
 export function getStageName(stage: number) {
-  switch (stage) {
-    case 0:
-      return "New";
-    case 1:
-      return "Repeat x1";
-    case 2:
-      return "Repeat x2";
-    case 3:
-      return "Learned";
-    default:
-      return "Unknown";
-  }
-}
-
-export function getStageClass(stage: number) {
-  return (
-    ["status-new", "status-review1", "status-review2", "status-learned"][
-      stage
-    ] || ""
-  );
+  return LEARNING_STAGES[stage]?.label ?? "Unknown";
 }
 
 export function getAnswerText(card: Card) {
@@ -46,33 +67,26 @@ export function getAnswerText(card: Card) {
 }
 
 export function countStages(progress: GroupProgress) {
-  return Object.values(progress).reduce(
-    (counts, item) => {
-      if (item.stage === 3) counts.learnedCount += 1;
-      else if (item.stage === 2) counts.review2Count += 1;
-      else if (item.stage === 1) counts.review1Count += 1;
-      else if (item.stage === 0) counts.newCount += 1;
-      return counts;
-    },
-    {
-      learnedCount: 0,
-      review2Count: 0,
-      review1Count: 0,
-      newCount: 0,
-    },
-  );
+  return Object.values(progress).reduce((counts, item) => {
+    if (item.stage >= 0 && item.stage <= MASTERED_STAGE) {
+      counts[item.stage] += 1;
+    }
+    return counts;
+  }, Array<number>(LEARNING_STAGES.length).fill(0));
 }
 
 export function getCompletePercent(cards: Card[], progress: GroupProgress) {
   if (cards.length === 0) return 0;
-  return Math.round((countStages(progress).learnedCount * 100) / cards.length);
+  return Math.round(
+    (countStages(progress)[MASTERED_STAGE] * 100) / cards.length,
+  );
 }
 
 export function getNextDueTimestamp(cards: Card[], progress: GroupProgress) {
   let nextTime: number | null = null;
   for (const card of cards) {
     const cardProgress = progress[card.text];
-    if (!cardProgress || cardProgress.stage >= 3) continue;
+    if (!cardProgress || cardProgress.stage >= MASTERED_STAGE) continue;
     if (nextTime === null || cardProgress.nextReview < nextTime) {
       nextTime = cardProgress.nextReview;
     }
@@ -83,7 +97,7 @@ export function getNextDueTimestamp(cards: Card[], progress: GroupProgress) {
 export function getNextReviewLabel(progress: GroupProgress, now: number) {
   let nearest: number | null = null;
   for (const item of Object.values(progress)) {
-    if (item.stage < 3 && item.nextReview > now) {
+    if (item.stage < MASTERED_STAGE && item.nextReview > now) {
       if (nearest === null || item.nextReview < nearest) {
         nearest = item.nextReview;
       }
