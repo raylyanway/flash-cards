@@ -98,7 +98,14 @@ export function LearnScreen() {
     0,
   );
   return (
-    <Stack spacing={3}>
+    <Stack
+      spacing={3}
+      sx={(theme) => ({
+        height: `calc(100dvh - ${theme.spacing(4)})`,
+        minHeight: 0,
+        overflow: "hidden",
+      })}
+    >
       <Stack
         direction={isLeftHanded ? "row-reverse" : "row"}
         spacing={1.5}
@@ -170,12 +177,17 @@ export function LearnScreen() {
           borderRightColor: isLeftHanded ? cardAccentColor : "transparent",
           bgcolor: "background.paper",
           p: { xs: 2, sm: 3, md: 4 },
-          minHeight: { xs: 300, sm: 320, md: 340 },
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
           display: "grid",
           gridTemplateColumns: isLeftHanded
             ? "auto minmax(0, 1fr)"
             : "minmax(0, 1fr) auto",
-          gridTemplateRows: "auto minmax(0, 1fr) auto",
+          gridTemplateRows:
+            currentCard && learning.answerRevealed
+              ? "auto minmax(0, 1fr) minmax(0, 1fr)"
+              : "auto minmax(0, 1fr) 0px",
           gap: { xs: 1.5, sm: 2 },
         }}
       >
@@ -235,8 +247,14 @@ export function LearnScreen() {
         <Stack
           sx={{
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "safe center",
             minWidth: 0,
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            "&::-webkit-scrollbar": { display: "none" },
             textAlign: "center",
             py: 1,
             gridColumn: currentCard ? (isLeftHanded ? 2 : 1) : "1 / -1",
@@ -251,6 +269,7 @@ export function LearnScreen() {
               fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3.25rem" },
               lineHeight: 1.15,
               overflowWrap: "anywhere",
+              flexShrink: 0,
             }}
           >
             {currentCard?.text || "🎉 Great job!"}
@@ -343,45 +362,60 @@ export function LearnScreen() {
             )}
           </Stack>
         )}
-        <Collapse
-          in={Boolean(learning.answerRevealed && currentCard)}
-          timeout={reduceMotion ? 0 : 300}
-          onExited={() => setRevealedAnswerText(null)}
+        <Box
           sx={{
             gridColumn: currentCard ? (isLeftHanded ? 2 : 1) : "1 / -1",
             gridRow: 3,
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            "&::-webkit-scrollbar": { display: "none" },
           }}
-          unmountOnExit
         >
-          <Stack
-            spacing={0.25}
-            sx={{
-              minWidth: 0,
-              alignItems: "center",
-              textAlign: "center",
-              borderTop: 1,
-              borderColor: "divider",
-              pt: 1,
-              animation: "answerEnter 300ms ease-out both",
-              "@keyframes answerEnter": {
-                from: { opacity: 0, transform: "translateY(6px)" },
-                to: { opacity: 1, transform: "translateY(0)" },
-              },
-              "@media (prefers-reduced-motion: reduce)": { animation: "none" },
-            }}
+          <Collapse
+            in={Boolean(learning.answerRevealed && currentCard)}
+            timeout={reduceMotion ? 0 : 300}
+            onExited={() => setRevealedAnswerText(null)}
+            sx={{ minHeight: 0 }}
+            unmountOnExit
           >
-            <Typography
-              variant="h6"
+            <Stack
+              spacing={0.25}
               sx={{
-                fontWeight: 700,
-                overflowWrap: "anywhere",
-                maxWidth: "100%",
+                minWidth: 0,
+                minHeight: "100%",
+                alignItems: "center",
+                justifyContent: "safe center",
+                textAlign: "center",
+                borderTop: 1,
+                borderColor: "divider",
+                pt: 1,
+                animation: "answerEnter 300ms ease-out both",
+                "@keyframes answerEnter": {
+                  from: { opacity: 0, transform: "translateY(6px)" },
+                  to: { opacity: 1, transform: "translateY(0)" },
+                },
+                "@media (prefers-reduced-motion: reduce)": {
+                  animation: "none",
+                },
               }}
             >
-              {revealedAnswerText}
-            </Typography>
-          </Stack>
-        </Collapse>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 700,
+                  overflowWrap: "anywhere",
+                  maxWidth: "100%",
+                  flexShrink: 0,
+                }}
+              >
+                {revealedAnswerText}
+              </Typography>
+            </Stack>
+          </Collapse>
+        </Box>
       </Card>
     </Stack>
   );
