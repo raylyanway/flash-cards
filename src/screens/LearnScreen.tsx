@@ -34,6 +34,7 @@ export function LearnScreen() {
   const cards = useAppStore((state) => state.cards);
   const currentCard = useAppStore((state) => state.currentCard);
   const currentGroup = useAppStore((state) => state.currentGroup);
+  const isLeftHanded = useAppStore((state) => state.isLeftHanded);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
   const currentGroupProgress = progress[currentGroup];
@@ -60,6 +61,12 @@ export function LearnScreen() {
       : learning.resultClass === "wrong"
         ? "Wrong"
         : null;
+  const cardAccentColor =
+    feedbackLabel === "Correct"
+      ? "success.main"
+      : feedbackLabel === "Wrong"
+        ? "error.main"
+        : "primary.main";
   const [lastFeedbackLabel, setLastFeedbackLabel] = useState<string | null>(
     null,
   );
@@ -93,7 +100,7 @@ export function LearnScreen() {
   return (
     <Stack spacing={3}>
       <Stack
-        direction="row"
+        direction={isLeftHanded ? "row-reverse" : "row"}
         spacing={1.5}
         component="section"
         aria-label="Learning progress by stage"
@@ -157,18 +164,17 @@ export function LearnScreen() {
           borderRadius: 2,
           border: 1,
           borderColor: "divider",
-          borderLeft: "4px solid",
-          borderLeftColor:
-            feedbackLabel === "Correct"
-              ? "success.main"
-              : feedbackLabel === "Wrong"
-                ? "error.main"
-                : "primary.main",
+          borderLeft: isLeftHanded ? 0 : "4px solid",
+          borderRight: isLeftHanded ? "4px solid" : 0,
+          borderLeftColor: isLeftHanded ? "transparent" : cardAccentColor,
+          borderRightColor: isLeftHanded ? cardAccentColor : "transparent",
           bgcolor: "background.paper",
           p: { xs: 2, sm: 3, md: 4 },
           minHeight: { xs: 300, sm: 320, md: 340 },
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gridTemplateColumns: isLeftHanded
+            ? "auto minmax(0, 1fr)"
+            : "minmax(0, 1fr) auto",
           gridTemplateRows: "auto minmax(0, 1fr) auto",
           gap: { xs: 1.5, sm: 2 },
         }}
@@ -177,7 +183,12 @@ export function LearnScreen() {
           direction="row"
           spacing={1}
           useFlexGap
-          sx={{ alignItems: "center", flexWrap: "wrap", gridColumn: "1 / -1" }}
+          sx={{
+            alignItems: "center",
+            justifyContent: isLeftHanded ? "flex-end" : "flex-start",
+            flexWrap: "wrap",
+            gridColumn: "1 / -1",
+          }}
         >
           {currentStage !== null && (
             <Box
@@ -228,6 +239,8 @@ export function LearnScreen() {
             minWidth: 0,
             textAlign: "center",
             py: 1,
+            gridColumn: currentCard ? (isLeftHanded ? 2 : 1) : "1 / -1",
+            gridRow: 2,
           }}
         >
           <Typography
@@ -251,7 +264,11 @@ export function LearnScreen() {
         {currentCard && (
           <Stack
             spacing={1}
-            sx={{ gridColumn: 2, gridRow: "2 / 4", justifyContent: "center" }}
+            sx={{
+              gridColumn: isLeftHanded ? 1 : 2,
+              gridRow: "2 / 4",
+              justifyContent: "center",
+            }}
           >
             {learning.answerRevealed ? (
               <>
@@ -330,6 +347,10 @@ export function LearnScreen() {
           in={Boolean(learning.answerRevealed && currentCard)}
           timeout={reduceMotion ? 0 : 300}
           onExited={() => setRevealedAnswerText(null)}
+          sx={{
+            gridColumn: currentCard ? (isLeftHanded ? 2 : 1) : "1 / -1",
+            gridRow: 3,
+          }}
           unmountOnExit
         >
           <Stack
