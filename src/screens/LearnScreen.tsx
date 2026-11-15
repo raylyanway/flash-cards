@@ -63,6 +63,9 @@ export function LearnScreen() {
   const [lastFeedbackLabel, setLastFeedbackLabel] = useState<string | null>(
     null,
   );
+  const [revealedAnswerText, setRevealedAnswerText] = useState<string | null>(
+    null,
+  );
   useEffect(() => {
     if (feedbackLabel) setLastFeedbackLabel(feedbackLabel);
   }, [feedbackLabel]);
@@ -305,7 +308,10 @@ export function LearnScreen() {
                 <IconButton
                   aria-label="Show answer"
                   color="primary"
-                  onClick={learning.revealAnswer}
+                  onClick={() => {
+                    setRevealedAnswerText(getAnswerText(currentCard));
+                    learning.revealAnswer();
+                  }}
                   sx={{
                     width: 48,
                     height: 48,
@@ -321,9 +327,9 @@ export function LearnScreen() {
           </Stack>
         )}
         <Collapse
-          key={currentCard?.text ?? "no-card"}
           in={Boolean(learning.answerRevealed && currentCard)}
           timeout={reduceMotion ? 0 : 300}
+          onExited={() => setRevealedAnswerText(null)}
           unmountOnExit
         >
           <Stack
@@ -351,7 +357,7 @@ export function LearnScreen() {
                 maxWidth: "100%",
               }}
             >
-              {currentCard && getAnswerText(currentCard)}
+              {revealedAnswerText}
             </Typography>
           </Stack>
         </Collapse>
