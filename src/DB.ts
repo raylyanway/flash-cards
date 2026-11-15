@@ -166,7 +166,7 @@ async function decompressOrDecodeBuffer(buffer: ArrayBuffer) {
 async function resolveContentUrl(group: string) {
   const tried: string[] = [];
   for (const suffix of [".csv.gz", ".csv"]) {
-    const url = `content/${group}${suffix}`;
+    const url = `${import.meta.env.BASE_URL}content/${group}${suffix}`;
     tried.push(url);
     try {
       const response = await fetch(url, { cache: "reload" });

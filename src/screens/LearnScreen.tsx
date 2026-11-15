@@ -343,9 +343,6 @@ export function LearnScreen() {
               "@media (prefers-reduced-motion: reduce)": { animation: "none" },
             }}
           >
-            <Typography variant="caption" color="text.secondary">
-              Correct answer
-            </Typography>
             <Typography
               variant="h6"
               sx={{
