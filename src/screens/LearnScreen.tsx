@@ -1,16 +1,13 @@
 import {
   ArrowForwardRounded,
-  CheckCircleRounded,
   CheckRounded,
   CloseRounded,
-  ErrorOutlineRounded,
   StopRounded,
   VolumeUpRounded,
 } from "@mui/icons-material";
 import {
   Box,
   Card,
-  Chip,
   IconButton,
   Stack,
   Tooltip,
@@ -18,6 +15,7 @@ import {
 } from "@mui/material";
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { getStageBadgeColor, StatusBadge } from "../components/StatusBadge";
 import { useLearningSession } from "../hooks/useLearningSession";
 import { useAppStore } from "../store/useAppStore";
 import {
@@ -184,24 +182,14 @@ export function LearnScreen() {
           sx={{ alignItems: "center", flexWrap: "wrap", gridColumn: "1 / -1" }}
         >
           {currentStage !== null && (
-            <Chip
-              size="small"
-              color="primary"
-              variant="outlined"
+            <StatusBadge
+              color={getStageBadgeColor(currentStage)}
               label={getStageName(currentStage)}
             />
           )}
           {feedbackLabel && (
-            <Chip
-              size="small"
+            <StatusBadge
               color={feedbackLabel === "Correct" ? "success" : "error"}
-              icon={
-                feedbackLabel === "Correct" ? (
-                  <CheckCircleRounded />
-                ) : (
-                  <ErrorOutlineRounded />
-                )
-              }
               label={feedbackLabel}
             />
           )}
