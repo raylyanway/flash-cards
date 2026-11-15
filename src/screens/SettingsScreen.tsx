@@ -1,11 +1,15 @@
 import { SettingsRounded } from "@mui/icons-material";
 
-import { Button, Stack } from "@mui/material";
+import { Button, FormControlLabel, Stack, Switch } from "@mui/material";
 import { PageHeader } from "../components/PageHeader";
 import { SectionCard } from "../components/SectionCard";
 import { deleteAppDatabase } from "../db";
+import { useAppStore } from "../store/useAppStore";
 
 export function SettingsScreen() {
+  const isLeftHanded = useAppStore((state) => state.isLeftHanded);
+  const setIsLeftHanded = useAppStore((state) => state.setIsLeftHanded);
+
   const handleDeleteDatabase = async () => {
     const confirmed = confirm(
       "Delete the saved app database? This will remove all stored progress and content data in IndexedDB.",
@@ -33,6 +37,17 @@ export function SettingsScreen() {
       />
 
       <Stack spacing={3}>
+        <SectionCard title="Learning">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={isLeftHanded}
+                onChange={(event) => setIsLeftHanded(event.target.checked)}
+              />
+            }
+            label="Left-handed mode"
+          />
+        </SectionCard>
         <SectionCard
           title="Database"
           subtitle="Delete the saved app database and reset IndexedDB data. This does not remove your content files."
