@@ -11,7 +11,6 @@ import {
   Collapse,
   IconButton,
   Stack,
-  Tooltip,
   Typography,
   useMediaQuery,
 } from "@mui/material";
@@ -130,25 +129,23 @@ export function LearnScreen() {
           )}
           {progressTotal === 0 && <Box sx={{ flex: 1, bgcolor: "divider" }} />}
         </Box>
-        <Tooltip title="Stop learning">
-          <IconButton
-            aria-label="Stop learning"
-            color="error"
-            onClick={() => {
-              learning.stopLearningSession();
-              navigate("/");
-            }}
-            sx={{
-              width: 40,
-              height: 40,
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-            }}
-          >
-            <CloseRounded />
-          </IconButton>
-        </Tooltip>
+        <IconButton
+          aria-label="Stop learning"
+          color="error"
+          onClick={() => {
+            learning.stopLearningSession();
+            navigate("/");
+          }}
+          sx={{
+            width: 40,
+            height: 40,
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 1,
+          }}
+        >
+          <CloseRounded />
+        </IconButton>
       </Stack>
 
       <Card
@@ -202,6 +199,7 @@ export function LearnScreen() {
             in={Boolean(feedbackLabel)}
             timeout={reduceMotion ? 0 : 450}
             unmountOnExit
+            sx={{ "& .MuiCollapse-wrapperInner": { display: "flex" } }}
           >
             {(feedbackLabel || lastFeedbackLabel) && (
               <StatusBadge
@@ -254,92 +252,70 @@ export function LearnScreen() {
           >
             {learning.answerRevealed ? (
               <>
-                <Tooltip title="Incorrect">
-                  <span>
-                    <IconButton
-                      aria-label="Incorrect"
-                      color="error"
-                      disabled={Boolean(feedbackLabel)}
-                      onClick={() => learning.gradeAnswer(false)}
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 1,
-                      }}
-                    >
-                      <CloseRounded />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Correct">
-                  <span>
-                    <IconButton
-                      aria-label="Correct"
-                      color="success"
-                      disabled={Boolean(feedbackLabel)}
-                      onClick={() => learning.gradeAnswer(true)}
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 1,
-                      }}
-                    >
-                      <CheckRounded />
-                    </IconButton>
-                  </span>
-                </Tooltip>
+                <IconButton
+                  aria-label="Incorrect"
+                  color="error"
+                  disabled={Boolean(feedbackLabel)}
+                  onClick={() => learning.gradeAnswer(false)}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                >
+                  <CloseRounded />
+                </IconButton>
+                <IconButton
+                  aria-label="Correct"
+                  color="success"
+                  disabled={Boolean(feedbackLabel)}
+                  onClick={() => learning.gradeAnswer(true)}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                >
+                  <CheckRounded />
+                </IconButton>
               </>
             ) : (
               <>
-                <Tooltip
-                  title={
+                <IconButton
+                  aria-label={
                     learning.isSpeaking
                       ? "Stop pronunciation"
                       : "Pronounce text"
                   }
+                  onClick={learning.pronounceCurrentCard}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
                 >
-                  <IconButton
-                    aria-label={
-                      learning.isSpeaking
-                        ? "Stop pronunciation"
-                        : "Pronounce text"
-                    }
-                    onClick={learning.pronounceCurrentCard}
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      border: 1,
-                      borderColor: "divider",
-                      borderRadius: 1,
-                    }}
-                  >
-                    {learning.isSpeaking ? (
-                      <StopRounded />
-                    ) : (
-                      <VolumeUpRounded />
-                    )}
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Show answer">
-                  <IconButton
-                    aria-label="Show answer"
-                    color="primary"
-                    onClick={learning.revealAnswer}
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      border: 1,
-                      borderColor: "divider",
-                      borderRadius: 1,
-                    }}
-                  >
-                    <ArrowForwardRounded />
-                  </IconButton>
-                </Tooltip>
+                  {learning.isSpeaking ? <StopRounded /> : <VolumeUpRounded />}
+                </IconButton>
+                <IconButton
+                  aria-label="Show answer"
+                  color="primary"
+                  onClick={learning.revealAnswer}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                >
+                  <ArrowForwardRounded />
+                </IconButton>
               </>
             )}
           </Stack>
