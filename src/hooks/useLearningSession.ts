@@ -7,7 +7,7 @@ type UseLearningSessionParams = {
   nextDueTimestamp: number | null;
 };
 
-const ANSWER_DISPLAY_DELAY = 1_000;
+const ANSWER_DISPLAY_DELAY = 1_600;
 
 export function useLearningSession({
   nextDueTimestamp,
