@@ -19,13 +19,13 @@ export function initializeMissingProgress(
 export function getStageName(stage: number) {
   switch (stage) {
     case 0:
-      return "🆕 New";
+      return "New";
     case 1:
-      return "🔁 Repeat x1";
+      return "Repeat x1";
     case 2:
-      return "🔁 Repeat x2";
+      return "Repeat x2";
     case 3:
-      return "✅ Learned";
+      return "Learned";
     default:
       return "Unknown";
   }
