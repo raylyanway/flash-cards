@@ -1,12 +1,20 @@
 import Chip from "@mui/material/Chip";
 import { getContrastRatio } from "@mui/material/styles";
+import { MASTERED_STAGE } from "../utils/cardProgress";
 
-type StatusBadgeColor = "default" | "primary" | "warning" | "success" | "error";
+type StatusBadgeColor =
+  | "default"
+  | "primary"
+  | "secondary"
+  | "warning"
+  | "success"
+  | "error";
 
 export function getStageBadgeColor(stage: number): StatusBadgeColor {
-  if (stage === 1) return "warning";
-  if (stage === 2) return "primary";
-  if (stage >= 3) return "success";
+  if (stage >= MASTERED_STAGE) return "success";
+  if (stage >= 10) return "secondary";
+  if (stage >= 5) return "primary";
+  if (stage >= 1) return "warning";
   return "default";
 }
 
