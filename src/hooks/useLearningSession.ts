@@ -1,132 +1,47 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
-import type { Card, ProgressEntry } from "../types";
-import {
-  getAnswerText,
-  getAttemptsText,
-  isAnswerMatch,
-  MAX_WRONG_ATTEMPTS,
-  REVIEW_1_DELAY,
-  REVIEW_2_DELAY,
-} from "../utils/cardProgress";
-import {
-  createSpeechRecognition,
-  speakWord,
-  type SpeechRecognitionInstance,
-} from "../utils/speech";
+import type { ProgressEntry } from "../types";
+import { REVIEW_1_DELAY, REVIEW_2_DELAY } from "../utils/cardProgress";
+import { speakWord } from "../utils/speech";
 
 type UseLearningSessionParams = {
   nextDueTimestamp: number | null;
 };
 
-const CORRECT_ANSWER_DISPLAY_DELAY = 3_000;
+const ANSWER_DISPLAY_DELAY = 1_000;
 
 export function useLearningSession({
   nextDueTimestamp,
 }: UseLearningSessionParams) {
   const cards = useAppStore((state) => state.cards);
   const currentCard = useAppStore((state) => state.currentCard);
-  const listening = useAppStore((state) => state.listening);
   const now = useAppStore((state) => state.now);
   const currentGroup = useAppStore((state) => state.currentGroup);
   const progress = useAppStore((state) => state.progress);
-  const recognizedText = useAppStore((state) => state.recognizedText);
-  const result = useAppStore((state) => state.result);
-  const resultClass = useAppStore((state) => state.resultClass);
-  const skipEnabled = useAppStore((state) => state.skipEnabled);
-  const speechSupported = useAppStore((state) => state.speechSupported);
-  const wrongAttempts = useAppStore((state) => state.wrongAttempts);
   const setCurrentCard = useAppStore((state) => state.setCurrentCard);
-  const setListening = useAppStore((state) => state.setListening);
-  const setRecognizedText = useAppStore((state) => state.setRecognizedText);
-  const setResult = useAppStore((state) => state.setResult);
-  const setResultClass = useAppStore((state) => state.setResultClass);
   const setProgress = useAppStore((state) => state.setProgress);
-  const setSkipEnabled = useAppStore((state) => state.setSkipEnabled);
-  const setSpeechSupported = useAppStore((state) => state.setSpeechSupported);
-  const setWrongAttempts = useAppStore((state) => state.setWrongAttempts);
-
   const { pathname } = useLocation();
-  const isLearnRoute = pathname === "/learn";
   const currentGroupProgress = progress[currentGroup];
   const [answerRevealed, setAnswerRevealed] = useState(false);
-  const [lastSpokenAnswer, setLastSpokenAnswer] = useState("");
-
-  const skippedCardsRef = useRef(new Set<string>());
-  const answerRevealedAfterWrongRef = useRef(false);
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const [resultClass, setResultClass] = useState<"" | "correct" | "wrong">("");
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const transitionTimerRef = useRef<number | null>(null);
   const progressRef = useRef(currentGroupProgress);
   const cardsRef = useRef(cards);
-  const currentCardRef = useRef(currentCard);
-  const listeningRef = useRef(listening);
-  const wrongAttemptsRef = useRef(wrongAttempts);
   const sessionActiveRef = useRef(false);
-  const hasStartedListeningRef = useRef(false);
-  const isAnnouncingRef = useRef(false);
-  const resumeListeningAfterAnnouncementRef = useRef(false);
-  const announcementIdRef = useRef(0);
-  const startListeningRef = useRef<() => void>(() => undefined);
+  const gradingRef = useRef(false);
+  const speechIdRef = useRef(0);
 
-  const stopListening = useCallback(() => {
-    const recognition = recognitionRef.current;
-    listeningRef.current = false;
-    resumeListeningAfterAnnouncementRef.current = false;
-    setListening(false);
-    try {
-      recognition?.stop();
-    } catch {
-      // Ignore speech API stop races.
-    }
+  const stopSpeaking = useCallback(() => {
+    speechIdRef.current += 1;
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    setIsSpeaking(false);
   }, []);
-
-  const updateProgressForCard = useCallback(
-    async (card: Card, updater: (entry: ProgressEntry) => ProgressEntry) => {
-      const nextProgress = {
-        ...progressRef.current,
-        [card.text]: updater({ ...progressRef.current[card.text] }),
-      };
-      progressRef.current = nextProgress;
-      await setProgress({ [currentGroup]: nextProgress });
-      return nextProgress[card.text];
-    },
-    [currentGroup, setProgress],
-  );
-
-  const announceQuestion = useCallback(
-    (text: string, resumeListening = listeningRef.current) => {
-      const recognition = recognitionRef.current;
-      const announcementId = ++announcementIdRef.current;
-      resumeListeningAfterAnnouncementRef.current = resumeListening;
-      isAnnouncingRef.current = true;
-      listeningRef.current = false;
-      setListening(false);
-      try {
-        recognition?.stop();
-      } catch {
-        // Ignore speech API stop races.
-      }
-
-      speakWord(text, () => {
-        if (announcementId !== announcementIdRef.current) return;
-        isAnnouncingRef.current = false;
-        if (
-          resumeListeningAfterAnnouncementRef.current &&
-          sessionActiveRef.current
-        ) {
-          startListeningRef.current();
-        }
-      });
-    },
-    [setListening],
-  );
 
   const selectNextCard = useCallback(() => {
     if (!sessionActiveRef.current) return;
-
     const dueCards = cardsRef.current.filter((card) => {
-      if (skippedCardsRef.current.has(card.text)) return false;
       const cardProgress = progressRef.current[card.text];
       return Boolean(
         cardProgress &&
@@ -134,367 +49,121 @@ export function useLearningSession({
         cardProgress.nextReview <= Date.now(),
       );
     });
-
-    if (transitionTimerRef.current) {
-      window.clearTimeout(transitionTimerRef.current);
-      transitionTimerRef.current = null;
-    }
-
-    if (dueCards.length === 0) {
-      stopListening();
-      hasStartedListeningRef.current = false;
-      setAnswerRevealed(false);
-      setLastSpokenAnswer("");
-      answerRevealedAfterWrongRef.current = false;
-      setCurrentCard(null);
-      setResult("");
-      setSkipEnabled(false);
-      return;
-    }
-
     dueCards.sort(
-      (a, b) =>
-        progressRef.current[a.text].stage - progressRef.current[b.text].stage,
+      (first, second) =>
+        progressRef.current[first.text].stage -
+        progressRef.current[second.text].stage,
     );
-    const nextCard = dueCards[0];
+    stopSpeaking();
     setAnswerRevealed(false);
-    setLastSpokenAnswer("");
-    answerRevealedAfterWrongRef.current = false;
-    setCurrentCard(nextCard);
-    wrongAttemptsRef.current = 0;
-    setWrongAttempts(0);
-    setResult("");
     setResultClass("");
-    setSkipEnabled(true);
-    setRecognizedText(`Press Start Listening - ${getAttemptsText(0)}`);
-    announceQuestion(nextCard.text, hasStartedListeningRef.current);
-  }, [announceQuestion, setCurrentCard, stopListening]);
-
-  const scheduleNextCard = useCallback(
-    (delay: number) => {
-      if (transitionTimerRef.current) {
-        window.clearTimeout(transitionTimerRef.current);
-      }
-      transitionTimerRef.current = window.setTimeout(selectNextCard, delay);
-    },
-    [selectNextCard],
-  );
-
-  const markCorrect = useCallback(
-    async (card: Card) => {
-      await updateProgressForCard(card, (entry) => {
-        const nextEntry = { ...entry };
-        if (nextEntry.stage === 0) {
-          nextEntry.stage = 1;
-          nextEntry.nextReview = Date.now() + REVIEW_1_DELAY;
-        } else if (nextEntry.stage === 1) {
-          nextEntry.stage = 2;
-          nextEntry.nextReview = Date.now() + REVIEW_2_DELAY;
-        } else if (nextEntry.stage === 2) {
-          nextEntry.stage = 3;
-          nextEntry.nextReview = 0;
-        }
-        return nextEntry;
-      });
-      setAnswerRevealed(false);
-      answerRevealedAfterWrongRef.current = true;
-      setResult("✅ Correct");
-      setResultClass("correct");
-      setRecognizedText("Moving to the next card...");
-      stopListening();
-      scheduleNextCard(CORRECT_ANSWER_DISPLAY_DELAY);
-    },
-    [
-      scheduleNextCard,
-      setAnswerRevealed,
-      setRecognizedText,
-      setResult,
-      setResultClass,
-      stopListening,
-      updateProgressForCard,
-    ],
-  );
-
-  const markWrong = useCallback(
-    async (card: Card) => {
-      const nextAttempts = wrongAttemptsRef.current + 1;
-      wrongAttemptsRef.current = nextAttempts;
-      setWrongAttempts(nextAttempts);
-      setRecognizedText(
-        listeningRef.current
-          ? `🎤 Listening... (${getAttemptsText(nextAttempts)})`
-          : `Press Start Listening - ${getAttemptsText(nextAttempts)}`,
-      );
-      await updateProgressForCard(card, (entry) => ({
-        ...entry,
-        stage: entry.stage > 0 ? entry.stage - 1 : entry.stage,
-        nextReview: Date.now(),
-      }));
-
-      if (nextAttempts >= MAX_WRONG_ATTEMPTS) {
-        skippedCardsRef.current.add(card.text);
-        answerRevealedAfterWrongRef.current = true;
-        setAnswerRevealed(true);
-        setResult(`❌ Wrong - correct answer: ${getAnswerText(card)}`);
-        setResultClass("wrong");
-        setRecognizedText("Answer revealed. Press Skip to continue.");
-        setSkipEnabled(true);
-        stopListening();
-        return;
-      }
-
-      setResult("❌ Wrong");
-      setResultClass("wrong");
-    },
-    [
-      setAnswerRevealed,
-      setRecognizedText,
-      setResult,
-      setResultClass,
-      setSkipEnabled,
-      stopListening,
-      updateProgressForCard,
-    ],
-  );
-
-  const checkAnswerRef = useRef<(text: string) => void>(() => undefined);
-  checkAnswerRef.current = (text: string) => {
-    const card = currentCardRef.current;
-    if (!card) return;
-
-    const cardAnswers =
-      typeof card.answers === "string"
-        ? [card.answers]
-        : Array.isArray(card.answers) && card.answers.length > 0
-          ? card.answers
-          : [card.text];
-    if (isAnswerMatch(text, cardAnswers)) {
-      markCorrect(card);
-    } else {
-      markWrong(card);
-    }
-  };
-
-  useEffect(() => {
-    const recognition = createSpeechRecognition();
-    recognitionRef.current = recognition;
-    setSpeechSupported(Boolean(recognition));
-
-    if (!recognition) {
-      setRecognizedText("Speech recognition not supported");
-      return;
-    }
-
-    recognition.onresult = (event) => {
-      if (isAnnouncingRef.current) return;
-
-      const finalTranscript = Array.from(
-        { length: event.results.length - event.resultIndex },
-        (_, index) => event.results[event.resultIndex + index],
-      )
-        .filter((result) => result.isFinal)
-        .map((result) => result[0].transcript)
-        .join(" ")
-        .trim();
-
-      if (finalTranscript) {
-        setLastSpokenAnswer(finalTranscript);
-        checkAnswerRef.current(finalTranscript);
-      }
-    };
-    recognition.onerror = (event) => {
-      if (event.error === "no-speech" || event.error === "aborted") return;
-      console.log("Speech error:", event.error);
-      hasStartedListeningRef.current = false;
-      listeningRef.current = false;
-      resumeListeningAfterAnnouncementRef.current = false;
-      setListening(false);
-
-      if (event.error === "network") {
-        setRecognizedText(
-          "Speech recognition is unavailable in this browser session. Try opening the app in Chrome or Edge.",
-        );
-        return;
-      }
-
-      if (
-        event.error === "not-allowed" ||
-        event.error === "service-not-allowed"
-      ) {
-        setRecognizedText(
-          "Microphone access is blocked. Allow it in your browser settings and try again.",
-        );
-        return;
-      }
-
-      if (event.error === "audio-capture") {
-        setRecognizedText("No microphone was found. Check your input device.");
-        return;
-      }
-
-      setRecognizedText(`Speech recognition error: ${event.error}`);
-    };
-    recognition.onend = () => {
-      if (listeningRef.current) {
-        try {
-          recognition.start();
-        } catch {
-          // Browser may throw if recognition is already running.
-        }
-      }
-    };
-
-    return () => {
-      setListening(false);
-      recognition.onresult = null;
-      recognition.onerror = null;
-      recognition.onend = null;
-      try {
-        recognition.stop();
-      } catch {
-        // Ignore shutdown errors.
-      }
-    };
-  }, []);
+    gradingRef.current = false;
+    setCurrentCard(dueCards[0] ?? null);
+  }, [setCurrentCard, stopSpeaking]);
 
   useEffect(() => {
     progressRef.current = currentGroupProgress;
     cardsRef.current = cards;
-    currentCardRef.current = currentCard;
-    listeningRef.current = listening;
-    wrongAttemptsRef.current = wrongAttempts;
-  }, [cards, currentCard, listening, currentGroupProgress, wrongAttempts]);
+  }, [cards, currentGroupProgress]);
+
+  useEffect(() => {
+    if (pathname !== "/learn" || currentCard) return;
+    if (nextDueTimestamp !== null && nextDueTimestamp <= now) selectNextCard();
+  }, [currentCard, pathname, nextDueTimestamp, now, selectNextCard]);
 
   useEffect(() => {
     return () => {
-      if (transitionTimerRef.current) {
+      sessionActiveRef.current = false;
+      if (transitionTimerRef.current !== null) {
         window.clearTimeout(transitionTimerRef.current);
       }
+      stopSpeaking();
     };
-  }, []);
-
-  useEffect(() => {
-    if (!isLearnRoute || currentCard) return;
-    if (nextDueTimestamp !== null && nextDueTimestamp <= now) {
-      selectNextCard();
-    }
-  }, [currentCard, isLearnRoute, nextDueTimestamp, now, selectNextCard]);
+  }, [stopSpeaking]);
 
   const startLearningSession = () => {
     sessionActiveRef.current = true;
-    hasStartedListeningRef.current = false;
-    wrongAttemptsRef.current = 0;
-    setWrongAttempts(0);
-    setAnswerRevealed(false);
-    setLastSpokenAnswer("");
-    answerRevealedAfterWrongRef.current = false;
-    setResult("");
-    setRecognizedText("");
-    skippedCardsRef.current.clear();
-    window.setTimeout(selectNextCard, 0);
+    selectNextCard();
   };
 
   const stopLearningSession = () => {
     sessionActiveRef.current = false;
-    hasStartedListeningRef.current = false;
-    setAnswerRevealed(false);
-    setLastSpokenAnswer("");
-    answerRevealedAfterWrongRef.current = false;
-    if (transitionTimerRef.current) {
+    if (transitionTimerRef.current !== null) {
       window.clearTimeout(transitionTimerRef.current);
       transitionTimerRef.current = null;
     }
-    stopListening();
+    stopSpeaking();
     setCurrentCard(null);
-    setResult("");
+    setAnswerRevealed(false);
     setResultClass("");
-    setSkipEnabled(false);
   };
 
-  const startListening = () => {
-    const recognition = recognitionRef.current;
-    if (!recognition) return;
-    hasStartedListeningRef.current = true;
-    if (isAnnouncingRef.current) {
-      resumeListeningAfterAnnouncementRef.current = true;
-      setRecognizedText("🔊 Speaking question...");
-      return;
-    }
-    listeningRef.current = true;
-    resumeListeningAfterAnnouncementRef.current = false;
-    setLastSpokenAnswer("");
-    setResult("");
-    setResultClass("");
-    setListening(true);
-    setRecognizedText(
-      `🎤 Listening... (${getAttemptsText(wrongAttemptsRef.current)})`,
-    );
-    try {
-      recognition.start();
-    } catch {
-      // Ignore duplicate start calls.
-    }
-  };
-  startListeningRef.current = startListening;
-
-  const toggleListening = () => {
-    if (listening) {
-      stopListening();
-      setRecognizedText(
-        `Press Start Listening - ${getAttemptsText(wrongAttempts)}`,
-      );
-    } else {
-      startListening();
-    }
-  };
-
-  const repeatCurrentCard = () => {
-    if (currentCard) announceQuestion(currentCard.text);
-  };
-
-  const skipCurrentCard = async () => {
+  const pronounceCurrentCard = () => {
     if (!currentCard) return;
-
-    if (!answerRevealed) {
-      if (resultClass !== "correct") {
-        answerRevealedAfterWrongRef.current = false;
-      }
-      setAnswerRevealed(true);
-      setResult(`Answer: ${getAnswerText(currentCard)}`);
-      setResultClass("skipped");
-      setRecognizedText("Answer revealed. Press Skip to continue.");
-      setSkipEnabled(true);
-      stopListening();
+    if (isSpeaking) {
+      stopSpeaking();
       return;
     }
+    const speechId = ++speechIdRef.current;
+    setIsSpeaking(true);
+    speakWord(currentCard.text, () => {
+      if (speechId === speechIdRef.current) setIsSpeaking(false);
+    });
+  };
 
-    if (!answerRevealedAfterWrongRef.current) {
-      await updateProgressForCard(currentCard, (entry) => ({
+  const revealAnswer = () => {
+    stopSpeaking();
+    setAnswerRevealed(true);
+  };
+
+  const gradeAnswer = async (correct: boolean) => {
+    if (!currentCard || !answerRevealed || gradingRef.current) return;
+    gradingRef.current = true;
+    const updateEntry = (entry: ProgressEntry): ProgressEntry => {
+      if (!correct) {
+        return {
+          ...entry,
+          stage: Math.max(0, entry.stage - 1),
+          nextReview: Date.now() + REVIEW_1_DELAY,
+        };
+      }
+      const stage = Math.min(3, entry.stage + 1);
+      return {
         ...entry,
-        stage: entry.stage > 0 ? entry.stage - 1 : entry.stage,
-        nextReview: Date.now(),
-      }));
+        stage,
+        nextReview:
+          stage === 1
+            ? Date.now() + REVIEW_1_DELAY
+            : stage === 2
+              ? Date.now() + REVIEW_2_DELAY
+              : 0,
+      };
+    };
+    const nextProgress = {
+      ...progressRef.current,
+      [currentCard.text]: updateEntry({
+        ...progressRef.current[currentCard.text],
+      }),
+    };
+    progressRef.current = nextProgress;
+    setResultClass(correct ? "correct" : "wrong");
+    await setProgress({ [currentGroup]: nextProgress });
+    if (sessionActiveRef.current) {
+      transitionTimerRef.current = window.setTimeout(
+        selectNextCard,
+        ANSWER_DISPLAY_DELAY,
+      );
     }
-    skippedCardsRef.current.add(currentCard.text);
-    setSkipEnabled(false);
-    setRecognizedText("Moving to another card...");
-    selectNextCard();
   };
 
   return {
-    listening,
     answerRevealed,
-    lastSpokenAnswer,
-    recognizedText,
-    repeatCurrentCard,
-    result,
     resultClass,
-    skipCurrentCard,
-    skipEnabled,
-    speechSupported,
+    isSpeaking,
+    gradeAnswer,
+    pronounceCurrentCard,
+    revealAnswer,
     startLearningSession,
-    stopListening,
     stopLearningSession,
-    toggleListening,
   };
 }
