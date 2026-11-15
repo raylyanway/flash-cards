@@ -2,7 +2,6 @@ import type { Card, GroupProgress } from "../types";
 
 export const REVIEW_1_DELAY = 30 * 1000;
 export const REVIEW_2_DELAY = 60 * 1000;
-export const MAX_WRONG_ATTEMPTS = 3;
 
 export function initializeMissingProgress(
   cards: Card[],
@@ -44,58 +43,6 @@ export function getAnswerText(card: Card) {
   return Array.isArray(card.answers)
     ? card.answers.join(", ")
     : card.answers || card.text;
-}
-
-export function normalizeAnswer(text: string) {
-  return text
-    .normalize("NFC")
-    .toLocaleLowerCase()
-    .replace(/\p{P}/gu, "")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-export function isAnswerMatch(text: string, answers: string[]) {
-  const normalizedText = Array.from(normalizeAnswer(text));
-  if (normalizedText.length === 0) return false;
-
-  return answers.some((answer) => {
-    const normalizedAnswer = Array.from(normalizeAnswer(answer));
-    const maxLength = Math.max(normalizedText.length, normalizedAnswer.length);
-    if (
-      normalizedAnswer.length === 0 ||
-      Math.abs(normalizedText.length - normalizedAnswer.length) * 5 > maxLength
-    ) {
-      return false;
-    }
-
-    let previousRow = Array.from(
-      { length: normalizedAnswer.length + 1 },
-      (_, index) => index,
-    );
-    for (let textIndex = 1; textIndex <= normalizedText.length; textIndex++) {
-      const currentRow = [textIndex];
-      for (
-        let answerIndex = 1;
-        answerIndex <= normalizedAnswer.length;
-        answerIndex++
-      ) {
-        currentRow[answerIndex] = Math.min(
-          currentRow[answerIndex - 1] + 1,
-          previousRow[answerIndex] + 1,
-          previousRow[answerIndex - 1] +
-            Number(
-              normalizedText[textIndex - 1] !==
-                normalizedAnswer[answerIndex - 1],
-            ),
-        );
-      }
-      previousRow = currentRow;
-    }
-
-    return previousRow[normalizedAnswer.length] * 5 <= maxLength;
-  });
 }
 
 export function countStages(progress: GroupProgress) {
@@ -144,11 +91,4 @@ export function getNextReviewLabel(progress: GroupProgress, now: number) {
   }
   if (nearest === null) return "Ready now";
   return `${Math.max(0, Math.ceil((nearest - now) / 1000))} sec`;
-}
-
-export function getAttemptsText(attempts: number) {
-  const attemptsLeft = Math.max(0, MAX_WRONG_ATTEMPTS - attempts);
-  return attemptsLeft > 0
-    ? `${attemptsLeft} attempt${attemptsLeft === 1 ? "" : "s"} left`
-    : "No attempts left";
 }
