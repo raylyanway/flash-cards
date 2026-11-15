@@ -20,6 +20,7 @@ import { useLearningSession } from "../hooks/useLearningSession";
 import { useAppStore } from "../store/useAppStore";
 import {
   countStages,
+  formatReviewWait,
   getAnswerText,
   getNextDueTimestamp,
   getStageName,
@@ -51,7 +52,7 @@ export function LearnScreen() {
   const waitingMessage =
     nextDueTimestamp === null
       ? "All cards mastered 🎉"
-      : `Next review in ${Math.max(0, Math.ceil((nextDueTimestamp - now) / 1000))} sec`;
+      : `Next review in ${formatReviewWait(nextDueTimestamp - now)}`;
   const currentStage = currentCard
     ? (currentGroupProgress[currentCard.text]?.stage ?? 0)
     : null;
@@ -70,6 +71,14 @@ export function LearnScreen() {
       color: color === "default" ? "grey.600" : `${color}.main`,
     };
   });
+  const progressGroups = progressStages.reduce<
+    { color: string; count: number }[]
+  >((groups, stage) => {
+    const group = groups.find((item) => item.color === stage.color);
+    if (group) group.count += stage.count;
+    else groups.push({ color: stage.color, count: stage.count });
+    return groups;
+  }, []);
   const progressTotal = progressStages.reduce(
     (total, stage) => total + stage.count,
     0,
@@ -95,21 +104,21 @@ export function LearnScreen() {
             gap: 0.5,
             height: 24,
             overflow: "hidden",
-            borderRadius: 999,
+            borderRadius: "4px",
             bgcolor: "action.hover",
           }}
         >
-          {progressStages.map(
-            (stage) =>
-              stage.count > 0 && (
+          {progressGroups.map(
+            (group) =>
+              group.count > 0 && (
                 <Box
-                  key={stage.key}
+                  key={group.color}
                   sx={{
-                    flexGrow: stage.count,
+                    flexGrow: group.count,
                     flexBasis: 0,
                     minWidth: 0,
-                    bgcolor: stage.color,
-                    borderRadius: 999,
+                    bgcolor: group.color,
+                    borderRadius: "4px",
                   }}
                 />
               ),
@@ -217,25 +226,6 @@ export function LearnScreen() {
           >
             {learning.answerRevealed ? (
               <>
-                <Tooltip title="Correct">
-                  <span>
-                    <IconButton
-                      aria-label="Correct"
-                      color="success"
-                      disabled={Boolean(feedbackLabel)}
-                      onClick={() => learning.gradeAnswer(true)}
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 1,
-                      }}
-                    >
-                      <CheckRounded />
-                    </IconButton>
-                  </span>
-                </Tooltip>
                 <Tooltip title="Incorrect">
                   <span>
                     <IconButton
@@ -252,6 +242,25 @@ export function LearnScreen() {
                       }}
                     >
                       <CloseRounded />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title="Correct">
+                  <span>
+                    <IconButton
+                      aria-label="Correct"
+                      color="success"
+                      disabled={Boolean(feedbackLabel)}
+                      onClick={() => learning.gradeAnswer(true)}
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 1,
+                      }}
+                    >
+                      <CheckRounded />
                     </IconButton>
                   </span>
                 </Tooltip>
