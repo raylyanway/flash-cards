@@ -75,8 +75,7 @@ export function HomeScreen() {
         title="Study overview"
         description="Review what’s due, track your progress, and jump back in with a clean daily rhythm."
       />
-
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
           <Card>
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
