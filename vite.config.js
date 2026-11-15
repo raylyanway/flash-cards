@@ -23,11 +23,11 @@ function copyStaticAssets() {
   };
 }
 
-export default defineConfig({
-  base: "./",
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "/flash-cards/" : "/",
   build: {
     outDir: "docs",
     emptyOutDir: true,
   },
   plugins: [react(), copyStaticAssets()],
-});
+}));
