@@ -19,6 +19,10 @@ function copyStaticAssets() {
       await cp(path.resolve("content"), path.join(outDir, "content"), {
         recursive: true,
       });
+      await copyFile(
+        path.join(outDir, "index.html"),
+        path.join(outDir, "404.html"),
+      );
     },
   };
 }
