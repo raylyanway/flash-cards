@@ -29,7 +29,7 @@ import { getStageBadgeColor, StatusBadge } from "../../components/StatusBadge";
 import { deleteLibraryRows, getLibraryRows, importLibraryRows } from "../../db";
 import { useAppStore } from "../../store/useAppStore";
 import type { LibraryRow, ProgressMap } from "../../types";
-import { getStageName } from "../../utils/cardProgress";
+import { getStageName, MASTERED_STAGE } from "../../utils/cardProgress";
 import {
   createCsvFromLibrary,
   downloadCsv,
@@ -493,8 +493,8 @@ export function LibraryList() {
               <Chip color="primary" label="text · required" size="small" />
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              Optional: answers, progressStage (0–3), progressNextReview (ms),
-              and custom card fields.
+              Optional: answers, progressStage (0–{MASTERED_STAGE}),
+              progressNextReview (ms), and custom card fields.
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Use plain text for one answer, or a quoted JSON array for several.
