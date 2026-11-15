@@ -87,9 +87,6 @@ export function useLearningSession({
       transitionTimerRef.current = null;
     }
     stopSpeaking();
-    setCurrentCard(null);
-    setAnswerRevealed(false);
-    setResultClass("");
   };
 
   const pronounceCurrentCard = () => {
