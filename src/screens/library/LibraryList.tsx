@@ -3,6 +3,7 @@ import {
   DeleteOutlineRounded,
   FileDownloadRounded,
   FileUploadRounded,
+  FolderOutlined,
   RestartAltRounded,
   ScheduleRounded,
 } from "@mui/icons-material";
@@ -701,10 +702,16 @@ export function LibraryList() {
                   selected={isSelected}
                   onClick={() => toggleRowSelection(row, !isSelected)}
                   sx={(theme) => ({
-                    alignItems: "flex-start",
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "minmax(0, 1fr)",
+                      sm: "minmax(0, 1fr) minmax(0, 280px)",
+                    },
+                    alignItems: "center",
                     px: { xs: 1, sm: 1.5 },
                     py: 1,
-                    gap: 1.5,
+                    columnGap: 2,
+                    rowGap: 0.5,
                     width: "100%",
                     borderLeft: "3px solid",
                     borderColor: isSelected ? "primary.main" : "transparent",
@@ -714,7 +721,7 @@ export function LibraryList() {
                     },
                   })}
                 >
-                  <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack spacing={0.25} sx={{ minWidth: 0 }}>
                     <Typography
                       component="div"
                       variant="subtitle1"
@@ -736,37 +743,6 @@ export function LibraryList() {
                         {answers}
                       </Typography>
                     )}
-                    <Stack
-                      direction="row"
-                      spacing={0.75}
-                      useFlexGap
-                      sx={{ flexWrap: "wrap", alignItems: "center" }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        aria-label={`Group: ${row.content.group}`}
-                        sx={{ overflowWrap: "anywhere" }}
-                      >
-                        {row.content.group}
-                      </Typography>
-                      <StatusBadge
-                        color={getStageBadgeColor(row.progress.stage)}
-                        label={getStageName(row.progress.stage)}
-                        ariaLabel={`Progress: ${getStageName(row.progress.stage)}`}
-                      />
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        sx={{ alignItems: "center", color: "text.secondary" }}
-                        aria-label={`Next review: ${formatReviewDate(row.progress.nextReview)}`}
-                      >
-                        <ScheduleRounded sx={{ fontSize: 15 }} />
-                        <Typography variant="caption">
-                          {formatReviewDate(row.progress.nextReview)}
-                        </Typography>
-                      </Stack>
-                    </Stack>
                     {extraDetails.length > 0 && (
                       <Typography
                         component="div"
@@ -779,28 +755,82 @@ export function LibraryList() {
                     )}
                   </Stack>
                   <Stack
-                    direction="row"
                     spacing={0.5}
-                    aria-label={
-                      row.isBuiltIn
-                        ? "Built-in collection"
-                        : "Imported collection"
-                    }
                     sx={{
-                      alignItems: "center",
+                      minWidth: 0,
                       color: "text.secondary",
-                      flexShrink: 0,
-                      mt: 0.5,
+                      borderLeft: { sm: 1 },
+                      borderColor: "divider",
+                      pl: { sm: 2 },
                     }}
                   >
-                    {row.isBuiltIn ? (
-                      <AutoStoriesRounded sx={{ fontSize: 16 }} />
-                    ) : (
-                      <FileUploadRounded sx={{ fontSize: 16 }} />
-                    )}
-                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                      {row.isBuiltIn ? "Built-in" : "Imported"}
-                    </Typography>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        aria-label={`Group: ${row.content.group}`}
+                        sx={{ alignItems: "center", minWidth: 0 }}
+                      >
+                        <FolderOutlined sx={{ fontSize: 15, flexShrink: 0 }} />
+                        <Typography
+                          variant="caption"
+                          sx={{ overflowWrap: "anywhere" }}
+                        >
+                          {row.content.group}
+                        </Typography>
+                      </Stack>
+                      <StatusBadge
+                        color={getStageBadgeColor(row.progress.stage)}
+                        label={getStageName(row.progress.stage)}
+                        ariaLabel={`Progress: ${getStageName(row.progress.stage)}`}
+                      />
+                    </Stack>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        aria-label={`Next review: ${formatReviewDate(row.progress.nextReview)}`}
+                        sx={{ alignItems: "center", minWidth: 0 }}
+                      >
+                        <ScheduleRounded sx={{ fontSize: 15, flexShrink: 0 }} />
+                        <Typography variant="caption">
+                          {formatReviewDate(row.progress.nextReview)}
+                        </Typography>
+                      </Stack>
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        aria-label={
+                          row.isBuiltIn
+                            ? "Built-in collection"
+                            : "Imported collection"
+                        }
+                        sx={{ alignItems: "center", flexShrink: 0 }}
+                      >
+                        {row.isBuiltIn ? (
+                          <AutoStoriesRounded sx={{ fontSize: 15 }} />
+                        ) : (
+                          <FileUploadRounded sx={{ fontSize: 15 }} />
+                        )}
+                        <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                          {row.isBuiltIn ? "Built-in" : "Imported"}
+                        </Typography>
+                      </Stack>
+                    </Stack>
                   </Stack>
                 </ListItemButton>
                 <Divider component="li" />
