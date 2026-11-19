@@ -423,25 +423,27 @@ export function LibraryList() {
               </Tooltip>
             </>
           )}
-          <Tooltip title="Import CSV">
-            <span>
-              <IconButton
-                aria-label="Import CSV"
-                size="small"
-                sx={{
-                  width: 40,
-                  height: 40,
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                }}
-                disabled={isImporting || isUpdatingSelection}
-                onClick={() => setIsImportDialogOpen(true)}
-              >
-                <FileUploadRounded fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
+          {selectedRows.length === 0 && (
+            <Tooltip title="Import CSV">
+              <span>
+                <IconButton
+                  aria-label="Import CSV"
+                  size="small"
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                  disabled={isImporting || isUpdatingSelection}
+                  onClick={() => setIsImportDialogOpen(true)}
+                >
+                  <FileUploadRounded fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
           <input
             ref={importInputRef}
             type="file"
@@ -449,25 +451,27 @@ export function LibraryList() {
             accept=".csv,text/csv"
             onChange={(event) => void handleImport(event)}
           />
-          <Tooltip title="Export selected or filtered cards">
-            <span>
-              <IconButton
-                aria-label="Export selected or filtered cards"
-                size="small"
-                sx={{
-                  width: 40,
-                  height: 40,
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                }}
-                disabled={isImporting || isUpdatingSelection}
-                onClick={exportLibrary}
-              >
-                <FileDownloadRounded fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
+          {selectedRows.length > 0 && (
+            <Tooltip title="Export selected cards">
+              <span>
+                <IconButton
+                  aria-label="Export selected cards"
+                  size="small"
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                  disabled={isImporting || isUpdatingSelection}
+                  onClick={exportLibrary}
+                >
+                  <FileDownloadRounded fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
         </Stack>
       </Stack>
 
