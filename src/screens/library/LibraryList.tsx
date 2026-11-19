@@ -560,21 +560,21 @@ export function LibraryList() {
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 0.5 }}>
             <Typography variant="body2" color="text.secondary">
-              Choose a CSV file with a group and text for each card.
+              Choose a CSV file with a group, text, and answer for each card.
             </Typography>
             <Stack spacing={1}>
               <Typography variant="body2">
                 <Box component="span" sx={{ fontWeight: 700 }}>
                   Required:
                 </Box>{" "}
-                group, text
+                group, text, answers
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 <Box component="span" sx={{ fontWeight: 700 }}>
                   Optional:
                 </Box>{" "}
-                answers, progressStage (0–{MASTERED_STAGE}), progressNextReview
-                (ms), and custom fields
+                progressStage (0–{MASTERED_STAGE}), progressNextReview (ms), and
+                custom fields
               </Typography>
             </Stack>
             <Box
