@@ -10,39 +10,33 @@ type PageHeaderProps = {
 export function PageHeader({ icon, title, description }: PageHeaderProps) {
   return (
     <Box
+      component="header"
       sx={{
         display: { xs: "none", md: "flex" },
         alignItems: "center",
         gap: 2,
-        mb: { xs: 3, md: 4 },
+        mb: 4,
       }}
     >
       <Box
         sx={{
-          width: { xs: 44, sm: 52 },
-          height: { xs: 44, sm: 52 },
-          borderRadius: 2,
+          width: 44,
+          height: 44,
+          borderRadius: 1,
           display: "grid",
           placeItems: "center",
-          bgcolor: "primary.main",
-          color: "primary.contrastText",
+          bgcolor: "action.selected",
+          color: "primary.main",
           flexShrink: 0,
-          boxShadow: "0 10px 20px rgba(8, 127, 140, 0.18)",
         }}
       >
         {icon}
       </Box>
-      <Box>
+      <Box sx={{ minWidth: 0 }}>
         <Typography
-          variant="overline"
-          color="primary.main"
-          sx={{ letterSpacing: 1.6, fontWeight: 800, lineHeight: 1.4 }}
-        >
-          Learning dashboard
-        </Typography>
-        <Typography
-          variant="h4"
-          sx={{ fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1.05 }}
+          component="h1"
+          variant="h5"
+          sx={{ fontWeight: 700, letterSpacing: 0, lineHeight: 1.2 }}
         >
           {title}
         </Typography>
