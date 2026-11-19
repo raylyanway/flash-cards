@@ -46,7 +46,7 @@ import {
   parseLibraryCsv,
 } from "../../utils/csv";
 
-type SortOrder = "default" | "text-asc" | "text-desc" | "next-review";
+type SortOrder = "default" | "text-asc" | "text-desc" | "stage";
 
 function getRowKey(row: LibraryRow) {
   return JSON.stringify([row.content.group, row.content.text]);
@@ -122,16 +122,10 @@ export function LibraryList() {
         );
         return sortOrder === "text-asc" ? comparison : -comparison;
       });
-    } else if (sortOrder === "next-review") {
-      matches.sort((first, second) => {
-        const firstReview = first.progress.nextReview;
-        const secondReview = second.progress.nextReview;
-        const firstScheduled = Number.isFinite(firstReview) && firstReview > 0;
-        const secondScheduled =
-          Number.isFinite(secondReview) && secondReview > 0;
-        if (firstScheduled !== secondScheduled) return firstScheduled ? -1 : 1;
-        return firstScheduled ? firstReview - secondReview : 0;
-      });
+    } else if (sortOrder === "stage") {
+      matches.sort(
+        (first, second) => first.progress.stage - second.progress.stage,
+      );
     }
     return matches;
   }, [rows, search, selectedGroup, sortOrder]);
@@ -507,10 +501,10 @@ export function LibraryList() {
             onChange={(event) => setSortOrder(event.target.value as SortOrder)}
             sx={{ width: { xs: "100%", sm: 160 }, flexShrink: 0 }}
           >
-            <MenuItem value="default">Current order</MenuItem>
+            <MenuItem value="default">Default</MenuItem>
             <MenuItem value="text-asc">Text A–Z</MenuItem>
             <MenuItem value="text-desc">Text Z–A</MenuItem>
-            <MenuItem value="next-review">Next review</MenuItem>
+            <MenuItem value="stage">By stage</MenuItem>
           </TextField>
         )}
         <Stack
