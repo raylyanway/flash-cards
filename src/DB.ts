@@ -103,8 +103,11 @@ export async function addLibraryCard(
 ) {
   assertNoBuiltInGroups([group], "added to");
   const card = normalizeCardInput(newText, answers);
-  await db.transaction("rw", db.library, async () => {
-    if (!(await db.library.where("group").equals(group).count())) {
+  await db.transaction("rw", db.library, db.contentMetadata, async () => {
+    if (
+      !(await db.library.where("group").equals(group).count()) &&
+      !(await db.contentMetadata.get(group))
+    ) {
       throw new Error("Group not found.");
     }
     if (await db.library.get([group, card.text])) {
@@ -365,9 +368,15 @@ export async function getContentDisplayName(group: string) {
 
 export async function getUniqueContentGroups() {
   const groups = new Set(DEFAULT_CONTENT.map((item) => item.key));
-  const records = await db.library.toArray();
+  const [records, metadata] = await Promise.all([
+    db.library.toArray(),
+    db.contentMetadata.toArray(),
+  ]);
   for (const record of records) {
     if (record.group) groups.add(record.group);
+  }
+  for (const item of metadata) {
+    if (item.group) groups.add(item.group);
   }
 
   return Array.from(groups);
@@ -394,6 +403,31 @@ export async function getContentOptions() {
   }
 
   return options;
+}
+
+export async function createLibraryGroup(name: string) {
+  const group = name.trim();
+  if (!group) throw new Error("Group name is required.");
+  const normalized = group.toLocaleLowerCase();
+
+  await db.transaction("rw", db.library, db.contentMetadata, async () => {
+    const options = await getContentOptions();
+    if (
+      options.some(
+        (option) =>
+          option.key.toLocaleLowerCase() === normalized ||
+          option.label.trim().toLocaleLowerCase() === normalized,
+      )
+    ) {
+      throw new Error("A group with this name already exists.");
+    }
+    await db.contentMetadata.add({
+      group,
+      displayName: group,
+      importedAt: Date.now(),
+    });
+  });
+  return group;
 }
 
 export async function importContent(group: string, cards: Card[]) {
@@ -424,6 +458,12 @@ export async function initializeGroupContent(currentGroup: string) {
   const groupCount = await getStoreCountForGroup(currentGroup);
 
   if (groupCount > 0) return getAllCardsForGroup(currentGroup);
+  if (
+    !DEFAULT_CONTENT.some((content) => content.key === currentGroup) &&
+    (await getContentMetadata(currentGroup))
+  ) {
+    return [];
+  }
 
   await fetchAndSeed(currentGroup);
   return getAllCardsForGroup(currentGroup);

@@ -3,6 +3,7 @@ import {
   ArrowBackRounded,
   ChevronRightRounded,
   CloseRounded,
+  CreateNewFolderRounded,
   DeleteOutlineRounded,
   EditRounded,
   FileDownloadRounded,
@@ -35,6 +36,7 @@ import * as React from "react";
 import { getStageBadgeColor, StatusBadge } from "../../components/StatusBadge";
 import {
   addLibraryCard,
+  createLibraryGroup,
   DEFAULT_CONTENT,
   deleteLibraryRows,
   editLibraryCard,
@@ -138,6 +140,10 @@ export function LibraryList() {
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = React.useState(false);
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = React.useState(false);
+  const [groupName, setGroupName] = React.useState("");
+  const [groupError, setGroupError] = React.useState<string | null>(null);
+  const [isCreatingGroup, setIsCreatingGroup] = React.useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [editingRow, setEditingRow] = React.useState<LibraryRow | null>(null);
   const [editText, setEditText] = React.useState("");
@@ -384,6 +390,32 @@ export function LibraryList() {
       );
     } finally {
       setIsUpdatingSelection(false);
+    }
+  };
+
+  const createGroup = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isCreatingGroup) return;
+    if (!groupName.trim()) {
+      setGroupError("Enter a group name");
+      return;
+    }
+    setGroupError(null);
+    setIsCreatingGroup(true);
+    try {
+      await createLibraryGroup(groupName);
+      await refreshContentOptions(currentGroup);
+      setIsCreateGroupOpen(false);
+      setError(null);
+      setMessage("Group created");
+    } catch (createError) {
+      setGroupError(
+        createError instanceof Error
+          ? createError.message
+          : "Unable to create group",
+      );
+    } finally {
+      setIsCreatingGroup(false);
     }
   };
 
@@ -681,6 +713,27 @@ export function LibraryList() {
             ml: { sm: "auto" },
           }}
         >
+          {selectedGroup === null && (
+            <IconButton
+              aria-label="Add new group"
+              size="small"
+              sx={{
+                width: 40,
+                height: 40,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+              }}
+              disabled={isLoading || isImporting || isUpdatingSelection}
+              onClick={() => {
+                setGroupName("");
+                setGroupError(null);
+                setIsCreateGroupOpen(true);
+              }}
+            >
+              <CreateNewFolderRounded fontSize="small" />
+            </IconButton>
+          )}
           {selectedRows.length > 0 && (
             <>
               <IconButton
@@ -811,6 +864,52 @@ export function LibraryList() {
           )}
         </Stack>
       </Stack>
+
+      <Dialog
+        open={isCreateGroupOpen}
+        onClose={() => {
+          if (!isCreatingGroup) setIsCreateGroupOpen(false);
+        }}
+        aria-labelledby="create-group-title"
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <Box component="form" onSubmit={(event) => void createGroup(event)}>
+          <DialogTitle id="create-group-title">Add new group</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              {groupError && (
+                <Alert severity="error">{groupError.replace(/\.$/, "")}</Alert>
+              )}
+              <TextField
+                autoFocus
+                required
+                fullWidth
+                label="Group name"
+                value={groupName}
+                disabled={isCreatingGroup}
+                onChange={(event) => setGroupName(event.target.value)}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+            <Button
+              disabled={isCreatingGroup}
+              onClick={() => setIsCreateGroupOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isCreatingGroup}
+            >
+              Create group
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
 
       <Dialog
         open={isAddDialogOpen || Boolean(editingRow)}
@@ -1190,7 +1289,7 @@ export function LibraryList() {
         <Typography sx={{ p: 2 }}>
           {search.trim()
             ? "No cards match your search."
-            : "No library rows found for this group."}
+            : "No cards in this group yet."}
         </Typography>
       ) : (
         <List aria-label="Content library" disablePadding>
