@@ -1,5 +1,7 @@
 import {
+  ArrowBackRounded,
   AutoStoriesRounded,
+  ChevronRightRounded,
   CloseRounded,
   DeleteOutlineRounded,
   FileDownloadRounded,
@@ -9,7 +11,7 @@ import {
   ScheduleRounded,
   SearchRounded,
 } from "@mui/icons-material";
-import { Autocomplete, TextField } from "@mui/material";
+import { TextField } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -24,7 +26,6 @@ import InputAdornment from "@mui/material/InputAdornment";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
-import ListSubheader from "@mui/material/ListSubheader";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -33,8 +34,10 @@ import { getStageBadgeColor, StatusBadge } from "../../components/StatusBadge";
 import {
   DEFAULT_CONTENT,
   deleteLibraryRows,
+  getGroupOverviewProgress,
   getLibraryRows,
   importLibraryRows,
+  initializeGroupContent,
 } from "../../db";
 import { useAppStore } from "../../store/useAppStore";
 import type { LibraryRow, ProgressMap } from "../../types";
@@ -85,6 +88,9 @@ export function LibraryList() {
 
   const importInputRef = React.useRef<HTMLInputElement | null>(null);
   const [rows, setRows] = React.useState<LibraryRow[]>([]);
+  const [builtInCounts, setBuiltInCounts] = React.useState<
+    Record<string, number>
+  >({});
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = React.useState(false);
@@ -93,7 +99,7 @@ export function LibraryList() {
   const [message, setMessage] = React.useState<string | null>(null);
   const [isImporting, setIsImporting] = React.useState(false);
   const [isUpdatingSelection, setIsUpdatingSelection] = React.useState(false);
-  const [selectedGroup, setSelectedGroup] = React.useState("all");
+  const [selectedGroup, setSelectedGroup] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("default");
   const [selectedRowKeys, setSelectedRowKeys] = React.useState<Set<string>>(
@@ -103,7 +109,7 @@ export function LibraryList() {
   const filteredRows = React.useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     const matches = rows.filter((row) => {
-      if (selectedGroup !== "all" && row.content.group !== selectedGroup) {
+      if (row.content.group !== selectedGroup) {
         return false;
       }
       if (!query) return true;
@@ -139,17 +145,9 @@ export function LibraryList() {
     }
     return matches;
   }, [rows, search, selectedGroup, sortOrder]);
-  const groupFilterOptions = React.useMemo(() => {
-    const builtInKeys = new Set(DEFAULT_CONTENT.map((option) => option.key));
-    return [
-      { key: "all", label: "All groups" },
-      ...contentOptions.filter((option) => builtInKeys.has(option.key)),
-      ...contentOptions.filter((option) => !builtInKeys.has(option.key)),
-    ];
-  }, [contentOptions]);
-  const selectedGroupOption =
-    groupFilterOptions.find((option) => option.key === selectedGroup) ??
-    groupFilterOptions[0];
+  const selectedGroupOption = contentOptions.find(
+    (option) => option.key === selectedGroup,
+  );
   const selectedRows = React.useMemo(
     () => rows.filter((row) => selectedRowKeys.has(getRowKey(row))),
     [rows, selectedRowKeys],
@@ -160,6 +158,28 @@ export function LibraryList() {
   const allFilteredSelected =
     filteredRows.length > 0 && selectedFilteredCount === filteredRows.length;
   const removableRows = selectedRows.filter((row) => !row.isBuiltIn);
+
+  const openGroup = async (group: string) => {
+    setSelectedGroup(group);
+    setSearch("");
+    setSelectedRowKeys(new Set());
+    setError(null);
+    setIsLoading(true);
+    try {
+      if (DEFAULT_CONTENT.some((content) => content.key === group)) {
+        await initializeGroupContent(group);
+      }
+      setRows(await getLibraryRows(progress));
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load group.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toggleRowSelection = (row: LibraryRow, checked: boolean) => {
     const key = getRowKey(row);
@@ -205,6 +225,25 @@ export function LibraryList() {
       active = false;
     };
   }, [progress]);
+
+  React.useEffect(() => {
+    let active = true;
+    for (const option of DEFAULT_CONTENT) {
+      void getGroupOverviewProgress(option.key)
+        .then((entries) => {
+          if (active) {
+            setBuiltInCounts((current) => ({
+              ...current,
+              [option.key]: entries.length,
+            }));
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const exportLibrary = () => {
     try {
@@ -312,13 +351,28 @@ export function LibraryList() {
         })),
       );
       await setProgress(nextProgress);
-      if (nextProgress[currentGroup]) await loadGroupData(currentGroup);
+      const options = await refreshContentOptions(currentGroup);
+      const nextCurrentGroup = options.some(
+        (option) => option.key === currentGroup,
+      )
+        ? currentGroup
+        : options[0]?.key;
+      if (nextProgress[currentGroup] && nextCurrentGroup) {
+        await loadGroupData(nextCurrentGroup);
+      }
       setRows(
         await getLibraryRows({
           ...progress,
           ...nextProgress,
         }),
       );
+      if (
+        selectedGroup &&
+        !options.some((option) => option.key === selectedGroup)
+      ) {
+        setSelectedGroup(null);
+        setSearch("");
+      }
       setSelectedRowKeys(new Set());
       const keptBuiltInCount = selectedRows.length - removableRows.length;
       setMessage(
@@ -387,91 +441,88 @@ export function LibraryList() {
           pb: 2,
         }}
       >
-        <Autocomplete
-          size="small"
-          sx={{ minWidth: 0, width: { xs: "100%", sm: 220 } }}
-          options={groupFilterOptions}
-          value={selectedGroupOption}
-          getOptionLabel={(option) => option.label}
-          groupBy={(option) =>
-            option.key === "all"
-              ? ""
-              : DEFAULT_CONTENT.some((content) => content.key === option.key)
-                ? "Built-in"
-                : "Imported"
-          }
-          renderGroup={(group) =>
-            group.group ? (
-              <li key={group.key}>
-                <ListSubheader component="div">{group.group}</ListSubheader>
-                <Box component="ul" sx={{ p: 0 }}>
-                  {group.children}
-                </Box>
-              </li>
-            ) : (
-              <React.Fragment key={group.key}>{group.children}</React.Fragment>
-            )
-          }
-          isOptionEqualToValue={(option, value) => option.key === value.key}
-          onChange={(_, option) => {
-            setSelectedGroup(option?.key ?? "all");
-            setSelectedRowKeys(new Set());
-          }}
-          renderInput={(params) => (
-            <TextField {...params} label="Filter by group" />
-          )}
-        />
-        <TextField
-          size="small"
-          label="Search cards"
-          placeholder="Text or answer"
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setSelectedRowKeys(new Set());
-          }}
-          sx={{
-            width: { xs: "100%", sm: "auto" },
-            flex: { sm: "1 1 220px" },
-            minWidth: { xs: 0, sm: 200 },
-          }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchRounded fontSize="small" />
-                </InputAdornment>
-              ),
-              endAdornment: search && (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="Clear search"
-                    size="small"
-                    onClick={() => {
-                      setSearch("");
-                      setSelectedRowKeys(new Set());
-                    }}
-                  >
-                    <CloseRounded fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-        <TextField
-          select
-          size="small"
-          label="Sort by"
-          value={sortOrder}
-          onChange={(event) => setSortOrder(event.target.value as SortOrder)}
-          sx={{ width: { xs: "100%", sm: 160 }, flexShrink: 0 }}
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: "center", minWidth: 0 }}
         >
-          <MenuItem value="default">Current order</MenuItem>
-          <MenuItem value="text-asc">Text A–Z</MenuItem>
-          <MenuItem value="text-desc">Text Z–A</MenuItem>
-          <MenuItem value="next-review">Next review</MenuItem>
-        </TextField>
+          {selectedGroup !== null && (
+            <IconButton
+              aria-label="Back to groups"
+              disabled={isLoading || isImporting || isUpdatingSelection}
+              onClick={() => {
+                setSelectedGroup(null);
+                setSearch("");
+                setSelectedRowKeys(new Set());
+                setError(null);
+              }}
+            >
+              <ArrowBackRounded />
+            </IconButton>
+          )}
+          <Typography
+            component="h2"
+            variant="h6"
+            sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
+          >
+            {selectedGroupOption?.label ?? "Groups"}
+          </Typography>
+        </Stack>
+        {selectedGroup !== null && (
+          <TextField
+            size="small"
+            label="Search cards"
+            placeholder="Text or answer"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setSelectedRowKeys(new Set());
+            }}
+            sx={{
+              width: { xs: "100%", sm: "auto" },
+              flex: { sm: "1 1 220px" },
+              minWidth: { xs: 0, sm: 200 },
+            }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRounded fontSize="small" />
+                  </InputAdornment>
+                ),
+                endAdornment: search && (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="Clear search"
+                      size="small"
+                      onClick={() => {
+                        setSearch("");
+                        setSelectedRowKeys(new Set());
+                      }}
+                    >
+                      <CloseRounded fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        )}
+        {selectedGroup !== null && (
+          <TextField
+            select
+            size="small"
+            label="Sort by"
+            value={sortOrder}
+            onChange={(event) => setSortOrder(event.target.value as SortOrder)}
+            sx={{ width: { xs: "100%", sm: 160 }, flexShrink: 0 }}
+          >
+            <MenuItem value="default">Current order</MenuItem>
+            <MenuItem value="text-asc">Text A–Z</MenuItem>
+            <MenuItem value="text-desc">Text Z–A</MenuItem>
+            <MenuItem value="next-review">Next review</MenuItem>
+          </TextField>
+        )}
         <Stack
           direction="row"
           spacing={1}
@@ -776,6 +827,65 @@ export function LibraryList() {
         <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
           <CircularProgress aria-label="Loading library" />
         </Box>
+      ) : selectedGroup === null ? (
+        <List aria-label="Library groups" disablePadding>
+          {[true, false].map((builtIn) => {
+            const groups = contentOptions.filter(
+              (option) =>
+                DEFAULT_CONTENT.some(
+                  (content) => content.key === option.key,
+                ) === builtIn,
+            );
+            if (groups.length === 0) return null;
+            return (
+              <React.Fragment key={builtIn ? "built-in" : "imported"}>
+                <ListItem sx={{ px: 1.5, pt: 2, pb: 1 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontWeight: 700 }}
+                  >
+                    {builtIn ? "Built-in" : "Imported"}
+                  </Typography>
+                </ListItem>
+                {groups.map((option) => {
+                  const storedCount = rows.filter(
+                    (row) => row.content.group === option.key,
+                  ).length;
+                  const count = builtIn
+                    ? storedCount || builtInCounts[option.key]
+                    : storedCount;
+                  return (
+                    <React.Fragment key={option.key}>
+                      <ListItemButton
+                        component="button"
+                        type="button"
+                        onClick={() => void openGroup(option.key)}
+                        sx={{ width: "100%", px: 1.5, py: 1.5, gap: 1.5 }}
+                      >
+                        <FolderOutlined color="primary" />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
+                          >
+                            {option.label}
+                          </Typography>
+                          {count !== undefined && (
+                            <Typography variant="body2" color="text.secondary">
+                              {count} card{count === 1 ? "" : "s"}
+                            </Typography>
+                          )}
+                        </Box>
+                        <ChevronRightRounded color="action" />
+                      </ListItemButton>
+                      <Divider component="li" />
+                    </React.Fragment>
+                  );
+                })}
+              </React.Fragment>
+            );
+          })}
+        </List>
       ) : rows.length === 0 ? (
         <Typography sx={{ p: 2 }}>
           No library rows yet. Import a CSV file to add content.
