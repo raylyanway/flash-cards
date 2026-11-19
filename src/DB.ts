@@ -79,13 +79,7 @@ export async function saveProgressForGroup(
   });
 }
 
-export async function editLibraryCard(
-  group: string,
-  originalText: string,
-  newText: string,
-  answers: string[],
-) {
-  assertNoBuiltInGroups([group], "edited");
+function normalizeCardInput(newText: string, answers: string[]) {
   const text = newText.trim();
   const normalizedAnswers = answers.map((answer) => answer.trim());
   if (
@@ -95,22 +89,58 @@ export async function editLibraryCard(
   ) {
     throw new Error("Text and at least one non-empty answer are required.");
   }
+  return {
+    text,
+    answers:
+      normalizedAnswers.length === 1 ? normalizedAnswers[0] : normalizedAnswers,
+  };
+}
+
+export async function addLibraryCard(
+  group: string,
+  newText: string,
+  answers: string[],
+) {
+  assertNoBuiltInGroups([group], "added to");
+  const card = normalizeCardInput(newText, answers);
+  await db.transaction("rw", db.library, async () => {
+    if (!(await db.library.where("group").equals(group).count())) {
+      throw new Error("Group not found.");
+    }
+    if (await db.library.get([group, card.text])) {
+      throw new Error("A card with this text already exists in this group.");
+    }
+    await db.library.add({
+      ...card,
+      group,
+      learningProgress: { stage: 0, review: 0 },
+    });
+  });
+}
+
+export async function editLibraryCard(
+  group: string,
+  originalText: string,
+  newText: string,
+  answers: string[],
+) {
+  assertNoBuiltInGroups([group], "edited");
+  const card = normalizeCardInput(newText, answers);
 
   await db.transaction("rw", db.library, async () => {
     const record = await db.library.get([group, originalText]);
     if (!record) throw new Error("Card not found.");
-    if (text !== originalText && (await db.library.get([group, text]))) {
+    if (
+      card.text !== originalText &&
+      (await db.library.get([group, card.text]))
+    ) {
       throw new Error("A card with this text already exists in this group.");
     }
     const updated = {
       ...record,
-      text,
-      answers:
-        normalizedAnswers.length === 1
-          ? normalizedAnswers[0]
-          : normalizedAnswers,
+      ...card,
     };
-    if (text === originalText) {
+    if (card.text === originalText) {
       await db.library.put(updated);
     } else {
       await db.library.add(updated);

@@ -1,4 +1,5 @@
 import {
+  AddRounded,
   ArrowBackRounded,
   ChevronRightRounded,
   CloseRounded,
@@ -33,6 +34,7 @@ import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { getStageBadgeColor, StatusBadge } from "../../components/StatusBadge";
 import {
+  addLibraryCard,
   DEFAULT_CONTENT,
   deleteLibraryRows,
   editLibraryCard,
@@ -136,6 +138,7 @@ export function LibraryList() {
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = React.useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [editingRow, setEditingRow] = React.useState<LibraryRow | null>(null);
   const [editText, setEditText] = React.useState("");
   const [editAnswers, setEditAnswers] = React.useState("");
@@ -393,11 +396,29 @@ export function LibraryList() {
     setEditError(null);
   };
 
+  const openAddDialog = () => {
+    if (!selectedGroup || isBuiltInGroup) return;
+    setEditingRow(null);
+    setEditText("");
+    setEditAnswers("");
+    setEditError(null);
+    setIsAddDialogOpen(true);
+  };
+
+  const closeCardDialog = () => {
+    if (isUpdatingSelection) return;
+    setIsAddDialogOpen(false);
+    setEditingRow(null);
+  };
+
   const saveEditedCard = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!editingRow || editingRow.isBuiltIn || isUpdatingSelection) return;
+    const group = isAddDialogOpen ? selectedGroup : editingRow?.content.group;
+    if (!group || isBuiltInGroup || isUpdatingSelection) return;
+    if (!isAddDialogOpen && (!editingRow || editingRow.isBuiltIn)) return;
     const text = editText.trim();
     const answers =
+      editingRow &&
       editAnswers === formatAnswersForEdit(editingRow.content.answers)
         ? Array.isArray(editingRow.content.answers)
           ? editingRow.content.answers
@@ -411,7 +432,6 @@ export function LibraryList() {
     setEditError(null);
     setIsUpdatingSelection(true);
     try {
-      const group = editingRow.content.group;
       const nextGroupProgress = Object.fromEntries(
         rows
           .filter((row) => row.content.group === group)
@@ -420,20 +440,26 @@ export function LibraryList() {
             progress[group]?.[row.content.text] ?? row.progress,
           ]),
       );
-      const cardProgress = nextGroupProgress[editingRow.content.text];
-      delete nextGroupProgress[editingRow.content.text];
-      nextGroupProgress[text] = cardProgress;
-
-      await editLibraryCard(group, editingRow.content.text, text, answers);
+      if (isAddDialogOpen) {
+        await addLibraryCard(group, text, answers);
+        nextGroupProgress[text] = { stage: 0, review: 0 };
+      } else if (editingRow) {
+        const cardProgress = nextGroupProgress[editingRow.content.text];
+        delete nextGroupProgress[editingRow.content.text];
+        nextGroupProgress[text] = cardProgress;
+        await editLibraryCard(group, editingRow.content.text, text, answers);
+      }
       await setProgress({ [group]: nextGroupProgress });
       if (group === currentGroup) await loadGroupData(group);
       setRows(
         await getLibraryRows({ ...progress, [group]: nextGroupProgress }),
       );
       setSelectedRowKeys(new Set());
+      if (isAddDialogOpen) setSearch("");
+      setIsAddDialogOpen(false);
       setEditingRow(null);
       setError(null);
-      setMessage("Card updated");
+      setMessage(isAddDialogOpen ? "Card added" : "Card updated");
     } catch (saveError) {
       setEditError(
         saveError instanceof Error ? saveError.message : "Unable to save card",
@@ -740,6 +766,25 @@ export function LibraryList() {
               <FileUploadRounded fontSize="small" />
             </IconButton>
           )}
+          {selectedGroup !== null &&
+            selectedRows.length === 0 &&
+            !isBuiltInGroup && (
+              <IconButton
+                aria-label="Add card"
+                size="small"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                }}
+                disabled={isLoading || isImporting || isUpdatingSelection}
+                onClick={openAddDialog}
+              >
+                <AddRounded fontSize="small" />
+              </IconButton>
+            )}
           <input
             ref={importInputRef}
             type="file"
@@ -768,17 +813,17 @@ export function LibraryList() {
       </Stack>
 
       <Dialog
-        open={Boolean(editingRow)}
-        onClose={() => {
-          if (!isUpdatingSelection) setEditingRow(null);
-        }}
+        open={isAddDialogOpen || Boolean(editingRow)}
+        onClose={closeCardDialog}
         aria-labelledby="edit-card-title"
         maxWidth="sm"
         fullWidth
         slotProps={{ paper: { sx: { borderRadius: 2 } } }}
       >
         <Box component="form" onSubmit={(event) => void saveEditedCard(event)}>
-          <DialogTitle id="edit-card-title">Edit card</DialogTitle>
+          <DialogTitle id="edit-card-title">
+            {isAddDialogOpen ? "Add card" : "Edit card"}
+          </DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ pt: 1 }}>
               {editError && (
@@ -811,10 +856,7 @@ export function LibraryList() {
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-            <Button
-              disabled={isUpdatingSelection}
-              onClick={() => setEditingRow(null)}
-            >
+            <Button disabled={isUpdatingSelection} onClick={closeCardDialog}>
               Cancel
             </Button>
             <Button
@@ -822,7 +864,7 @@ export function LibraryList() {
               variant="contained"
               disabled={isUpdatingSelection}
             >
-              Save
+              {isAddDialogOpen ? "Add card" : "Save"}
             </Button>
           </DialogActions>
         </Box>
