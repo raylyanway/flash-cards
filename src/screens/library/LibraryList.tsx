@@ -7,7 +7,6 @@ import {
   FileUploadRounded,
   FolderOutlined,
   RestartAltRounded,
-  ScheduleRounded,
   SearchRounded,
 } from "@mui/icons-material";
 import { TextField } from "@mui/material";
@@ -58,14 +57,6 @@ function formatValue(value: unknown) {
   if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
-}
-
-function formatReviewDate(timestamp: number) {
-  if (!Number.isFinite(timestamp) || timestamp <= 0) return "Not scheduled";
-  return new Date(timestamp).toLocaleString(undefined, {
-    dateStyle: "short",
-    timeStyle: "medium",
-  });
 }
 
 function formatExtraDetails(row: LibraryRow) {
@@ -936,10 +927,7 @@ export function LibraryList() {
                   onClick={() => toggleRowSelection(row, !isSelected)}
                   sx={(theme) => ({
                     display: "grid",
-                    gridTemplateColumns: {
-                      xs: "minmax(0, 1fr)",
-                      sm: "minmax(0, 1fr) minmax(0, 280px)",
-                    },
+                    gridTemplateColumns: "minmax(0, 1fr) auto",
                     alignItems: "center",
                     px: { xs: 1, sm: 1.5 },
                     py: 1,
@@ -987,37 +975,11 @@ export function LibraryList() {
                       </Typography>
                     )}
                   </Stack>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    useFlexGap
-                    sx={{
-                      minWidth: 0,
-                      color: "text.secondary",
-                      borderLeft: { sm: 1 },
-                      borderColor: "divider",
-                      pl: { sm: 2 },
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <StatusBadge
-                      color={getStageBadgeColor(row.progress.stage)}
-                      label={getStageName(row.progress.stage)}
-                      ariaLabel={`Progress: ${getStageName(row.progress.stage)}`}
-                    />
-                    <Stack
-                      direction="row"
-                      spacing={0.5}
-                      aria-label={`Next review: ${formatReviewDate(row.progress.nextReview)}`}
-                      sx={{ alignItems: "center", minWidth: 0 }}
-                    >
-                      <ScheduleRounded sx={{ fontSize: 15, flexShrink: 0 }} />
-                      <Typography variant="caption">
-                        {formatReviewDate(row.progress.nextReview)}
-                      </Typography>
-                    </Stack>
-                  </Stack>
+                  <StatusBadge
+                    color={getStageBadgeColor(row.progress.stage)}
+                    label={getStageName(row.progress.stage)}
+                    ariaLabel={`Progress: ${getStageName(row.progress.stage)}`}
+                  />
                 </ListItemButton>
                 <Divider component="li" />
               </React.Fragment>
