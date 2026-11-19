@@ -381,12 +381,11 @@ export function LibraryList() {
               <IconButton
                 aria-label="Remove selected cards"
                 size="small"
-                color="error"
                 sx={{
                   width: 40,
                   height: 40,
                   border: 1,
-                  borderColor: "error.main",
+                  borderColor: "divider",
                   borderRadius: 1,
                 }}
                 disabled={isImporting || isUpdatingSelection}
