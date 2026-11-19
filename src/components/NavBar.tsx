@@ -14,7 +14,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import ColorModeIconDropdown from "./ColorModeIconDropdown";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   display: "flex",
@@ -122,9 +121,6 @@ export function NavBar() {
               })}
             </Box>
           </Box>
-          <ColorModeIconDropdown
-            sx={{ display: { xs: "none", md: "block" } }}
-          />
           <Box
             sx={{
               display: { xs: "flex", md: "none" },
@@ -132,7 +128,6 @@ export function NavBar() {
               alignItems: "center",
             }}
           >
-            <ColorModeIconDropdown size="medium" />
             <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
               <MenuIcon />
             </IconButton>

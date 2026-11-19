@@ -36,6 +36,14 @@ export function useLearningSession({
     setIsSpeaking(false);
   }, []);
 
+  const startSpeaking = useCallback((text: string) => {
+    const speechId = ++speechIdRef.current;
+    setIsSpeaking(true);
+    speakWord(text, () => {
+      if (speechId === speechIdRef.current) setIsSpeaking(false);
+    });
+  }, []);
+
   const selectNextCard = useCallback(() => {
     if (!sessionActiveRef.current) return;
     const dueCards = cardsRef.current.filter((card) => {
@@ -43,7 +51,7 @@ export function useLearningSession({
       return Boolean(
         cardProgress &&
         cardProgress.stage < MASTERED_STAGE &&
-        cardProgress.nextReview <= Date.now(),
+        cardProgress.review <= Date.now(),
       );
     });
     dueCards.sort(
@@ -55,8 +63,12 @@ export function useLearningSession({
     setAnswerRevealed(false);
     setResultClass("");
     gradingRef.current = false;
-    setCurrentCard(dueCards[0] ?? null);
-  }, [setCurrentCard, stopSpeaking]);
+    const nextCard = dueCards[0] ?? null;
+    setCurrentCard(nextCard);
+    if (nextCard && useAppStore.getState().autoPronounce) {
+      startSpeaking(nextCard.text);
+    }
+  }, [setCurrentCard, startSpeaking, stopSpeaking]);
 
   useEffect(() => {
     progressRef.current = currentGroupProgress;
@@ -87,9 +99,6 @@ export function useLearningSession({
       transitionTimerRef.current = null;
     }
     stopSpeaking();
-    setCurrentCard(null);
-    setAnswerRevealed(false);
-    setResultClass("");
   };
 
   const pronounceCurrentCard = () => {
@@ -98,11 +107,7 @@ export function useLearningSession({
       stopSpeaking();
       return;
     }
-    const speechId = ++speechIdRef.current;
-    setIsSpeaking(true);
-    speakWord(currentCard.text, () => {
-      if (speechId === speechIdRef.current) setIsSpeaking(false);
-    });
+    startSpeaking(currentCard.text);
   };
 
   const revealAnswer = () => {

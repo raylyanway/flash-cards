@@ -1,32 +1,50 @@
 import {
-  AutoStoriesRounded,
+  AddRounded,
+  ArrowBackRounded,
+  ChevronRightRounded,
+  CloseRounded,
+  CreateNewFolderRounded,
   DeleteOutlineRounded,
+  EditRounded,
   FileDownloadRounded,
   FileUploadRounded,
+  FolderOutlined,
   RestartAltRounded,
-  ScheduleRounded,
+  SearchRounded,
+  SortRounded,
+  TaskAltRounded,
 } from "@mui/icons-material";
-import { Autocomplete, TextField } from "@mui/material";
+import { TextField, useMediaQuery } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Collapse from "@mui/material/Collapse";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { getStageBadgeColor, StatusBadge } from "../../components/StatusBadge";
-import { deleteLibraryRows, getLibraryRows, importLibraryRows } from "../../db";
+import {
+  addLibraryCard,
+  createLibraryGroup,
+  DEFAULT_CONTENT,
+  deleteLibraryRows,
+  editLibraryCard,
+  getGroupOverviewProgress,
+  getLibraryRows,
+  importLibraryRows,
+  initializeGroupContent,
+} from "../../db";
 import { useAppStore } from "../../store/useAppStore";
 import type { LibraryRow, ProgressMap } from "../../types";
 import { getStageName, MASTERED_STAGE } from "../../utils/cardProgress";
@@ -35,6 +53,52 @@ import {
   downloadCsv,
   parseLibraryCsv,
 } from "../../utils/csv";
+
+type SortOrder = "default" | "text-asc" | "text-desc" | "stage";
+
+const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: "default", label: "Default" },
+  { value: "text-asc", label: "Text A–Z" },
+  { value: "text-desc", label: "Text Z–A" },
+  { value: "stage", label: "By stage" },
+];
+
+function LibraryAlert({
+  message,
+  severity,
+  onClose,
+}: {
+  message: string | null;
+  severity: "error" | "success";
+  onClose: () => void;
+}) {
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const [lastMessage, setLastMessage] = React.useState(message);
+
+  React.useEffect(() => {
+    if (message) setLastMessage(message);
+  }, [message]);
+
+  return (
+    <Collapse
+      in={Boolean(message)}
+      timeout={reduceMotion ? 0 : 300}
+      unmountOnExit
+    >
+      <Alert
+        severity={severity}
+        onClose={onClose}
+        sx={{
+          mb: 1,
+          opacity: message ? 1 : 0,
+          transition: reduceMotion ? "none" : "opacity 300ms ease",
+        }}
+      >
+        {(message ?? lastMessage ?? "").replace(/\.$/, "")}
+      </Alert>
+    </Collapse>
+  );
+}
 
 function getRowKey(row: LibraryRow) {
   return JSON.stringify([row.content.group, row.content.text]);
@@ -47,12 +111,8 @@ function formatValue(value: unknown) {
   return String(value);
 }
 
-function formatReviewDate(timestamp: number) {
-  if (!Number.isFinite(timestamp) || timestamp <= 0) return "Not scheduled";
-  return new Date(timestamp).toLocaleString(undefined, {
-    dateStyle: "short",
-    timeStyle: "medium",
-  });
+function formatAnswersForEdit(answers: string | string[] | undefined) {
+  return Array.isArray(answers) ? answers.join(" | ") : (answers ?? "");
 }
 
 function formatExtraDetails(row: LibraryRow) {
@@ -74,31 +134,77 @@ export function LibraryList() {
 
   const importInputRef = React.useRef<HTMLInputElement | null>(null);
   const [rows, setRows] = React.useState<LibraryRow[]>([]);
+  const [builtInCounts, setBuiltInCounts] = React.useState<
+    Record<string, number>
+  >({});
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = React.useState(false);
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = React.useState(false);
+  const [groupName, setGroupName] = React.useState("");
+  const [groupError, setGroupError] = React.useState<string | null>(null);
+  const [isCreatingGroup, setIsCreatingGroup] = React.useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
+  const [editingRow, setEditingRow] = React.useState<LibraryRow | null>(null);
+  const [editText, setEditText] = React.useState("");
+  const [editAnswers, setEditAnswers] = React.useState("");
+  const [editError, setEditError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
   const [isImporting, setIsImporting] = React.useState(false);
   const [isUpdatingSelection, setIsUpdatingSelection] = React.useState(false);
-  const [selectedGroup, setSelectedGroup] = React.useState("all");
+  const [selectedGroup, setSelectedGroup] = React.useState<string | null>(null);
+  const [search, setSearch] = React.useState("");
+  const [sortOrder, setSortOrder] = React.useState<SortOrder>("default");
+  const sortIndex = SORT_OPTIONS.findIndex(
+    (option) => option.value === sortOrder,
+  );
+  const currentSort = SORT_OPTIONS[sortIndex];
+  const nextSort = SORT_OPTIONS[(sortIndex + 1) % SORT_OPTIONS.length];
   const [selectedRowKeys, setSelectedRowKeys] = React.useState<Set<string>>(
     new Set(),
   );
 
-  const filteredRows = React.useMemo(
-    () =>
-      selectedGroup === "all"
-        ? rows
-        : rows.filter((row) => row.content.group === selectedGroup),
-    [rows, selectedGroup],
+  const filteredRows = React.useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    const matches = rows.filter((row) => {
+      if (row.content.group !== selectedGroup) {
+        return false;
+      }
+      if (!query) return true;
+      const answers = Array.isArray(row.content.answers)
+        ? row.content.answers
+        : [row.content.answers ?? ""];
+      return [row.content.text, ...answers].some((value) =>
+        value.toLocaleLowerCase().includes(query),
+      );
+    });
+    if (sortOrder === "text-asc" || sortOrder === "text-desc") {
+      matches.sort((first, second) => {
+        const comparison = first.content.text.localeCompare(
+          second.content.text,
+          undefined,
+          {
+            numeric: true,
+            sensitivity: "base",
+          },
+        );
+        return sortOrder === "text-asc" ? comparison : -comparison;
+      });
+    } else if (sortOrder === "stage") {
+      matches.sort(
+        (first, second) => first.progress.stage - second.progress.stage,
+      );
+    }
+    return matches;
+  }, [rows, search, selectedGroup, sortOrder]);
+  const selectedGroupOption = contentOptions.find(
+    (option) => option.key === selectedGroup,
   );
-  const groupFilterOptions = React.useMemo(
-    () => [{ key: "all", label: "All groups" }, ...contentOptions],
-    [contentOptions],
+  const isBuiltInGroup = DEFAULT_CONTENT.some(
+    (option) => option.key === selectedGroup,
   );
-  const selectedGroupOption =
-    groupFilterOptions.find((option) => option.key === selectedGroup) ??
-    groupFilterOptions[0];
   const selectedRows = React.useMemo(
     () => rows.filter((row) => selectedRowKeys.has(getRowKey(row))),
     [rows, selectedRowKeys],
@@ -109,6 +215,29 @@ export function LibraryList() {
   const allFilteredSelected =
     filteredRows.length > 0 && selectedFilteredCount === filteredRows.length;
   const removableRows = selectedRows.filter((row) => !row.isBuiltIn);
+
+  const openGroup = async (group: string) => {
+    setSelectedGroup(group);
+    setSearch("");
+    setSelectedRowKeys(new Set());
+    setError(null);
+    setMessage(null);
+    setIsLoading(true);
+    try {
+      if (DEFAULT_CONTENT.some((content) => content.key === group)) {
+        await initializeGroupContent(group);
+      }
+      setRows(await getLibraryRows(progress));
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load group.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toggleRowSelection = (row: LibraryRow, checked: boolean) => {
     const key = getRowKey(row);
@@ -133,6 +262,18 @@ export function LibraryList() {
   };
 
   React.useEffect(() => {
+    if (!error) return;
+    const timer = window.setTimeout(() => setError(null), 5_000);
+    return () => window.clearTimeout(timer);
+  }, [error]);
+
+  React.useEffect(() => {
+    if (!message) return;
+    const timer = window.setTimeout(() => setMessage(null), 5_000);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
+  React.useEffect(() => {
     let active = true;
 
     getLibraryRows(progress)
@@ -155,13 +296,32 @@ export function LibraryList() {
     };
   }, [progress]);
 
+  React.useEffect(() => {
+    let active = true;
+    for (const option of DEFAULT_CONTENT) {
+      void getGroupOverviewProgress(option.key)
+        .then((entries) => {
+          if (active) {
+            setBuiltInCounts((current) => ({
+              ...current,
+              [option.key]: entries.length,
+            }));
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const exportLibrary = () => {
     try {
       setError(null);
       const rowsToExport =
         selectedRows.length > 0 ? selectedRows : filteredRows;
       if (!rowsToExport.length) {
-        setError("There is no library data to export.");
+        setError("No cards to export.");
         return;
       }
       const exportScope = selectedRows.length > 0 ? "selected" : selectedGroup;
@@ -171,11 +331,14 @@ export function LibraryList() {
       );
     } catch (exportError) {
       console.error("Failed to export library rows:", exportError);
-      setError("Unable to export library rows. See console for details.");
+      setError("Unable to export cards.");
     }
   };
 
-  const resetSelectedProgress = async () => {
+  const updateSelectedProgress = async (stage: number) => {
+    if (selectedRows.length === 0 || isUpdatingSelection) return;
+    const isMastering = stage === MASTERED_STAGE;
+    setIsResetDialogOpen(false);
     setError(null);
     setMessage(null);
     setIsUpdatingSelection(true);
@@ -196,8 +359,8 @@ export function LibraryList() {
           );
         }
         nextProgress[group][row.content.text] = {
-          stage: 0,
-          nextReview: 0,
+          stage,
+          review: 0,
         };
       }
 
@@ -211,14 +374,127 @@ export function LibraryList() {
       );
       setSelectedRowKeys(new Set());
       setMessage(
-        `Reset progress for ${selectedRows.length} selected card${selectedRows.length === 1 ? "" : "s"}.`,
+        isMastering
+          ? `${selectedRows.length} card${selectedRows.length === 1 ? "" : "s"} marked as mastered.`
+          : `Reset progress for ${selectedRows.length} selected card${selectedRows.length === 1 ? "" : "s"}.`,
       );
-    } catch (resetError) {
-      console.error("Failed to reset selected library progress:", resetError);
+    } catch (progressError) {
+      console.error(
+        "Failed to update selected library progress:",
+        progressError,
+      );
       setError(
-        resetError instanceof Error
-          ? `Unable to reset selected progress: ${resetError.message}`
-          : "Unable to reset selected progress.",
+        progressError instanceof Error
+          ? `Unable to ${isMastering ? "mark cards as mastered" : "reset selected progress"}: ${progressError.message}`
+          : `Unable to ${isMastering ? "mark cards as mastered" : "reset selected progress"}.`,
+      );
+    } finally {
+      setIsUpdatingSelection(false);
+    }
+  };
+
+  const createGroup = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isCreatingGroup) return;
+    if (!groupName.trim()) {
+      setGroupError("Enter a group name");
+      return;
+    }
+    setGroupError(null);
+    setIsCreatingGroup(true);
+    try {
+      await createLibraryGroup(groupName);
+      await refreshContentOptions(currentGroup);
+      setIsCreateGroupOpen(false);
+      setError(null);
+      setMessage("Group created");
+    } catch (createError) {
+      setGroupError(
+        createError instanceof Error
+          ? createError.message
+          : "Unable to create group",
+      );
+    } finally {
+      setIsCreatingGroup(false);
+    }
+  };
+
+  const openEditDialog = () => {
+    if (selectedRows.length !== 1 || selectedRows[0].isBuiltIn) return;
+    const row = selectedRows[0];
+    setEditingRow(row);
+    setEditText(row.content.text);
+    setEditAnswers(formatAnswersForEdit(row.content.answers));
+    setEditError(null);
+  };
+
+  const openAddDialog = () => {
+    if (!selectedGroup || isBuiltInGroup) return;
+    setEditingRow(null);
+    setEditText("");
+    setEditAnswers("");
+    setEditError(null);
+    setIsAddDialogOpen(true);
+  };
+
+  const closeCardDialog = () => {
+    if (isUpdatingSelection) return;
+    setIsAddDialogOpen(false);
+    setEditingRow(null);
+  };
+
+  const saveEditedCard = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const group = isAddDialogOpen ? selectedGroup : editingRow?.content.group;
+    if (!group || isBuiltInGroup || isUpdatingSelection) return;
+    if (!isAddDialogOpen && (!editingRow || editingRow.isBuiltIn)) return;
+    const text = editText.trim();
+    const answers =
+      editingRow &&
+      editAnswers === formatAnswersForEdit(editingRow.content.answers)
+        ? Array.isArray(editingRow.content.answers)
+          ? editingRow.content.answers
+          : [editingRow.content.answers ?? ""]
+        : editAnswers.split("|").map((answer) => answer.trim());
+    if (!text || answers.some((answer) => !answer)) {
+      setEditError("Enter text and at least one non-empty answer");
+      return;
+    }
+
+    setEditError(null);
+    setIsUpdatingSelection(true);
+    try {
+      const nextGroupProgress = Object.fromEntries(
+        rows
+          .filter((row) => row.content.group === group)
+          .map((row) => [
+            row.content.text,
+            progress[group]?.[row.content.text] ?? row.progress,
+          ]),
+      );
+      if (isAddDialogOpen) {
+        await addLibraryCard(group, text, answers);
+        nextGroupProgress[text] = { stage: 0, review: 0 };
+      } else if (editingRow) {
+        const cardProgress = nextGroupProgress[editingRow.content.text];
+        delete nextGroupProgress[editingRow.content.text];
+        nextGroupProgress[text] = cardProgress;
+        await editLibraryCard(group, editingRow.content.text, text, answers);
+      }
+      await setProgress({ [group]: nextGroupProgress });
+      if (group === currentGroup) await loadGroupData(group);
+      setRows(
+        await getLibraryRows({ ...progress, [group]: nextGroupProgress }),
+      );
+      setSelectedRowKeys(new Set());
+      if (isAddDialogOpen) setSearch("");
+      setIsAddDialogOpen(false);
+      setEditingRow(null);
+      setError(null);
+      setMessage(isAddDialogOpen ? "Card added" : "Card updated");
+    } catch (saveError) {
+      setEditError(
+        saveError instanceof Error ? saveError.message : "Unable to save card",
       );
     } finally {
       setIsUpdatingSelection(false);
@@ -227,11 +503,7 @@ export function LibraryList() {
 
   const removeSelectedRows = async () => {
     if (removableRows.length === 0) return;
-    const confirmed = window.confirm(
-      `Permanently delete ${removableRows.length} imported card${removableRows.length === 1 ? "" : "s"} and their progress? Built-in cards will be kept.`,
-    );
-    if (!confirmed) return;
-
+    setIsDeleteDialogOpen(false);
     setError(null);
     setMessage(null);
     setIsUpdatingSelection(true);
@@ -263,13 +535,28 @@ export function LibraryList() {
         })),
       );
       await setProgress(nextProgress);
-      if (nextProgress[currentGroup]) await loadGroupData(currentGroup);
+      const options = await refreshContentOptions(currentGroup);
+      const nextCurrentGroup = options.some(
+        (option) => option.key === currentGroup,
+      )
+        ? currentGroup
+        : options[0]?.key;
+      if (nextProgress[currentGroup] && nextCurrentGroup) {
+        await loadGroupData(nextCurrentGroup);
+      }
       setRows(
         await getLibraryRows({
           ...progress,
           ...nextProgress,
         }),
       );
+      if (
+        selectedGroup &&
+        !options.some((option) => option.key === selectedGroup)
+      ) {
+        setSelectedGroup(null);
+        setSearch("");
+      }
       setSelectedRowKeys(new Set());
       const keptBuiltInCount = selectedRows.length - removableRows.length;
       setMessage(
@@ -279,8 +566,8 @@ export function LibraryList() {
       console.error("Failed to remove selected library rows:", deleteError);
       setError(
         deleteError instanceof Error
-          ? `Unable to remove selected rows: ${deleteError.message}`
-          : "Unable to remove selected rows.",
+          ? `Unable to remove selected cards: ${deleteError.message}`
+          : "Unable to remove selected cards.",
       );
     } finally {
       setIsUpdatingSelection(false);
@@ -297,15 +584,14 @@ export function LibraryList() {
       if (!file.name.toLowerCase().endsWith(".csv")) {
         throw new Error("Please upload a .csv file only.");
       }
-      const importedRows = parseLibraryCsv(await file.text());
-      if (
-        !window.confirm(
-          `Import ${importedRows.length} library rows? Matching imported cards and supplied progress values will be updated. Built-in collections cannot be imported; other existing rows will be kept.`,
-        )
-      ) {
-        return;
+      if (isBuiltInGroup) {
+        throw new Error("Built-in collections cannot be imported or replaced.");
       }
-
+      const importedRows = parseLibraryCsv(
+        await file.text(),
+        selectedGroup ?? undefined,
+        DEFAULT_CONTENT.map((option) => option.key),
+      );
       setIsImporting(true);
       const importedProgress = await importLibraryRows(importedRows);
       await setProgress(importedProgress);
@@ -319,13 +605,15 @@ export function LibraryList() {
       });
       setRows(nextRows);
       setSelectedRowKeys(new Set());
-      setMessage(`Imported ${importedRows.length} library rows.`);
+      setMessage(
+        `${importedRows.length} card${importedRows.length === 1 ? "" : "s"} imported.`,
+      );
     } catch (importError) {
       console.error("Failed to import library:", importError);
       setError(
         importError instanceof Error
-          ? `Unable to import the library: ${importError.message}`
-          : "Unable to import the library. See console for details.",
+          ? `Unable to import cards: ${importError.message}`
+          : "Unable to import cards.",
       );
     } finally {
       setIsImporting(false);
@@ -338,27 +626,82 @@ export function LibraryList() {
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1.5}
+        useFlexGap
         sx={{
           alignItems: { sm: "center" },
+          flexWrap: { sm: "wrap", md: "nowrap" },
           justifyContent: "space-between",
-          p: 1,
+          pb: 2,
         }}
       >
-        <Autocomplete
-          size="small"
-          sx={{ minWidth: 220, width: { xs: "100%", sm: 220 } }}
-          options={groupFilterOptions}
-          value={selectedGroupOption}
-          getOptionLabel={(option) => option.label}
-          isOptionEqualToValue={(option, value) => option.key === value.key}
-          onChange={(_, option) => {
-            setSelectedGroup(option?.key ?? "all");
-            setSelectedRowKeys(new Set());
-          }}
-          renderInput={(params) => (
-            <TextField {...params} label="Filter by group" />
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: "center", minWidth: 0 }}
+        >
+          {selectedGroup !== null && (
+            <IconButton
+              aria-label="Back to groups"
+              disabled={isLoading || isImporting || isUpdatingSelection}
+              onClick={() => {
+                setSelectedGroup(null);
+                setSearch("");
+                setSelectedRowKeys(new Set());
+                setError(null);
+                setMessage(null);
+              }}
+            >
+              <ArrowBackRounded />
+            </IconButton>
           )}
-        />
+          <Typography
+            component="h2"
+            variant="h6"
+            sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
+          >
+            {selectedGroupOption?.label ?? "Groups"}
+          </Typography>
+        </Stack>
+        {selectedGroup !== null && (
+          <TextField
+            size="small"
+            label="Search cards"
+            placeholder="Text or answer"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setSelectedRowKeys(new Set());
+            }}
+            sx={{
+              width: { xs: "100%", sm: "auto" },
+              flex: { sm: "1 1 220px" },
+              minWidth: { xs: 0, sm: 200 },
+            }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRounded fontSize="small" />
+                  </InputAdornment>
+                ),
+                endAdornment: search && (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="Clear search"
+                      size="small"
+                      onClick={() => {
+                        setSearch("");
+                        setSelectedRowKeys(new Set());
+                      }}
+                    >
+                      <CloseRounded fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        )}
         <Stack
           direction="row"
           spacing={1}
@@ -370,63 +713,31 @@ export function LibraryList() {
             ml: { sm: "auto" },
           }}
         >
+          {selectedGroup === null && (
+            <IconButton
+              aria-label="Add new group"
+              size="small"
+              sx={{
+                width: 40,
+                height: 40,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+              }}
+              disabled={isLoading || isImporting || isUpdatingSelection}
+              onClick={() => {
+                setGroupName("");
+                setGroupError(null);
+                setIsCreateGroupOpen(true);
+              }}
+            >
+              <CreateNewFolderRounded fontSize="small" />
+            </IconButton>
+          )}
           {selectedRows.length > 0 && (
             <>
-              <Tooltip title="Reset progress">
-                <span>
-                  <IconButton
-                    aria-label="Reset selected progress"
-                    size="small"
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      border: 1,
-                      borderColor: "divider",
-                      borderRadius: 1,
-                    }}
-                    disabled={isImporting || isUpdatingSelection}
-                    onClick={() => void resetSelectedProgress()}
-                  >
-                    <RestartAltRounded fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip
-                title={
-                  removableRows.length === 0
-                    ? "Built-in cards cannot be removed"
-                    : "Remove selected imported cards"
-                }
-              >
-                <span>
-                  <IconButton
-                    aria-label="Remove selected imported cards"
-                    size="small"
-                    color="error"
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      border: 1,
-                      borderColor: "error.main",
-                      borderRadius: 1,
-                    }}
-                    disabled={
-                      removableRows.length === 0 ||
-                      isImporting ||
-                      isUpdatingSelection
-                    }
-                    onClick={() => void removeSelectedRows()}
-                  >
-                    <DeleteOutlineRounded fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            </>
-          )}
-          <Tooltip title="Import CSV">
-            <span>
               <IconButton
-                aria-label="Import CSV"
+                aria-label="Reset selected progress"
                 size="small"
                 sx={{
                   width: 40,
@@ -436,12 +747,97 @@ export function LibraryList() {
                   borderRadius: 1,
                 }}
                 disabled={isImporting || isUpdatingSelection}
-                onClick={() => setIsImportDialogOpen(true)}
+                onClick={() => setIsResetDialogOpen(true)}
               >
-                <FileUploadRounded fontSize="small" />
+                <RestartAltRounded fontSize="small" />
               </IconButton>
-            </span>
-          </Tooltip>
+              <IconButton
+                aria-label="Mark selected cards as mastered"
+                size="small"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                }}
+                disabled={isImporting || isUpdatingSelection}
+                onClick={() => void updateSelectedProgress(MASTERED_STAGE)}
+              >
+                <TaskAltRounded fontSize="small" />
+              </IconButton>
+              {!isBuiltInGroup && selectedRows.length === 1 && (
+                <IconButton
+                  aria-label="Edit selected card"
+                  size="small"
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                  disabled={isImporting || isUpdatingSelection}
+                  onClick={openEditDialog}
+                >
+                  <EditRounded fontSize="small" />
+                </IconButton>
+              )}
+              {!isBuiltInGroup && (
+                <IconButton
+                  aria-label="Remove selected cards"
+                  size="small"
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                  disabled={isImporting || isUpdatingSelection}
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                >
+                  <DeleteOutlineRounded fontSize="small" />
+                </IconButton>
+              )}
+            </>
+          )}
+          {selectedRows.length === 0 && !isBuiltInGroup && (
+            <IconButton
+              aria-label="Import CSV"
+              size="small"
+              sx={{
+                width: 40,
+                height: 40,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+              }}
+              disabled={isImporting || isUpdatingSelection}
+              onClick={() => setIsImportDialogOpen(true)}
+            >
+              <FileUploadRounded fontSize="small" />
+            </IconButton>
+          )}
+          {selectedGroup !== null &&
+            selectedRows.length === 0 &&
+            !isBuiltInGroup && (
+              <IconButton
+                aria-label="Add card"
+                size="small"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                }}
+                disabled={isLoading || isImporting || isUpdatingSelection}
+                onClick={openAddDialog}
+              >
+                <AddRounded fontSize="small" />
+              </IconButton>
+            )}
           <input
             ref={importInputRef}
             type="file"
@@ -449,86 +845,335 @@ export function LibraryList() {
             accept=".csv,text/csv"
             onChange={(event) => void handleImport(event)}
           />
-          <Tooltip title="Export selected or filtered cards">
-            <span>
-              <IconButton
-                aria-label="Export selected or filtered cards"
-                size="small"
-                sx={{
-                  width: 40,
-                  height: 40,
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                }}
-                disabled={isImporting || isUpdatingSelection}
-                onClick={exportLibrary}
-              >
-                <FileDownloadRounded fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
+          {selectedRows.length > 0 && (
+            <IconButton
+              aria-label="Export selected cards"
+              size="small"
+              sx={{
+                width: 40,
+                height: 40,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+              }}
+              disabled={isImporting || isUpdatingSelection}
+              onClick={exportLibrary}
+            >
+              <FileDownloadRounded fontSize="small" />
+            </IconButton>
+          )}
         </Stack>
       </Stack>
+
+      <Dialog
+        open={isCreateGroupOpen}
+        onClose={() => {
+          if (!isCreatingGroup) setIsCreateGroupOpen(false);
+        }}
+        aria-labelledby="create-group-title"
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <Box component="form" onSubmit={(event) => void createGroup(event)}>
+          <DialogTitle id="create-group-title">Add new group</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              {groupError && (
+                <Alert severity="error">{groupError.replace(/\.$/, "")}</Alert>
+              )}
+              <TextField
+                autoFocus
+                required
+                fullWidth
+                label="Group name"
+                value={groupName}
+                disabled={isCreatingGroup}
+                onChange={(event) => setGroupName(event.target.value)}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+            <Button
+              disabled={isCreatingGroup}
+              onClick={() => setIsCreateGroupOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isCreatingGroup}
+            >
+              Create group
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog
+        open={isAddDialogOpen || Boolean(editingRow)}
+        onClose={closeCardDialog}
+        aria-labelledby="edit-card-title"
+        maxWidth="sm"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <Box component="form" onSubmit={(event) => void saveEditedCard(event)}>
+          <DialogTitle id="edit-card-title">
+            {isAddDialogOpen ? "Add card" : "Edit card"}
+          </DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              {editError && (
+                <Alert severity="error">{editError.replace(/\.$/, "")}</Alert>
+              )}
+              <TextField
+                autoFocus
+                required
+                fullWidth
+                multiline
+                minRows={2}
+                maxRows={6}
+                label="Text"
+                value={editText}
+                disabled={isUpdatingSelection}
+                onChange={(event) => setEditText(event.target.value)}
+              />
+              <TextField
+                required
+                fullWidth
+                multiline
+                minRows={2}
+                maxRows={6}
+                label="Answers"
+                helperText="Separate multiple answers with |"
+                value={editAnswers}
+                disabled={isUpdatingSelection}
+                onChange={(event) => setEditAnswers(event.target.value)}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+            <Button disabled={isUpdatingSelection} onClick={closeCardDialog}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isUpdatingSelection}
+            >
+              {isAddDialogOpen ? "Add card" : "Save"}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog
+        open={isResetDialogOpen}
+        onClose={() => setIsResetDialogOpen(false)}
+        aria-labelledby="reset-progress-title"
+        aria-describedby="reset-progress-description"
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <DialogTitle id="reset-progress-title" sx={{ pt: 3, pb: 1 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 1,
+                bgcolor: "action.selected",
+                color: "primary.main",
+                flexShrink: 0,
+              }}
+            >
+              <RestartAltRounded />
+            </Box>
+            <Typography component="span" variant="h6" sx={{ fontWeight: 700 }}>
+              Reset progress?
+            </Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Typography id="reset-progress-description" color="text.secondary">
+            Reset progress for {selectedRows.length} selected card
+            {selectedRows.length === 1 ? "" : "s"}.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button autoFocus onClick={() => setIsResetDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void updateSelectedProgress(0)}
+          >
+            Reset progress
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        aria-labelledby="delete-cards-title"
+        aria-describedby={
+          removableRows.length > 0 ? "delete-cards-description" : undefined
+        }
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <DialogTitle id="delete-cards-title" sx={{ pt: 3, pb: 1 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 1,
+                bgcolor: "error.main",
+                color: "error.contrastText",
+                flexShrink: 0,
+              }}
+            >
+              <DeleteOutlineRounded />
+            </Box>
+            <Typography component="span" variant="h6" sx={{ fontWeight: 700 }}>
+              {removableRows.length === 0
+                ? "Built-in cards cannot be removed"
+                : "Delete selected cards?"}
+            </Typography>
+          </Stack>
+        </DialogTitle>
+        {removableRows.length > 0 && (
+          <DialogContent>
+            <Typography id="delete-cards-description" color="text.secondary">
+              This will permanently delete {removableRows.length} imported card
+              {removableRows.length === 1 ? "" : "s"} and their progress.
+            </Typography>
+            {selectedRows.length > removableRows.length && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 1.5 }}
+              >
+                Built-in cards in your selection will be kept.
+              </Typography>
+            )}
+          </DialogContent>
+        )}
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button autoFocus onClick={() => setIsDeleteDialogOpen(false)}>
+            {removableRows.length === 0 ? "Close" : "Cancel"}
+          </Button>
+          {removableRows.length > 0 && (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => void removeSelectedRows()}
+            >
+              Delete cards
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={isImportDialogOpen}
         onClose={() => setIsImportDialogOpen(false)}
         maxWidth="sm"
         fullWidth
+        aria-labelledby="import-cards-title"
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              m: { xs: 2, sm: 4 },
+              width: { xs: "calc(100% - 32px)", sm: "calc(100% - 64px)" },
+            },
+          },
+        }}
       >
-        <DialogTitle>Import a library CSV</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Required headers: group and text. Every row needs both values.
-            </Typography>
-            <Stack
-              direction="row"
-              spacing={1}
-              useFlexGap
-              sx={{ flexWrap: "wrap" }}
+        <DialogTitle
+          id="import-cards-title"
+          sx={{ px: { xs: 2, sm: 3 }, pt: 3, pb: 1 }}
+        >
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <Box
+              sx={{
+                width: { xs: 32, sm: 40 },
+                height: { xs: 32, sm: 40 },
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 1,
+                bgcolor: "action.selected",
+                color: "primary.main",
+                flexShrink: 0,
+              }}
             >
-              <Chip color="primary" label="group · required" size="small" />
-              <Chip color="primary" label="text · required" size="small" />
-            </Stack>
-            <Typography variant="body2" color="text.secondary">
-              Optional: answers, progressStage (0–{MASTERED_STAGE}),
-              progressNextReview (ms), and custom card fields.
+              <FileUploadRounded />
+            </Box>
+            <Typography
+              component="span"
+              variant="h6"
+              sx={{ fontWeight: 700, minWidth: 0, overflowWrap: "anywhere" }}
+            >
+              Import cards
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Use plain text for one answer, or a quoted JSON array for several.
-            </Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+          <Stack spacing={2} sx={{ mt: 0.5 }}>
             <Box
               sx={{
                 bgcolor: "action.hover",
                 borderRadius: 1,
-                px: 1.5,
-                py: 1,
-                overflowX: "auto",
+                p: 1.5,
               }}
             >
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontWeight: 700 }}
+              >
                 Example
               </Typography>
               <Typography
                 component="pre"
                 variant="body2"
-                sx={{ fontFamily: "monospace", mb: 0, whiteSpace: "pre" }}
+                sx={{
+                  fontFamily: "monospace",
+                  mb: 0,
+                  whiteSpace: "pre-wrap",
+                  overflowWrap: "anywhere",
+                }}
               >
-                {
-                  'group,text,answers\nbody-parts,arm,arm\nbody-parts,leg,"[""leg"",""lower limb""]"'
-                }
+                {selectedGroup
+                  ? "text,answers\nhello,hi\ngoodbye,bye|see you"
+                  : "group,text,answers\nmy-cards,hello,hi\nmore-cards,goodbye,bye|see you"}
               </Typography>
             </Box>
-            <Typography variant="caption" color="text.secondary">
-              Built-in collections cannot be replaced by imports. Existing group
-              and text matches update; supplied progress values replace existing
-              values.
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ overflowWrap: "anywhere" }}
+            >
+              {selectedGroup
+                ? `CSV requires 'text' and 'answers' columns. The 'group' column is optional; if present, only '${selectedGroup}' rows are imported and other groups are ignored.`
+                : "CSV requires group, text and answers. New groups are created, existing cards are updated, and built-in groups are skipped."}
             </Typography>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions
+          sx={{ px: { xs: 2, sm: 3 }, pb: 3, gap: 1, flexWrap: "wrap" }}
+        >
           <Button onClick={() => setIsImportDialogOpen(false)}>Cancel</Button>
           <Button
             variant="contained"
@@ -543,49 +1188,161 @@ export function LibraryList() {
         </DialogActions>
       </Dialog>
 
-      {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 1 }}>
-          {error}
-        </Alert>
-      )}
-      {message && (
-        <Alert
-          severity="success"
-          onClose={() => setMessage(null)}
-          sx={{ mb: 1 }}
-        >
-          {message}
-        </Alert>
-      )}
+      <LibraryAlert
+        message={error}
+        severity="error"
+        onClose={() => setError(null)}
+      />
+      <LibraryAlert
+        message={message}
+        severity="success"
+        onClose={() => setMessage(null)}
+      />
 
       {isLoading || isImporting || isUpdatingSelection ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
           <CircularProgress aria-label="Loading library" />
         </Box>
+      ) : selectedGroup === null ? (
+        <List aria-label="Library groups" disablePadding>
+          {[true, false].map((builtIn) => {
+            const groups = contentOptions.filter(
+              (option) =>
+                DEFAULT_CONTENT.some(
+                  (content) => content.key === option.key,
+                ) === builtIn,
+            );
+            if (groups.length === 0) return null;
+            return (
+              <React.Fragment key={builtIn ? "built-in" : "imported"}>
+                <ListItem sx={{ px: 1.5, pt: 1.5, pb: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontWeight: 700 }}
+                  >
+                    {builtIn ? "Built-in" : "Imported"}
+                  </Typography>
+                </ListItem>
+                {groups.map((option) => {
+                  const storedCount = rows.filter(
+                    (row) => row.content.group === option.key,
+                  ).length;
+                  const count = builtIn
+                    ? storedCount || builtInCounts[option.key]
+                    : storedCount;
+                  return (
+                    <React.Fragment key={option.key}>
+                      <ListItemButton
+                        component="button"
+                        type="button"
+                        onClick={() => void openGroup(option.key)}
+                        sx={{
+                          width: "100%",
+                          minHeight: 48,
+                          px: 1.5,
+                          py: 1,
+                          gap: 1.5,
+                        }}
+                      >
+                        <FolderOutlined color="primary" fontSize="small" />
+                        <Box
+                          sx={{
+                            flex: 1,
+                            minWidth: 0,
+                            display: "grid",
+                            gridTemplateColumns: "minmax(0, 1fr) auto",
+                            alignItems: "center",
+                            gap: 1,
+                          }}
+                        >
+                          <Typography
+                            sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
+                          >
+                            {option.label}
+                          </Typography>
+                          {count !== undefined && (
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ whiteSpace: "nowrap" }}
+                            >
+                              {count} card{count === 1 ? "" : "s"}
+                            </Typography>
+                          )}
+                        </Box>
+                        <ChevronRightRounded color="action" />
+                      </ListItemButton>
+                      <Divider component="li" />
+                    </React.Fragment>
+                  );
+                })}
+              </React.Fragment>
+            );
+          })}
+        </List>
       ) : rows.length === 0 ? (
         <Typography sx={{ p: 2 }}>
           No library rows yet. Import a CSV file to add content.
         </Typography>
       ) : filteredRows.length === 0 ? (
         <Typography sx={{ p: 2 }}>
-          No library rows found for this group.
+          {search.trim()
+            ? "No cards match your search."
+            : "No cards in this group yet."}
         </Typography>
       ) : (
         <List aria-label="Content library" disablePadding>
-          <ListItem sx={{ justifyContent: "space-between", px: 2, py: 0.5 }}>
+          <ListItem
+            sx={{
+              justifyContent: "space-between",
+              px: { xs: 0.5, sm: 1 },
+              py: 1,
+              gap: 1,
+              flexWrap: "wrap",
+              borderTop: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
             <Typography variant="body2" color="text.secondary">
-              {selectedFilteredCount} / {filteredRows.length} selected
+              {filteredRows.length} card{filteredRows.length === 1 ? "" : "s"}
+              {selectedFilteredCount > 0 &&
+                ` · ${selectedFilteredCount} selected`}
             </Typography>
-            <Button
-              size="small"
-              onClick={() => toggleFilteredSelection(!allFilteredSelected)}
+            <Stack
+              direction="row"
+              spacing={0.5}
+              useFlexGap
+              sx={{
+                ml: "auto",
+                maxWidth: "100%",
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
+              }}
             >
-              {allFilteredSelected ? "Deselect all" : "Select all"}
-            </Button>
+              <Button
+                size="small"
+                startIcon={<SortRounded />}
+                aria-label={`Sort: ${currentSort.label}. Next: ${nextSort.label}`}
+                onClick={() => setSortOrder(nextSort.value)}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                Sort: {currentSort.label}
+              </Button>
+              <Button
+                size="small"
+                onClick={() => toggleFilteredSelection(!allFilteredSelected)}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                {allFilteredSelected ? "Deselect all" : "Select all"}
+              </Button>
+            </Stack>
           </ListItem>
           {filteredRows.map((row) => {
             const answers = formatValue(row.content.answers);
             const extraDetails = formatExtraDetails(row);
+            const isSelected = selectedRowKeys.has(getRowKey(row));
 
             return (
               <React.Fragment key={`${row.content.group}:${row.content.text}`}>
@@ -593,36 +1350,36 @@ export function LibraryList() {
                   component="button"
                   type="button"
                   role="checkbox"
-                  aria-checked={selectedRowKeys.has(getRowKey(row))}
+                  aria-checked={isSelected}
                   aria-label={`Select ${row.content.text}`}
-                  selected={selectedRowKeys.has(getRowKey(row))}
-                  onClick={() =>
-                    toggleRowSelection(
-                      row,
-                      !selectedRowKeys.has(getRowKey(row)),
-                    )
-                  }
+                  selected={isSelected}
+                  onClick={() => toggleRowSelection(row, !isSelected)}
                   sx={(theme) => ({
-                    alignItems: "flex-start",
-                    px: 2,
-                    py: 1.5,
-                    gap: 1.5,
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 1fr) auto",
+                    alignItems: "center",
+                    px: { xs: 1, sm: 1.5 },
+                    py: 1,
+                    columnGap: 2,
+                    rowGap: 0.5,
                     width: "100%",
                     borderLeft: "3px solid",
-                    borderColor: selectedRowKeys.has(getRowKey(row))
-                      ? "primary.main"
-                      : "transparent",
+                    borderColor: isSelected ? "primary.main" : "transparent",
                     "&.Mui-selected": { bgcolor: "action.selected" },
                     "&.Mui-selected:hover": {
                       bgcolor: theme.palette.action.hover,
                     },
                   })}
                 >
-                  <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack spacing={0.25} sx={{ minWidth: 0 }}>
                     <Typography
                       component="div"
                       variant="subtitle1"
-                      sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
+                      sx={{
+                        fontWeight: 700,
+                        lineHeight: 1.3,
+                        overflowWrap: "anywhere",
+                      }}
                     >
                       {row.content.text}
                     </Typography>
@@ -636,31 +1393,6 @@ export function LibraryList() {
                         {answers}
                       </Typography>
                     )}
-                    <Stack
-                      direction="row"
-                      spacing={0.75}
-                      useFlexGap
-                      sx={{ flexWrap: "wrap", pt: 0.25 }}
-                    >
-                      <Chip
-                        size="small"
-                        variant="outlined"
-                        label={row.content.group}
-                        aria-label={`Group: ${row.content.group}`}
-                      />
-                      <StatusBadge
-                        color={getStageBadgeColor(row.progress.stage)}
-                        label={getStageName(row.progress.stage)}
-                        ariaLabel={`Progress: ${getStageName(row.progress.stage)}`}
-                      />
-                      <Chip
-                        size="small"
-                        variant="outlined"
-                        icon={<ScheduleRounded />}
-                        label={formatReviewDate(row.progress.nextReview)}
-                        aria-label={`Next review: ${formatReviewDate(row.progress.nextReview)}`}
-                      />
-                    </Stack>
                     {extraDetails.length > 0 && (
                       <Typography
                         component="div"
@@ -672,24 +1404,10 @@ export function LibraryList() {
                       </Typography>
                     )}
                   </Stack>
-                  <Chip
-                    size="small"
-                    color={row.isBuiltIn ? "primary" : "default"}
-                    variant={row.isBuiltIn ? "filled" : "outlined"}
-                    icon={
-                      row.isBuiltIn ? (
-                        <AutoStoriesRounded />
-                      ) : (
-                        <FileUploadRounded />
-                      )
-                    }
-                    label={row.isBuiltIn ? "Built-in" : "Imported"}
-                    aria-label={
-                      row.isBuiltIn
-                        ? "Built-in collection"
-                        : "Imported collection"
-                    }
-                    sx={{ flexShrink: 0, mt: 0.25 }}
+                  <StatusBadge
+                    color={getStageBadgeColor(row.progress.stage)}
+                    label={getStageName(row.progress.stage)}
+                    ariaLabel={`Progress: ${getStageName(row.progress.stage)}`}
                   />
                 </ListItemButton>
                 <Divider component="li" />

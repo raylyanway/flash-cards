@@ -32,6 +32,26 @@ function serializeLibraryCell(value: unknown) {
   return value;
 }
 
+function serializeLibraryAnswers(value: unknown) {
+  if (typeof value === "string" && value.includes("|")) {
+    return JSON.stringify([value]);
+  }
+  if (Array.isArray(value)) {
+    const joined = value.join("|");
+    if (
+      value.some(
+        (answer) => typeof answer !== "string" || answer.includes("|"),
+      ) ||
+      joined.trimStart().startsWith("[") ||
+      joined.trimStart().startsWith("{")
+    ) {
+      return JSON.stringify(value);
+    }
+    return joined;
+  }
+  return serializeLibraryCell(value);
+}
+
 export function createCsvFromCards(cards: Card[]) {
   const fieldSet = new Set<string>();
   for (const card of cards) {
@@ -63,17 +83,17 @@ export function createCsvFromProgress(
   progressData: ProgressMap,
   cards: Card[],
 ) {
-  const headers = ["text", "stage", "nextReview"];
+  const headers = ["text", "stage", "review"];
   return papaparse.unparse(
     cards.map((card) => {
       const progressEntry = progressData[card.group ?? ""]?.[card.text] || {
         stage: 0,
-        nextReview: 0,
+        review: 0,
       };
       return {
         text: card.text,
         stage: progressEntry.stage,
-        nextReview: progressEntry.nextReview,
+        review: progressEntry.review,
       };
     }),
     { columns: headers },
@@ -88,19 +108,10 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
     });
   }
 
-  const preferredOrder = [
-    "group",
-    "text",
-    "answers",
-    "progressStage",
-    "progressNextReview",
-  ];
+  const preferredOrder = ["group", "text", "answers", "stage", "review"];
   const headers = [
     ...preferredOrder.filter(
-      (key) =>
-        key === "progressStage" ||
-        key === "progressNextReview" ||
-        contentFields.has(key),
+      (key) => key === "stage" || key === "review" || contentFields.has(key),
     ),
     ...[...contentFields].filter((key) => !preferredOrder.includes(key)),
   ];
@@ -109,31 +120,62 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
     rows.map(({ content, progress }) => {
       const row: Record<string, unknown> = {
         ...content,
-        progressStage: progress.stage,
-        progressNextReview: progress.nextReview,
+        stage: progress.stage,
+        review: progress.review,
       };
       return Object.fromEntries(
-        headers.map((key) => [key, serializeLibraryCell(row[key]) ?? ""]),
+        headers.map((key) => [
+          key,
+          (key === "answers"
+            ? serializeLibraryAnswers(row[key])
+            : serializeLibraryCell(row[key])) ?? "",
+        ]),
       );
     }),
     { columns: headers },
   );
 }
 
-export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
+export function parseLibraryCsv(
+  csvText: string,
+  targetGroup?: string,
+  excludedGroups: readonly string[] = [],
+): LibraryImportRow[] {
   const { data, errors, meta } = papaparse.parse<Record<string, string>>(
     csvText,
     { header: true, skipEmptyLines: "greedy" },
   );
-  if (errors.length > 0) {
-    throw new Error(`Failed to parse CSV: ${errors[0].message}`);
+  const headers = meta.fields || [];
+  const isIgnoredGroup = (group: string | undefined) =>
+    group !== undefined &&
+    (excludedGroups.includes(group.trim()) ||
+      Boolean(
+        targetGroup &&
+        headers.includes("group") &&
+        group.trim() !== targetGroup,
+      ));
+  const relevantError = errors.find((error) => {
+    if (
+      !headers.includes("group") ||
+      error.type !== "FieldMismatch" ||
+      typeof error.row !== "number"
+    ) {
+      return true;
+    }
+    const group = data[error.row]?.group;
+    return !isIgnoredGroup(group);
+  });
+  if (relevantError) {
+    throw new Error(`Failed to parse CSV: ${relevantError.message}`);
   }
   if (data.length === 0) {
     throw new Error("CSV file is empty or missing a header row.");
   }
 
-  const headers = meta.fields || [];
-  for (const required of ["group", "text"]) {
+  const requiredHeaders = targetGroup
+    ? ["text", "answers"]
+    : ["group", "text", "answers"];
+  for (const required of requiredHeaders) {
     if (!headers.includes(required)) {
       throw new Error(
         `Validation Error: The CSV file is missing the required '${required}' column.`,
@@ -141,7 +183,18 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
     }
   }
 
-  return data.map((rawRow, index) => {
+  const matchingRows = data
+    .map((rawRow, index) => ({ rawRow, index }))
+    .filter(({ rawRow }) => !isIgnoredGroup(rawRow.group));
+  if (matchingRows.length === 0) {
+    throw new Error(
+      targetGroup
+        ? `CSV contains no rows for group '${targetGroup}'.`
+        : "CSV contains no importable rows.",
+    );
+  }
+
+  return matchingRows.map(({ rawRow, index }) => {
     const row = Object.fromEntries(
       Object.entries(rawRow).map(([key, value]) => {
         if (value === undefined || value === null) return [key, ""];
@@ -159,11 +212,31 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
         return [key, value];
       }),
     ) as Record<string, unknown>;
-    const group = typeof row.group === "string" ? row.group : "";
+    const group =
+      targetGroup ?? (typeof row.group === "string" ? row.group : "");
     const text = typeof row.text === "string" ? row.text : "";
     if (!group.trim() || !text.trim()) {
       throw new Error(`CSV row ${index + 2} must include a group and text.`);
     }
+    const answers =
+      typeof row.answers === "string" && row.answers.includes("|")
+        ? row.answers.split("|").map((answer) => answer.trim())
+        : row.answers;
+    if (
+      !(
+        (typeof answers === "string" && answers.trim()) ||
+        (Array.isArray(answers) &&
+          answers.length > 0 &&
+          answers.every(
+            (answer) => typeof answer === "string" && answer.trim(),
+          ))
+      )
+    ) {
+      throw new Error(
+        `CSV row ${index + 2} must include at least one non-empty answer.`,
+      );
+    }
+    row.answers = answers;
 
     const card: Card = { group, text };
     for (const [key, value] of Object.entries(row)) {
@@ -172,8 +245,8 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
           "group",
           "text",
           "isBuiltIn",
-          "progressStage",
-          "progressNextReview",
+          "stage",
+          "review",
           "progressCorrectCount",
         ].includes(key)
       ) {
@@ -184,8 +257,8 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
 
     const progress: LibraryImportRow["progress"] = {};
     const progressFields = [
-      ["stage", "progressStage"],
-      ["nextReview", "progressNextReview"],
+      ["stage", "stage"],
+      ["review", "review"],
     ] as const;
     for (const [field, csvField] of progressFields) {
       const value = row[csvField];

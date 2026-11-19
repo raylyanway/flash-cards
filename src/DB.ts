@@ -6,6 +6,7 @@ import type {
   LibraryImportRow,
   LibraryRecord,
   LibraryRow,
+  ProgressEntry,
   ProgressMap,
   SettingRecord,
 } from "./types";
@@ -78,6 +79,82 @@ export async function saveProgressForGroup(
   });
 }
 
+function normalizeCardInput(newText: string, answers: string[]) {
+  const text = newText.trim();
+  const normalizedAnswers = answers.map((answer) => answer.trim());
+  if (
+    !text ||
+    normalizedAnswers.length === 0 ||
+    normalizedAnswers.some((answer) => !answer)
+  ) {
+    throw new Error("Text and at least one non-empty answer are required.");
+  }
+  return {
+    text,
+    answers:
+      normalizedAnswers.length === 1 ? normalizedAnswers[0] : normalizedAnswers,
+  };
+}
+
+export async function addLibraryCard(
+  group: string,
+  newText: string,
+  answers: string[],
+) {
+  assertNoBuiltInGroups([group], "added to");
+  const card = normalizeCardInput(newText, answers);
+  await db.transaction("rw", db.library, db.contentMetadata, async () => {
+    if (
+      !(await db.library.where("group").equals(group).count()) &&
+      !(await db.contentMetadata.get(group))
+    ) {
+      throw new Error("Group not found.");
+    }
+    if (await db.library.get([group, card.text])) {
+      throw new Error("A card with this text already exists in this group.");
+    }
+    await db.library.add({
+      ...card,
+      group,
+      learningProgress: { stage: 0, review: 0 },
+    });
+  });
+}
+
+export async function editLibraryCard(
+  group: string,
+  originalText: string,
+  newText: string,
+  answers: string[],
+) {
+  assertNoBuiltInGroups([group], "edited");
+  const card = normalizeCardInput(newText, answers);
+
+  await db.transaction("rw", db.library, async () => {
+    const record = await db.library.get([group, originalText]);
+    if (!record) throw new Error("Card not found.");
+    if (
+      card.text !== originalText &&
+      (await db.library.get([group, card.text]))
+    ) {
+      throw new Error("A card with this text already exists in this group.");
+    }
+    const updated = {
+      ...record,
+      ...card,
+    };
+    if (card.text === originalText) {
+      await db.library.put(updated);
+    } else {
+      await db.library.add(updated);
+      await db.library
+        .where("[group+text]")
+        .equals([group, originalText])
+        .delete();
+    }
+  });
+}
+
 export async function importLibraryRows(rows: LibraryImportRow[]) {
   assertNoBuiltInGroups(
     rows.map((row) => row.group),
@@ -85,6 +162,8 @@ export async function importLibraryRows(rows: LibraryImportRow[]) {
   );
 
   const progressByGroup: ProgressMap = {};
+  const recordsByGroup = new Map<string, Map<string, LibraryRecord>>();
+  const pendingRecords = new Map<string, LibraryRecord>();
 
   await db.transaction("rw", db.library, async () => {
     for (const row of rows) {
@@ -96,25 +175,32 @@ export async function importLibraryRows(rows: LibraryImportRow[]) {
         progressByGroup[row.group] = Object.fromEntries(
           storedRows.map((record) => [record.text, record.learningProgress]),
         );
+        recordsByGroup.set(
+          row.group,
+          new Map(storedRows.map((record) => [record.text, record])),
+        );
       }
 
       const existing = progressByGroup[row.group][row.card.text] ?? {
         stage: 0,
-        nextReview: 0,
+        review: 0,
       };
       progressByGroup[row.group][row.card.text] = {
         ...existing,
         ...row.progress,
       };
+      const groupRecords = recordsByGroup.get(row.group)!;
+      const record = {
+        ...groupRecords.get(row.card.text),
+        ...row.card,
+        group: row.group,
+        learningProgress: progressByGroup[row.group][row.card.text],
+      };
+      groupRecords.set(row.card.text, record);
+      pendingRecords.set(JSON.stringify([row.group, row.card.text]), record);
     }
 
-    await db.library.bulkPut(
-      rows.map(({ group, card }) => ({
-        ...card,
-        group,
-        learningProgress: progressByGroup[group][card.text],
-      })),
-    );
+    await db.library.bulkPut([...pendingRecords.values()]);
   });
 
   return progressByGroup;
@@ -178,6 +264,22 @@ async function resolveContentUrl(group: string) {
   throw new Error(`Failed to fetch content data. Tried: ${tried.join(", ")}`);
 }
 
+export async function getGroupOverviewProgress(
+  group: string,
+): Promise<ProgressEntry[]> {
+  const records = await db.library.where("group").equals(group).toArray();
+  if (records.length > 0) {
+    return records.map((record) => record.learningProgress);
+  }
+  if (!DEFAULT_CONTENT.some((content) => content.key === group)) return [];
+
+  const { response, url } = await resolveContentUrl(group);
+  const text = url.endsWith(".gz")
+    ? await decompressOrDecodeBuffer(await response.arrayBuffer())
+    : await response.text();
+  return parseCsv(text).map(() => ({ stage: 0, review: 0 }));
+}
+
 async function fetchAndSeed(currentGroup: string) {
   const { response, url } = await resolveContentUrl(currentGroup);
   const text = url.endsWith(".gz")
@@ -189,7 +291,7 @@ async function fetchAndSeed(currentGroup: string) {
     data.map((item) => ({
       ...item,
       group: currentGroup,
-      learningProgress: { stage: 0, nextReview: 0 },
+      learningProgress: { stage: 0, review: 0 },
     })),
   );
 }
@@ -266,9 +368,15 @@ export async function getContentDisplayName(group: string) {
 
 export async function getUniqueContentGroups() {
   const groups = new Set(DEFAULT_CONTENT.map((item) => item.key));
-  const records = await db.library.toArray();
+  const [records, metadata] = await Promise.all([
+    db.library.toArray(),
+    db.contentMetadata.toArray(),
+  ]);
   for (const record of records) {
     if (record.group) groups.add(record.group);
+  }
+  for (const item of metadata) {
+    if (item.group) groups.add(item.group);
   }
 
   return Array.from(groups);
@@ -297,6 +405,31 @@ export async function getContentOptions() {
   return options;
 }
 
+export async function createLibraryGroup(name: string) {
+  const group = name.trim();
+  if (!group) throw new Error("Group name is required.");
+  const normalized = group.toLocaleLowerCase();
+
+  await db.transaction("rw", db.library, db.contentMetadata, async () => {
+    const options = await getContentOptions();
+    if (
+      options.some(
+        (option) =>
+          option.key.toLocaleLowerCase() === normalized ||
+          option.label.trim().toLocaleLowerCase() === normalized,
+      )
+    ) {
+      throw new Error("A group with this name already exists.");
+    }
+    await db.contentMetadata.add({
+      group,
+      displayName: group,
+      importedAt: Date.now(),
+    });
+  });
+  return group;
+}
+
 export async function importContent(group: string, cards: Card[]) {
   assertNoBuiltInGroups([group], "imported or replaced");
   await db.transaction("rw", db.library, async () => {
@@ -314,7 +447,7 @@ export async function importContent(group: string, cards: Card[]) {
         group,
         learningProgress: existingProgress.get(item.text) ?? {
           stage: 0,
-          nextReview: 0,
+          review: 0,
         },
       })),
     );
@@ -325,6 +458,12 @@ export async function initializeGroupContent(currentGroup: string) {
   const groupCount = await getStoreCountForGroup(currentGroup);
 
   if (groupCount > 0) return getAllCardsForGroup(currentGroup);
+  if (
+    !DEFAULT_CONTENT.some((content) => content.key === currentGroup) &&
+    (await getContentMetadata(currentGroup))
+  ) {
+    return [];
+  }
 
   await fetchAndSeed(currentGroup);
   return getAllCardsForGroup(currentGroup);

@@ -14,7 +14,8 @@ import {
   Typography,
   useMediaQuery,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { alpha } from "@mui/material/styles";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStageBadgeColor, StatusBadge } from "../components/StatusBadge";
 import { useLearningSession } from "../hooks/useLearningSession";
@@ -28,12 +29,51 @@ import {
   LEARNING_STAGES,
 } from "../utils/cardProgress";
 
+function useScrollFades(contentKey: string | null) {
+  const elementRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ top: false, bottom: false });
+  const updateEdges = () => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    const canScroll = element.scrollHeight > element.clientHeight + 1;
+    const top = canScroll && element.scrollTop > 1;
+    const bottom =
+      canScroll &&
+      element.scrollTop + element.clientHeight < element.scrollHeight - 1;
+    setEdges((current) =>
+      current.top === top && current.bottom === bottom
+        ? current
+        : { top, bottom },
+    );
+  };
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(element);
+    if (element.firstElementChild) observer.observe(element.firstElementChild);
+    element.addEventListener("scroll", updateEdges, { passive: true });
+    updateEdges();
+
+    return () => {
+      observer.disconnect();
+      element.removeEventListener("scroll", updateEdges);
+    };
+  }, [contentKey]);
+
+  return { elementRef, edges, updateEdges };
+}
+
 export function LearnScreen() {
   const navigate = useNavigate();
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const cards = useAppStore((state) => state.cards);
   const currentCard = useAppStore((state) => state.currentCard);
   const currentGroup = useAppStore((state) => state.currentGroup);
+  const isLeftHanded = useAppStore((state) => state.isLeftHanded);
   const now = useAppStore((state) => state.now);
   const progress = useAppStore((state) => state.progress);
   const currentGroupProgress = progress[currentGroup];
@@ -60,9 +100,20 @@ export function LearnScreen() {
       : learning.resultClass === "wrong"
         ? "Wrong"
         : null;
+  const cardAccentColor =
+    feedbackLabel === "Correct"
+      ? "success.main"
+      : feedbackLabel === "Wrong"
+        ? "error.main"
+        : "primary.main";
   const [lastFeedbackLabel, setLastFeedbackLabel] = useState<string | null>(
     null,
   );
+  const [revealedAnswerText, setRevealedAnswerText] = useState<string | null>(
+    null,
+  );
+  const promptScroll = useScrollFades(currentCard?.text ?? null);
+  const answerScroll = useScrollFades(revealedAnswerText);
   useEffect(() => {
     if (feedbackLabel) setLastFeedbackLabel(feedbackLabel);
   }, [feedbackLabel]);
@@ -88,9 +139,16 @@ export function LearnScreen() {
     0,
   );
   return (
-    <Stack spacing={3}>
+    <Stack
+      spacing={3}
+      sx={(theme) => ({
+        height: `calc(100dvh - ${theme.spacing(4)})`,
+        minHeight: 0,
+        overflow: "hidden",
+      })}
+    >
       <Stack
-        direction="row"
+        direction={isLeftHanded ? "row-reverse" : "row"}
         spacing={1.5}
         component="section"
         aria-label="Learning progress by stage"
@@ -154,19 +212,23 @@ export function LearnScreen() {
           borderRadius: 2,
           border: 1,
           borderColor: "divider",
-          borderLeft: "4px solid",
-          borderLeftColor:
-            feedbackLabel === "Correct"
-              ? "success.main"
-              : feedbackLabel === "Wrong"
-                ? "error.main"
-                : "primary.main",
+          borderLeft: isLeftHanded ? 0 : "4px solid",
+          borderRight: isLeftHanded ? "4px solid" : 0,
+          borderLeftColor: isLeftHanded ? "transparent" : cardAccentColor,
+          borderRightColor: isLeftHanded ? cardAccentColor : "transparent",
           bgcolor: "background.paper",
           p: { xs: 2, sm: 3, md: 4 },
-          minHeight: { xs: 300, sm: 320, md: 340 },
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) auto",
-          gridTemplateRows: "auto minmax(0, 1fr) auto",
+          gridTemplateColumns: isLeftHanded
+            ? "auto minmax(0, 1fr)"
+            : "minmax(0, 1fr) auto",
+          gridTemplateRows:
+            currentCard && learning.answerRevealed
+              ? "auto minmax(0, 2fr) minmax(0, 1fr)"
+              : "auto minmax(0, 1fr) 0px",
           gap: { xs: 1.5, sm: 2 },
         }}
       >
@@ -174,7 +236,12 @@ export function LearnScreen() {
           direction="row"
           spacing={1}
           useFlexGap
-          sx={{ alignItems: "center", flexWrap: "wrap", gridColumn: "1 / -1" }}
+          sx={{
+            alignItems: "center",
+            justifyContent: isLeftHanded ? "flex-end" : "flex-start",
+            flexWrap: "wrap",
+            gridColumn: "1 / -1",
+          }}
         >
           {currentStage !== null && (
             <Box
@@ -218,37 +285,92 @@ export function LearnScreen() {
             </Typography>
           )}
         </Stack>
-        <Stack
+        <Box
           sx={{
-            alignItems: "center",
-            justifyContent: "center",
+            position: "relative",
             minWidth: 0,
-            textAlign: "center",
-            py: 1,
+            minHeight: 0,
+            overflow: "hidden",
+            gridColumn: currentCard ? (isLeftHanded ? 2 : 1) : "1 / -1",
+            gridRow: 2,
+            "&::before": {
+              content: promptScroll.edges.top ? '""' : "none",
+              position: "absolute",
+              zIndex: 1,
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 24,
+              borderRadius: 1,
+              pointerEvents: "none",
+              maskImage:
+                "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+              background: (theme) =>
+                `linear-gradient(to bottom, ${alpha(theme.palette.primary.main, 0.12)}, transparent)`,
+            },
+            "&::after": {
+              content: promptScroll.edges.bottom ? '""' : "none",
+              position: "absolute",
+              zIndex: 1,
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 24,
+              borderRadius: 1,
+              pointerEvents: "none",
+              maskImage:
+                "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+              background: (theme) =>
+                `linear-gradient(to top, ${alpha(theme.palette.primary.main, 0.12)}, transparent)`,
+            },
           }}
         >
-          <Typography
-            component="h2"
+          <Stack
+            ref={promptScroll.elementRef}
+            onScroll={promptScroll.updateEdges}
             sx={{
-              width: "100%",
-              fontWeight: 800,
-              fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3.25rem" },
-              lineHeight: 1.15,
-              overflowWrap: "anywhere",
+              height: "100%",
+              minWidth: 0,
+              minHeight: 0,
+              overflowY: "auto",
+              overflowX: "hidden",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              "&::-webkit-scrollbar": { display: "none" },
+              alignItems: "center",
+              justifyContent: "safe center",
+              textAlign: "center",
+              py: 1,
             }}
           >
-            {currentCard?.text || "🎉 Great job!"}
-          </Typography>
-          {!currentCard && (
-            <Typography color="text.secondary" sx={{ mt: 2 }}>
-              {waitingMessage}
+            <Typography
+              component="h2"
+              sx={{
+                width: "100%",
+                fontWeight: 800,
+                fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3.25rem" },
+                lineHeight: 1.15,
+                overflowWrap: "anywhere",
+                flexShrink: 0,
+              }}
+            >
+              {currentCard?.text || "🎉 Great job!"}
             </Typography>
-          )}
-        </Stack>
+            {!currentCard && (
+              <Typography color="text.secondary" sx={{ mt: 2 }}>
+                {waitingMessage}
+              </Typography>
+            )}
+          </Stack>
+        </Box>
         {currentCard && (
           <Stack
             spacing={1}
-            sx={{ gridColumn: 2, gridRow: "2 / 4", justifyContent: "center" }}
+            sx={{
+              gridColumn: isLeftHanded ? 1 : 2,
+              gridRow: "2 / 4",
+              justifyContent: "center",
+            }}
           >
             {learning.answerRevealed ? (
               <>
@@ -305,7 +427,10 @@ export function LearnScreen() {
                 <IconButton
                   aria-label="Show answer"
                   color="primary"
-                  onClick={learning.revealAnswer}
+                  onClick={() => {
+                    setRevealedAnswerText(getAnswerText(currentCard));
+                    learning.revealAnswer();
+                  }}
                   sx={{
                     width: 48,
                     height: 48,
@@ -320,41 +445,111 @@ export function LearnScreen() {
             )}
           </Stack>
         )}
-        <Collapse
-          key={currentCard?.text ?? "no-card"}
-          in={Boolean(learning.answerRevealed && currentCard)}
-          timeout={reduceMotion ? 0 : 300}
-          unmountOnExit
-        >
-          <Stack
-            spacing={0.25}
+        {currentCard && learning.answerRevealed && (
+          <Box
             sx={{
-              minWidth: 0,
-              alignItems: "center",
-              textAlign: "center",
+              gridColumn: isLeftHanded ? 2 : 1,
+              gridRow: 3,
+              alignSelf: "start",
               borderTop: 1,
               borderColor: "divider",
-              pt: 1,
-              animation: "answerEnter 300ms ease-out both",
-              "@keyframes answerEnter": {
-                from: { opacity: 0, transform: "translateY(6px)" },
-                to: { opacity: 1, transform: "translateY(0)" },
-              },
-              "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+              transform: { xs: "translateY(-6px)", sm: "translateY(-8px)" },
+            }}
+          />
+        )}
+        <Box
+          sx={{
+            position: "relative",
+            gridColumn: currentCard ? (isLeftHanded ? 2 : 1) : "1 / -1",
+            gridRow: 3,
+            minHeight: 0,
+            overflow: "hidden",
+            "&::before": {
+              content: answerScroll.edges.top ? '""' : "none",
+              position: "absolute",
+              zIndex: 1,
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 24,
+              borderRadius: 1,
+              pointerEvents: "none",
+              maskImage:
+                "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+              background: (theme) =>
+                `linear-gradient(to bottom, ${alpha(theme.palette.primary.main, 0.12)}, transparent)`,
+            },
+            "&::after": {
+              content: answerScroll.edges.bottom ? '""' : "none",
+              position: "absolute",
+              zIndex: 1,
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 24,
+              borderRadius: 1,
+              pointerEvents: "none",
+              maskImage:
+                "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+              background: (theme) =>
+                `linear-gradient(to top, ${alpha(theme.palette.primary.main, 0.12)}, transparent)`,
+            },
+          }}
+        >
+          <Box
+            ref={answerScroll.elementRef}
+            onScroll={answerScroll.updateEdges}
+            sx={{
+              height: "100%",
+              minHeight: 0,
+              overflowY: "auto",
+              overflowX: "hidden",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              "&::-webkit-scrollbar": { display: "none" },
             }}
           >
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                overflowWrap: "anywhere",
-                maxWidth: "100%",
-              }}
+            <Collapse
+              in={Boolean(learning.answerRevealed && currentCard)}
+              timeout={reduceMotion ? 0 : 300}
+              onExited={() => setRevealedAnswerText(null)}
+              sx={{ minHeight: 0 }}
+              unmountOnExit
             >
-              {currentCard && getAnswerText(currentCard)}
-            </Typography>
-          </Stack>
-        </Collapse>
+              <Stack
+                spacing={0.25}
+                sx={{
+                  minWidth: 0,
+                  minHeight: "100%",
+                  alignItems: "center",
+                  justifyContent: "safe center",
+                  textAlign: "center",
+                  pt: 1,
+                  animation: "answerEnter 300ms ease-out both",
+                  "@keyframes answerEnter": {
+                    from: { opacity: 0, transform: "translateY(6px)" },
+                    to: { opacity: 1, transform: "translateY(0)" },
+                  },
+                  "@media (prefers-reduced-motion: reduce)": {
+                    animation: "none",
+                  },
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    overflowWrap: "anywhere",
+                    maxWidth: "100%",
+                    flexShrink: 0,
+                  }}
+                >
+                  {revealedAnswerText}
+                </Typography>
+              </Stack>
+            </Collapse>
+          </Box>
+        </Box>
       </Card>
     </Stack>
   );

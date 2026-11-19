@@ -9,7 +9,7 @@ export type Card = {
 
 export type ProgressEntry = {
   stage: number;
-  nextReview: number;
+  review: number;
 };
 
 export type ProgressMap = Record<string, Record<string, ProgressEntry>>;
