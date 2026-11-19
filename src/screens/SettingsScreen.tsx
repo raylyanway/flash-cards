@@ -1,6 +1,13 @@
 import { SettingsRounded } from "@mui/icons-material";
 
-import { Button, FormControlLabel, Stack, Switch } from "@mui/material";
+import {
+  Button,
+  FormControlLabel,
+  Stack,
+  Switch,
+  Typography,
+} from "@mui/material";
+import ColorModeIconDropdown from "../components/ColorModeIconDropdown";
 import { PageHeader } from "../components/PageHeader";
 import { SectionCard } from "../components/SectionCard";
 import { deleteAppDatabase } from "../db";
@@ -39,6 +46,12 @@ export function SettingsScreen() {
       />
 
       <Stack spacing={3}>
+        <SectionCard title="Appearance">
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <Typography>Theme</Typography>
+            <ColorModeIconDropdown aria-label="Choose theme" />
+          </Stack>
+        </SectionCard>
         <SectionCard title="Learning">
           <Stack>
             <FormControlLabel
