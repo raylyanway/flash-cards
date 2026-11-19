@@ -564,7 +564,6 @@ export function LibraryList() {
                 bgcolor: "action.hover",
                 borderRadius: 1,
                 p: 1.5,
-                overflowX: "auto",
               }}
             >
               <Typography
@@ -577,7 +576,12 @@ export function LibraryList() {
               <Typography
                 component="pre"
                 variant="body2"
-                sx={{ fontFamily: "monospace", mb: 0, whiteSpace: "pre" }}
+                sx={{
+                  fontFamily: "monospace",
+                  mb: 0,
+                  whiteSpace: "pre-wrap",
+                  overflowWrap: "anywhere",
+                }}
               >
                 {
                   'group,text,answers\nmy-cards,hello,hi\nmy-cards,goodbye,"[""bye"",""see you""]"'
