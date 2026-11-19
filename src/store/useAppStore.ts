@@ -43,6 +43,7 @@ export type AppState = {
   progress: ProgressMap;
   theme: ThemePreference;
   isLeftHanded: boolean;
+  autoPronounce: boolean;
   libraryNavOpen: boolean;
 };
 
@@ -58,6 +59,7 @@ export type AppActions = {
   setProgress: (progress: ProgressMap) => Promise<void>;
   setTheme: (theme: ThemePreference) => void;
   setIsLeftHanded: (isLeftHanded: boolean) => void;
+  setAutoPronounce: (autoPronounce: boolean) => void;
   setLibraryNavOpen: (open: boolean) => void;
   setHasHydrated: (hydrated: boolean) => void;
 };
@@ -75,6 +77,7 @@ const DEFAULT_STATE: AppState = {
   progress: {},
   theme: DEFAULT_THEME,
   isLeftHanded: false,
+  autoPronounce: false,
   libraryNavOpen: false,
 };
 
@@ -152,6 +155,7 @@ export const useAppStore = create<AppStore>()(
       },
       setTheme: (theme) => set({ theme }),
       setIsLeftHanded: (isLeftHanded) => set({ isLeftHanded }),
+      setAutoPronounce: (autoPronounce) => set({ autoPronounce }),
       setLibraryNavOpen: (libraryNavOpen: boolean) => set({ libraryNavOpen }),
     }),
     {
@@ -161,6 +165,7 @@ export const useAppStore = create<AppStore>()(
         theme: state.theme,
         currentGroup: state.currentGroup,
         isLeftHanded: state.isLeftHanded,
+        autoPronounce: state.autoPronounce,
       }),
       version: 1,
       onRehydrateStorage: (state) => () => state.setHasHydrated(true),

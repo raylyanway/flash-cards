@@ -9,6 +9,8 @@ import { useAppStore } from "../store/useAppStore";
 export function SettingsScreen() {
   const isLeftHanded = useAppStore((state) => state.isLeftHanded);
   const setIsLeftHanded = useAppStore((state) => state.setIsLeftHanded);
+  const autoPronounce = useAppStore((state) => state.autoPronounce);
+  const setAutoPronounce = useAppStore((state) => state.setAutoPronounce);
 
   const handleDeleteDatabase = async () => {
     const confirmed = confirm(
@@ -38,15 +40,26 @@ export function SettingsScreen() {
 
       <Stack spacing={3}>
         <SectionCard title="Learning">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isLeftHanded}
-                onChange={(event) => setIsLeftHanded(event.target.checked)}
-              />
-            }
-            label="Left-handed mode"
-          />
+          <Stack>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={isLeftHanded}
+                  onChange={(event) => setIsLeftHanded(event.target.checked)}
+                />
+              }
+              label="Left-handed mode"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={autoPronounce}
+                  onChange={(event) => setAutoPronounce(event.target.checked)}
+                />
+              }
+              label="Automatically pronounce new cards"
+            />
+          </Stack>
         </SectionCard>
         <SectionCard
           title="Database"
