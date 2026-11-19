@@ -14,7 +14,8 @@ import {
   Typography,
   useMediaQuery,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { alpha } from "@mui/material/styles";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStageBadgeColor, StatusBadge } from "../components/StatusBadge";
 import { useLearningSession } from "../hooks/useLearningSession";
@@ -27,6 +28,44 @@ import {
   getStageName,
   LEARNING_STAGES,
 } from "../utils/cardProgress";
+
+function useScrollFades(contentKey: string | null) {
+  const elementRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ top: false, bottom: false });
+  const updateEdges = () => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    const canScroll = element.scrollHeight > element.clientHeight + 1;
+    const top = canScroll && element.scrollTop > 1;
+    const bottom =
+      canScroll &&
+      element.scrollTop + element.clientHeight < element.scrollHeight - 1;
+    setEdges((current) =>
+      current.top === top && current.bottom === bottom
+        ? current
+        : { top, bottom },
+    );
+  };
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(element);
+    if (element.firstElementChild) observer.observe(element.firstElementChild);
+    element.addEventListener("scroll", updateEdges, { passive: true });
+    updateEdges();
+
+    return () => {
+      observer.disconnect();
+      element.removeEventListener("scroll", updateEdges);
+    };
+  }, [contentKey]);
+
+  return { elementRef, edges, updateEdges };
+}
 
 export function LearnScreen() {
   const navigate = useNavigate();
@@ -73,6 +112,8 @@ export function LearnScreen() {
   const [revealedAnswerText, setRevealedAnswerText] = useState<string | null>(
     null,
   );
+  const promptScroll = useScrollFades(currentCard?.text ?? null);
+  const answerScroll = useScrollFades(revealedAnswerText);
   useEffect(() => {
     if (feedbackLabel) setLastFeedbackLabel(feedbackLabel);
   }, [feedbackLabel]);
@@ -244,42 +285,84 @@ export function LearnScreen() {
             </Typography>
           )}
         </Stack>
-        <Stack
+        <Box
           sx={{
-            alignItems: "center",
-            justifyContent: "safe center",
+            position: "relative",
             minWidth: 0,
             minHeight: 0,
-            overflowY: "auto",
-            overflowX: "hidden",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-            "&::-webkit-scrollbar": { display: "none" },
-            textAlign: "center",
-            py: 1,
+            overflow: "hidden",
             gridColumn: currentCard ? (isLeftHanded ? 2 : 1) : "1 / -1",
             gridRow: 2,
+            "&::before": {
+              content: promptScroll.edges.top ? '""' : "none",
+              position: "absolute",
+              zIndex: 1,
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 24,
+              borderRadius: 1,
+              pointerEvents: "none",
+              maskImage:
+                "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+              background: (theme) =>
+                `linear-gradient(to bottom, ${alpha(theme.palette.primary.main, 0.12)}, transparent)`,
+            },
+            "&::after": {
+              content: promptScroll.edges.bottom ? '""' : "none",
+              position: "absolute",
+              zIndex: 1,
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 24,
+              borderRadius: 1,
+              pointerEvents: "none",
+              maskImage:
+                "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+              background: (theme) =>
+                `linear-gradient(to top, ${alpha(theme.palette.primary.main, 0.12)}, transparent)`,
+            },
           }}
         >
-          <Typography
-            component="h2"
+          <Stack
+            ref={promptScroll.elementRef}
+            onScroll={promptScroll.updateEdges}
             sx={{
-              width: "100%",
-              fontWeight: 800,
-              fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3.25rem" },
-              lineHeight: 1.15,
-              overflowWrap: "anywhere",
-              flexShrink: 0,
+              height: "100%",
+              minWidth: 0,
+              minHeight: 0,
+              overflowY: "auto",
+              overflowX: "hidden",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              "&::-webkit-scrollbar": { display: "none" },
+              alignItems: "center",
+              justifyContent: "safe center",
+              textAlign: "center",
+              py: 1,
             }}
           >
-            {currentCard?.text || "🎉 Great job!"}
-          </Typography>
-          {!currentCard && (
-            <Typography color="text.secondary" sx={{ mt: 2 }}>
-              {waitingMessage}
+            <Typography
+              component="h2"
+              sx={{
+                width: "100%",
+                fontWeight: 800,
+                fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3.25rem" },
+                lineHeight: 1.15,
+                overflowWrap: "anywhere",
+                flexShrink: 0,
+              }}
+            >
+              {currentCard?.text || "🎉 Great job!"}
             </Typography>
-          )}
-        </Stack>
+            {!currentCard && (
+              <Typography color="text.secondary" sx={{ mt: 2 }}>
+                {waitingMessage}
+              </Typography>
+            )}
+          </Stack>
+        </Box>
         {currentCard && (
           <Stack
             spacing={1}
@@ -362,59 +445,110 @@ export function LearnScreen() {
             )}
           </Stack>
         )}
+        {currentCard && learning.answerRevealed && (
+          <Box
+            sx={{
+              gridColumn: isLeftHanded ? 2 : 1,
+              gridRow: 3,
+              alignSelf: "start",
+              borderTop: 1,
+              borderColor: "divider",
+              transform: { xs: "translateY(-6px)", sm: "translateY(-8px)" },
+            }}
+          />
+        )}
         <Box
           sx={{
+            position: "relative",
             gridColumn: currentCard ? (isLeftHanded ? 2 : 1) : "1 / -1",
             gridRow: 3,
             minHeight: 0,
-            overflowY: "auto",
-            overflowX: "hidden",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-            "&::-webkit-scrollbar": { display: "none" },
+            overflow: "hidden",
+            "&::before": {
+              content: answerScroll.edges.top ? '""' : "none",
+              position: "absolute",
+              zIndex: 1,
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 24,
+              borderRadius: 1,
+              pointerEvents: "none",
+              maskImage:
+                "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+              background: (theme) =>
+                `linear-gradient(to bottom, ${alpha(theme.palette.primary.main, 0.12)}, transparent)`,
+            },
+            "&::after": {
+              content: answerScroll.edges.bottom ? '""' : "none",
+              position: "absolute",
+              zIndex: 1,
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 24,
+              borderRadius: 1,
+              pointerEvents: "none",
+              maskImage:
+                "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+              background: (theme) =>
+                `linear-gradient(to top, ${alpha(theme.palette.primary.main, 0.12)}, transparent)`,
+            },
           }}
         >
-          <Collapse
-            in={Boolean(learning.answerRevealed && currentCard)}
-            timeout={reduceMotion ? 0 : 300}
-            onExited={() => setRevealedAnswerText(null)}
-            sx={{ minHeight: 0 }}
-            unmountOnExit
+          <Box
+            ref={answerScroll.elementRef}
+            onScroll={answerScroll.updateEdges}
+            sx={{
+              height: "100%",
+              minHeight: 0,
+              overflowY: "auto",
+              overflowX: "hidden",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              "&::-webkit-scrollbar": { display: "none" },
+            }}
           >
-            <Stack
-              spacing={0.25}
-              sx={{
-                minWidth: 0,
-                minHeight: "100%",
-                alignItems: "center",
-                justifyContent: "safe center",
-                textAlign: "center",
-                borderTop: 1,
-                borderColor: "divider",
-                pt: 1,
-                animation: "answerEnter 300ms ease-out both",
-                "@keyframes answerEnter": {
-                  from: { opacity: 0, transform: "translateY(6px)" },
-                  to: { opacity: 1, transform: "translateY(0)" },
-                },
-                "@media (prefers-reduced-motion: reduce)": {
-                  animation: "none",
-                },
-              }}
+            <Collapse
+              in={Boolean(learning.answerRevealed && currentCard)}
+              timeout={reduceMotion ? 0 : 300}
+              onExited={() => setRevealedAnswerText(null)}
+              sx={{ minHeight: 0 }}
+              unmountOnExit
             >
-              <Typography
-                variant="h6"
+              <Stack
+                spacing={0.25}
                 sx={{
-                  fontWeight: 700,
-                  overflowWrap: "anywhere",
-                  maxWidth: "100%",
-                  flexShrink: 0,
+                  minWidth: 0,
+                  minHeight: "100%",
+                  alignItems: "center",
+                  justifyContent: "safe center",
+                  textAlign: "center",
+                  pt: 1,
+                  animation: "answerEnter 300ms ease-out both",
+                  "@keyframes answerEnter": {
+                    from: { opacity: 0, transform: "translateY(6px)" },
+                    to: { opacity: 1, transform: "translateY(0)" },
+                  },
+                  "@media (prefers-reduced-motion: reduce)": {
+                    animation: "none",
+                  },
                 }}
               >
-                {revealedAnswerText}
-              </Typography>
-            </Stack>
-          </Collapse>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    overflowWrap: "anywhere",
+                    maxWidth: "100%",
+                    flexShrink: 0,
+                  }}
+                >
+                  {revealedAnswerText}
+                </Typography>
+              </Stack>
+            </Collapse>
+          </Box>
         </Box>
       </Card>
     </Stack>
