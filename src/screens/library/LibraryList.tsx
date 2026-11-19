@@ -1,6 +1,5 @@
 import {
   ArrowBackRounded,
-  AutoStoriesRounded,
   ChevronRightRounded,
   CloseRounded,
   DeleteOutlineRounded,
@@ -989,81 +988,34 @@ export function LibraryList() {
                     )}
                   </Stack>
                   <Stack
-                    spacing={0.5}
+                    direction="row"
+                    spacing={1}
+                    useFlexGap
                     sx={{
                       minWidth: 0,
                       color: "text.secondary",
                       borderLeft: { sm: 1 },
                       borderColor: "divider",
                       pl: { sm: 2 },
+                      alignItems: "center",
+                      flexWrap: "wrap",
                     }}
                   >
+                    <StatusBadge
+                      color={getStageBadgeColor(row.progress.stage)}
+                      label={getStageName(row.progress.stage)}
+                      ariaLabel={`Progress: ${getStageName(row.progress.stage)}`}
+                    />
                     <Stack
                       direction="row"
-                      spacing={1}
-                      sx={{
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
+                      spacing={0.5}
+                      aria-label={`Next review: ${formatReviewDate(row.progress.nextReview)}`}
+                      sx={{ alignItems: "center", minWidth: 0 }}
                     >
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        aria-label={`Group: ${row.content.group}`}
-                        sx={{ alignItems: "center", minWidth: 0 }}
-                      >
-                        <FolderOutlined sx={{ fontSize: 15, flexShrink: 0 }} />
-                        <Typography
-                          variant="caption"
-                          sx={{ overflowWrap: "anywhere" }}
-                        >
-                          {row.content.group}
-                        </Typography>
-                      </Stack>
-                      <StatusBadge
-                        color={getStageBadgeColor(row.progress.stage)}
-                        label={getStageName(row.progress.stage)}
-                        ariaLabel={`Progress: ${getStageName(row.progress.stage)}`}
-                      />
-                    </Stack>
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      sx={{
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        aria-label={`Next review: ${formatReviewDate(row.progress.nextReview)}`}
-                        sx={{ alignItems: "center", minWidth: 0 }}
-                      >
-                        <ScheduleRounded sx={{ fontSize: 15, flexShrink: 0 }} />
-                        <Typography variant="caption">
-                          {formatReviewDate(row.progress.nextReview)}
-                        </Typography>
-                      </Stack>
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        aria-label={
-                          row.isBuiltIn
-                            ? "Built-in collection"
-                            : "Imported collection"
-                        }
-                        sx={{ alignItems: "center", flexShrink: 0 }}
-                      >
-                        {row.isBuiltIn ? (
-                          <AutoStoriesRounded sx={{ fontSize: 15 }} />
-                        ) : (
-                          <FileUploadRounded sx={{ fontSize: 15 }} />
-                        )}
-                        <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                          {row.isBuiltIn ? "Built-in" : "Imported"}
-                        </Typography>
-                      </Stack>
+                      <ScheduleRounded sx={{ fontSize: 15, flexShrink: 0 }} />
+                      <Typography variant="caption">
+                        {formatReviewDate(row.progress.nextReview)}
+                      </Typography>
                     </Stack>
                   </Stack>
                 </ListItemButton>
