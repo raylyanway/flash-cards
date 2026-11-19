@@ -22,7 +22,6 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { getStageBadgeColor, StatusBadge } from "../../components/StatusBadge";
@@ -76,6 +75,7 @@ export function LibraryList() {
   const [rows, setRows] = React.useState<LibraryRow[]>([]);
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
@@ -177,6 +177,8 @@ export function LibraryList() {
   };
 
   const resetSelectedProgress = async () => {
+    if (selectedRows.length === 0 || isUpdatingSelection) return;
+    setIsResetDialogOpen(false);
     setError(null);
     setMessage(null);
     setIsUpdatingSelection(true);
@@ -361,67 +363,55 @@ export function LibraryList() {
         >
           {selectedRows.length > 0 && (
             <>
-              <Tooltip title="Reset progress">
-                <span>
-                  <IconButton
-                    aria-label="Reset selected progress"
-                    size="small"
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      border: 1,
-                      borderColor: "divider",
-                      borderRadius: 1,
-                    }}
-                    disabled={isImporting || isUpdatingSelection}
-                    onClick={() => void resetSelectedProgress()}
-                  >
-                    <RestartAltRounded fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title="Remove selected cards">
-                <span>
-                  <IconButton
-                    aria-label="Remove selected cards"
-                    size="small"
-                    color="error"
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      border: 1,
-                      borderColor: "error.main",
-                      borderRadius: 1,
-                    }}
-                    disabled={isImporting || isUpdatingSelection}
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                  >
-                    <DeleteOutlineRounded fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
+              <IconButton
+                aria-label="Reset selected progress"
+                size="small"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                }}
+                disabled={isImporting || isUpdatingSelection}
+                onClick={() => setIsResetDialogOpen(true)}
+              >
+                <RestartAltRounded fontSize="small" />
+              </IconButton>
+              <IconButton
+                aria-label="Remove selected cards"
+                size="small"
+                color="error"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  border: 1,
+                  borderColor: "error.main",
+                  borderRadius: 1,
+                }}
+                disabled={isImporting || isUpdatingSelection}
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                <DeleteOutlineRounded fontSize="small" />
+              </IconButton>
             </>
           )}
           {selectedRows.length === 0 && (
-            <Tooltip title="Import CSV">
-              <span>
-                <IconButton
-                  aria-label="Import CSV"
-                  size="small"
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 1,
-                  }}
-                  disabled={isImporting || isUpdatingSelection}
-                  onClick={() => setIsImportDialogOpen(true)}
-                >
-                  <FileUploadRounded fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
+            <IconButton
+              aria-label="Import CSV"
+              size="small"
+              sx={{
+                width: 40,
+                height: 40,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+              }}
+              disabled={isImporting || isUpdatingSelection}
+              onClick={() => setIsImportDialogOpen(true)}
+            >
+              <FileUploadRounded fontSize="small" />
+            </IconButton>
           )}
           <input
             ref={importInputRef}
@@ -431,28 +421,73 @@ export function LibraryList() {
             onChange={(event) => void handleImport(event)}
           />
           {selectedRows.length > 0 && (
-            <Tooltip title="Export selected cards">
-              <span>
-                <IconButton
-                  aria-label="Export selected cards"
-                  size="small"
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 1,
-                  }}
-                  disabled={isImporting || isUpdatingSelection}
-                  onClick={exportLibrary}
-                >
-                  <FileDownloadRounded fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
+            <IconButton
+              aria-label="Export selected cards"
+              size="small"
+              sx={{
+                width: 40,
+                height: 40,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+              }}
+              disabled={isImporting || isUpdatingSelection}
+              onClick={exportLibrary}
+            >
+              <FileDownloadRounded fontSize="small" />
+            </IconButton>
           )}
         </Stack>
       </Stack>
+
+      <Dialog
+        open={isResetDialogOpen}
+        onClose={() => setIsResetDialogOpen(false)}
+        aria-labelledby="reset-progress-title"
+        aria-describedby="reset-progress-description"
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <DialogTitle id="reset-progress-title" sx={{ pt: 3, pb: 1 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 1,
+                bgcolor: "action.selected",
+                color: "primary.main",
+                flexShrink: 0,
+              }}
+            >
+              <RestartAltRounded />
+            </Box>
+            <Typography component="span" variant="h6" sx={{ fontWeight: 700 }}>
+              Reset progress?
+            </Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Typography id="reset-progress-description" color="text.secondary">
+            Reset progress for {selectedRows.length} selected card
+            {selectedRows.length === 1 ? "" : "s"}.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button autoFocus onClick={() => setIsResetDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void resetSelectedProgress()}
+          >
+            Reset progress
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={isDeleteDialogOpen}
