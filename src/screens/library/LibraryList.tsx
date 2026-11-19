@@ -25,6 +25,7 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListSubheader from "@mui/material/ListSubheader";
+import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
@@ -43,6 +44,8 @@ import {
   downloadCsv,
   parseLibraryCsv,
 } from "../../utils/csv";
+
+type SortOrder = "default" | "text-asc" | "text-desc" | "next-review";
 
 function getRowKey(row: LibraryRow) {
   return JSON.stringify([row.content.group, row.content.text]);
@@ -92,13 +95,14 @@ export function LibraryList() {
   const [isUpdatingSelection, setIsUpdatingSelection] = React.useState(false);
   const [selectedGroup, setSelectedGroup] = React.useState("all");
   const [search, setSearch] = React.useState("");
+  const [sortOrder, setSortOrder] = React.useState<SortOrder>("default");
   const [selectedRowKeys, setSelectedRowKeys] = React.useState<Set<string>>(
     new Set(),
   );
 
   const filteredRows = React.useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
-    return rows.filter((row) => {
+    const matches = rows.filter((row) => {
       if (selectedGroup !== "all" && row.content.group !== selectedGroup) {
         return false;
       }
@@ -110,7 +114,31 @@ export function LibraryList() {
         value.toLocaleLowerCase().includes(query),
       );
     });
-  }, [rows, search, selectedGroup]);
+    if (sortOrder === "text-asc" || sortOrder === "text-desc") {
+      matches.sort((first, second) => {
+        const comparison = first.content.text.localeCompare(
+          second.content.text,
+          undefined,
+          {
+            numeric: true,
+            sensitivity: "base",
+          },
+        );
+        return sortOrder === "text-asc" ? comparison : -comparison;
+      });
+    } else if (sortOrder === "next-review") {
+      matches.sort((first, second) => {
+        const firstReview = first.progress.nextReview;
+        const secondReview = second.progress.nextReview;
+        const firstScheduled = Number.isFinite(firstReview) && firstReview > 0;
+        const secondScheduled =
+          Number.isFinite(secondReview) && secondReview > 0;
+        if (firstScheduled !== secondScheduled) return firstScheduled ? -1 : 1;
+        return firstScheduled ? firstReview - secondReview : 0;
+      });
+    }
+    return matches;
+  }, [rows, search, selectedGroup, sortOrder]);
   const groupFilterOptions = React.useMemo(() => {
     const builtInKeys = new Set(DEFAULT_CONTENT.map((option) => option.key));
     return [
@@ -351,8 +379,10 @@ export function LibraryList() {
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1.5}
+        useFlexGap
         sx={{
           alignItems: { sm: "center" },
+          flexWrap: { sm: "wrap", md: "nowrap" },
           justifyContent: "space-between",
           pb: 2,
         }}
@@ -402,8 +432,8 @@ export function LibraryList() {
           }}
           sx={{
             width: { xs: "100%", sm: "auto" },
-            flex: { sm: 1 },
-            minWidth: 0,
+            flex: { sm: "1 1 220px" },
+            minWidth: { xs: 0, sm: 200 },
           }}
           slotProps={{
             input: {
@@ -429,6 +459,19 @@ export function LibraryList() {
             },
           }}
         />
+        <TextField
+          select
+          size="small"
+          label="Sort by"
+          value={sortOrder}
+          onChange={(event) => setSortOrder(event.target.value as SortOrder)}
+          sx={{ width: { xs: "100%", sm: 160 }, flexShrink: 0 }}
+        >
+          <MenuItem value="default">Current order</MenuItem>
+          <MenuItem value="text-asc">Text A–Z</MenuItem>
+          <MenuItem value="text-desc">Text Z–A</MenuItem>
+          <MenuItem value="next-review">Next review</MenuItem>
+        </TextField>
         <Stack
           direction="row"
           spacing={1}
