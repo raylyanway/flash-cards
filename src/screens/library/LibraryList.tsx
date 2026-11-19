@@ -132,6 +132,9 @@ export function LibraryList() {
   const selectedGroupOption = contentOptions.find(
     (option) => option.key === selectedGroup,
   );
+  const isBuiltInGroup = DEFAULT_CONTENT.some(
+    (option) => option.key === selectedGroup,
+  );
   const selectedRows = React.useMemo(
     () => rows.filter((row) => selectedRowKeys.has(getRowKey(row))),
     [rows, selectedRowKeys],
@@ -384,7 +387,14 @@ export function LibraryList() {
       if (!file.name.toLowerCase().endsWith(".csv")) {
         throw new Error("Please upload a .csv file only.");
       }
-      const importedRows = parseLibraryCsv(await file.text());
+      if (isBuiltInGroup) {
+        throw new Error("Built-in collections cannot be imported or replaced.");
+      }
+      const importedRows = parseLibraryCsv(
+        await file.text(),
+        selectedGroup ?? undefined,
+        DEFAULT_CONTENT.map((option) => option.key),
+      );
       setIsImporting(true);
       const importedProgress = await importLibraryRows(importedRows);
       await setProgress(importedProgress);
@@ -552,7 +562,7 @@ export function LibraryList() {
               </IconButton>
             </>
           )}
-          {selectedRows.length === 0 && (
+          {selectedRows.length === 0 && !isBuiltInGroup && (
             <IconButton
               aria-label="Import CSV"
               size="small"
@@ -718,14 +728,25 @@ export function LibraryList() {
         maxWidth="sm"
         fullWidth
         aria-labelledby="import-cards-title"
-        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 2,
+              m: { xs: 2, sm: 4 },
+              width: { xs: "calc(100% - 32px)", sm: "calc(100% - 64px)" },
+            },
+          },
+        }}
       >
-        <DialogTitle id="import-cards-title" sx={{ pt: 3, pb: 1 }}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+        <DialogTitle
+          id="import-cards-title"
+          sx={{ px: { xs: 2, sm: 3 }, pt: 3, pb: 1 }}
+        >
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <Box
               sx={{
-                width: 40,
-                height: 40,
+                width: { xs: 32, sm: 40 },
+                height: { xs: 32, sm: 40 },
                 display: "grid",
                 placeItems: "center",
                 borderRadius: 1,
@@ -736,12 +757,16 @@ export function LibraryList() {
             >
               <FileUploadRounded />
             </Box>
-            <Typography component="span" variant="h6" sx={{ fontWeight: 700 }}>
+            <Typography
+              component="span"
+              variant="h6"
+              sx={{ fontWeight: 700, minWidth: 0, overflowWrap: "anywhere" }}
+            >
               Import cards
             </Typography>
           </Stack>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
           <Stack spacing={2} sx={{ mt: 0.5 }}>
             <Box
               sx={{
@@ -767,17 +792,25 @@ export function LibraryList() {
                   overflowWrap: "anywhere",
                 }}
               >
-                {
-                  "group,text,answers\nmy-cards,hello,hi\nmy-cards,goodbye,bye|see you"
-                }
+                {selectedGroup
+                  ? "text,answers\nhello,hi\ngoodbye,bye|see you"
+                  : "group,text,answers\nmy-cards,hello,hi\nmore-cards,goodbye,bye|see you"}
               </Typography>
             </Box>
-            <Typography variant="caption" color="text.secondary">
-              Built-in collections cannot be imported or replaced.
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ overflowWrap: "anywhere" }}
+            >
+              {selectedGroup
+                ? `CSV requires 'text' and 'answers' columns. The 'group' column is optional; if present, only '${selectedGroup}' rows are imported and other groups are ignored.`
+                : "CSV requires group, text and answers. New groups are created, existing cards are updated, and built-in groups are skipped."}
             </Typography>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+        <DialogActions
+          sx={{ px: { xs: 2, sm: 3 }, pb: 3, gap: 1, flexWrap: "wrap" }}
+        >
           <Button onClick={() => setIsImportDialogOpen(false)}>Cancel</Button>
           <Button
             variant="contained"

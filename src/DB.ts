@@ -86,6 +86,8 @@ export async function importLibraryRows(rows: LibraryImportRow[]) {
   );
 
   const progressByGroup: ProgressMap = {};
+  const recordsByGroup = new Map<string, Map<string, LibraryRecord>>();
+  const pendingRecords = new Map<string, LibraryRecord>();
 
   await db.transaction("rw", db.library, async () => {
     for (const row of rows) {
@@ -97,6 +99,10 @@ export async function importLibraryRows(rows: LibraryImportRow[]) {
         progressByGroup[row.group] = Object.fromEntries(
           storedRows.map((record) => [record.text, record.learningProgress]),
         );
+        recordsByGroup.set(
+          row.group,
+          new Map(storedRows.map((record) => [record.text, record])),
+        );
       }
 
       const existing = progressByGroup[row.group][row.card.text] ?? {
@@ -107,15 +113,18 @@ export async function importLibraryRows(rows: LibraryImportRow[]) {
         ...existing,
         ...row.progress,
       };
+      const groupRecords = recordsByGroup.get(row.group)!;
+      const record = {
+        ...groupRecords.get(row.card.text),
+        ...row.card,
+        group: row.group,
+        learningProgress: progressByGroup[row.group][row.card.text],
+      };
+      groupRecords.set(row.card.text, record);
+      pendingRecords.set(JSON.stringify([row.group, row.card.text]), record);
     }
 
-    await db.library.bulkPut(
-      rows.map(({ group, card }) => ({
-        ...card,
-        group,
-        learningProgress: progressByGroup[group][card.text],
-      })),
-    );
+    await db.library.bulkPut([...pendingRecords.values()]);
   });
 
   return progressByGroup;

@@ -145,20 +145,46 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
   );
 }
 
-export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
+export function parseLibraryCsv(
+  csvText: string,
+  targetGroup?: string,
+  excludedGroups: readonly string[] = [],
+): LibraryImportRow[] {
   const { data, errors, meta } = papaparse.parse<Record<string, string>>(
     csvText,
     { header: true, skipEmptyLines: "greedy" },
   );
-  if (errors.length > 0) {
-    throw new Error(`Failed to parse CSV: ${errors[0].message}`);
+  const headers = meta.fields || [];
+  const isIgnoredGroup = (group: string | undefined) =>
+    group !== undefined &&
+    (excludedGroups.includes(group.trim()) ||
+      Boolean(
+        targetGroup &&
+        headers.includes("group") &&
+        group.trim() !== targetGroup,
+      ));
+  const relevantError = errors.find((error) => {
+    if (
+      !headers.includes("group") ||
+      error.type !== "FieldMismatch" ||
+      typeof error.row !== "number"
+    ) {
+      return true;
+    }
+    const group = data[error.row]?.group;
+    return !isIgnoredGroup(group);
+  });
+  if (relevantError) {
+    throw new Error(`Failed to parse CSV: ${relevantError.message}`);
   }
   if (data.length === 0) {
     throw new Error("CSV file is empty or missing a header row.");
   }
 
-  const headers = meta.fields || [];
-  for (const required of ["group", "text", "answers"]) {
+  const requiredHeaders = targetGroup
+    ? ["text", "answers"]
+    : ["group", "text", "answers"];
+  for (const required of requiredHeaders) {
     if (!headers.includes(required)) {
       throw new Error(
         `Validation Error: The CSV file is missing the required '${required}' column.`,
@@ -166,7 +192,18 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
     }
   }
 
-  return data.map((rawRow, index) => {
+  const matchingRows = data
+    .map((rawRow, index) => ({ rawRow, index }))
+    .filter(({ rawRow }) => !isIgnoredGroup(rawRow.group));
+  if (matchingRows.length === 0) {
+    throw new Error(
+      targetGroup
+        ? `CSV contains no rows for group '${targetGroup}'.`
+        : "CSV contains no importable rows.",
+    );
+  }
+
+  return matchingRows.map(({ rawRow, index }) => {
     const row = Object.fromEntries(
       Object.entries(rawRow).map(([key, value]) => {
         if (value === undefined || value === null) return [key, ""];
@@ -184,7 +221,8 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
         return [key, value];
       }),
     ) as Record<string, unknown>;
-    const group = typeof row.group === "string" ? row.group : "";
+    const group =
+      targetGroup ?? (typeof row.group === "string" ? row.group : "");
     const text = typeof row.text === "string" ? row.text : "";
     if (!group.trim() || !text.trim()) {
       throw new Error(`CSV row ${index + 2} must include a group and text.`);
