@@ -75,6 +75,7 @@ export function LibraryList() {
   const importInputRef = React.useRef<HTMLInputElement | null>(null);
   const [rows, setRows] = React.useState<LibraryRow[]>([]);
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
@@ -227,11 +228,7 @@ export function LibraryList() {
 
   const removeSelectedRows = async () => {
     if (removableRows.length === 0) return;
-    const confirmed = window.confirm(
-      `Permanently delete ${removableRows.length} imported card${removableRows.length === 1 ? "" : "s"} and their progress? Built-in cards will be kept.`,
-    );
-    if (!confirmed) return;
-
+    setIsDeleteDialogOpen(false);
     setError(null);
     setMessage(null);
     setIsUpdatingSelection(true);
@@ -415,7 +412,7 @@ export function LibraryList() {
                       isImporting ||
                       isUpdatingSelection
                     }
-                    onClick={() => void removeSelectedRows()}
+                    onClick={() => setIsDeleteDialogOpen(true)}
                   >
                     <DeleteOutlineRounded fontSize="small" />
                   </IconButton>
@@ -476,43 +473,123 @@ export function LibraryList() {
       </Stack>
 
       <Dialog
+        open={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        aria-labelledby="delete-cards-title"
+        aria-describedby="delete-cards-description"
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <DialogTitle id="delete-cards-title" sx={{ pt: 3, pb: 1 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 1,
+                bgcolor: "error.main",
+                color: "error.contrastText",
+                flexShrink: 0,
+              }}
+            >
+              <DeleteOutlineRounded />
+            </Box>
+            <Typography component="span" variant="h6" sx={{ fontWeight: 700 }}>
+              Delete selected cards?
+            </Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Typography id="delete-cards-description" color="text.secondary">
+            This will permanently delete {removableRows.length} imported card
+            {removableRows.length === 1 ? "" : "s"} and their progress. This
+            cannot be undone.
+          </Typography>
+          {selectedRows.length > removableRows.length && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+              Built-in cards in your selection will be kept.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button autoFocus onClick={() => setIsDeleteDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => void removeSelectedRows()}
+          >
+            Delete cards
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
         open={isImportDialogOpen}
         onClose={() => setIsImportDialogOpen(false)}
         maxWidth="sm"
         fullWidth
+        aria-labelledby="import-cards-title"
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
       >
-        <DialogTitle>Import a library CSV</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Required headers: group and text. Every row needs both values.
-            </Typography>
-            <Stack
-              direction="row"
-              spacing={1}
-              useFlexGap
-              sx={{ flexWrap: "wrap" }}
+        <DialogTitle id="import-cards-title" sx={{ pt: 3, pb: 1 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 1,
+                bgcolor: "action.selected",
+                color: "primary.main",
+                flexShrink: 0,
+              }}
             >
-              <Chip color="primary" label="group · required" size="small" />
-              <Chip color="primary" label="text · required" size="small" />
+              <FileUploadRounded />
+            </Box>
+            <Typography component="span" variant="h6" sx={{ fontWeight: 700 }}>
+              Import cards
+            </Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 0.5 }}>
+            <Typography variant="body2" color="text.secondary">
+              Choose a CSV file with a group and text for each card.
+            </Typography>
+            <Stack spacing={1}>
+              <Typography variant="body2">
+                <Box component="span" sx={{ fontWeight: 700 }}>
+                  Required:
+                </Box>{" "}
+                group, text
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <Box component="span" sx={{ fontWeight: 700 }}>
+                  Optional:
+                </Box>{" "}
+                answers, progressStage (0–{MASTERED_STAGE}), progressNextReview
+                (ms), and custom fields
+              </Typography>
             </Stack>
-            <Typography variant="body2" color="text.secondary">
-              Optional: answers, progressStage (0–{MASTERED_STAGE}),
-              progressNextReview (ms), and custom card fields.
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Use plain text for one answer, or a quoted JSON array for several.
-            </Typography>
             <Box
               sx={{
                 bgcolor: "action.hover",
                 borderRadius: 1,
-                px: 1.5,
-                py: 1,
+                p: 1.5,
                 overflowX: "auto",
               }}
             >
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontWeight: 700 }}
+              >
                 Example
               </Typography>
               <Typography
@@ -521,18 +598,18 @@ export function LibraryList() {
                 sx={{ fontFamily: "monospace", mb: 0, whiteSpace: "pre" }}
               >
                 {
-                  'group,text,answers\nbody-parts,arm,arm\nbody-parts,leg,"[""leg"",""lower limb""]"'
+                  'group,text,answers\nmy-cards,hello,hi\nmy-cards,goodbye,"[""bye"",""see you""]"'
                 }
               </Typography>
             </Box>
             <Typography variant="caption" color="text.secondary">
-              Built-in collections cannot be replaced by imports. Existing group
-              and text matches update; supplied progress values replace existing
-              values.
+              Multiple answers use a quoted JSON array. Matching cards and
+              supplied progress are updated; built-in collections cannot be
+              imported or replaced.
             </Typography>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
           <Button onClick={() => setIsImportDialogOpen(false)}>Cancel</Button>
           <Button
             variant="contained"
