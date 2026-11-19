@@ -133,7 +133,7 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
   }
 
   const headers = meta.fields || [];
-  for (const required of ["group", "text"]) {
+  for (const required of ["group", "text", "answers"]) {
     if (!headers.includes(required)) {
       throw new Error(
         `Validation Error: The CSV file is missing the required '${required}' column.`,
@@ -163,6 +163,21 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
     const text = typeof row.text === "string" ? row.text : "";
     if (!group.trim() || !text.trim()) {
       throw new Error(`CSV row ${index + 2} must include a group and text.`);
+    }
+    const answers = row.answers;
+    if (
+      !(
+        (typeof answers === "string" && answers.trim()) ||
+        (Array.isArray(answers) &&
+          answers.length > 0 &&
+          answers.every(
+            (answer) => typeof answer === "string" && answer.trim(),
+          ))
+      )
+    ) {
+      throw new Error(
+        `CSV row ${index + 2} must include at least one non-empty answer.`,
+      );
     }
 
     const card: Card = { group, text };
