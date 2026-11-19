@@ -380,16 +380,10 @@ export function LibraryList() {
                   </IconButton>
                 </span>
               </Tooltip>
-              <Tooltip
-                title={
-                  removableRows.length === 0
-                    ? "Built-in cards cannot be removed"
-                    : "Remove selected imported cards"
-                }
-              >
+              <Tooltip title="Remove selected cards">
                 <span>
                   <IconButton
-                    aria-label="Remove selected imported cards"
+                    aria-label="Remove selected cards"
                     size="small"
                     color="error"
                     sx={{
@@ -399,11 +393,7 @@ export function LibraryList() {
                       borderColor: "error.main",
                       borderRadius: 1,
                     }}
-                    disabled={
-                      removableRows.length === 0 ||
-                      isImporting ||
-                      isUpdatingSelection
-                    }
+                    disabled={isImporting || isUpdatingSelection}
                     onClick={() => setIsDeleteDialogOpen(true)}
                   >
                     <DeleteOutlineRounded fontSize="small" />
@@ -468,7 +458,9 @@ export function LibraryList() {
         open={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         aria-labelledby="delete-cards-title"
-        aria-describedby="delete-cards-description"
+        aria-describedby={
+          removableRows.length > 0 ? "delete-cards-description" : undefined
+        }
         maxWidth="xs"
         fullWidth
         slotProps={{ paper: { sx: { borderRadius: 2 } } }}
@@ -490,33 +482,42 @@ export function LibraryList() {
               <DeleteOutlineRounded />
             </Box>
             <Typography component="span" variant="h6" sx={{ fontWeight: 700 }}>
-              Delete selected cards?
+              {removableRows.length === 0
+                ? "Built-in cards cannot be removed"
+                : "Delete selected cards?"}
             </Typography>
           </Stack>
         </DialogTitle>
-        <DialogContent>
-          <Typography id="delete-cards-description" color="text.secondary">
-            This will permanently delete {removableRows.length} imported card
-            {removableRows.length === 1 ? "" : "s"} and their progress. This
-            cannot be undone.
-          </Typography>
-          {selectedRows.length > removableRows.length && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-              Built-in cards in your selection will be kept.
+        {removableRows.length > 0 && (
+          <DialogContent>
+            <Typography id="delete-cards-description" color="text.secondary">
+              This will permanently delete {removableRows.length} imported card
+              {removableRows.length === 1 ? "" : "s"} and their progress.
             </Typography>
-          )}
-        </DialogContent>
+            {selectedRows.length > removableRows.length && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 1.5 }}
+              >
+                Built-in cards in your selection will be kept.
+              </Typography>
+            )}
+          </DialogContent>
+        )}
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
           <Button autoFocus onClick={() => setIsDeleteDialogOpen(false)}>
-            Cancel
+            {removableRows.length === 0 ? "Close" : "Cancel"}
           </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => void removeSelectedRows()}
-          >
-            Delete cards
-          </Button>
+          {removableRows.length > 0 && (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => void removeSelectedRows()}
+            >
+              Delete cards
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
