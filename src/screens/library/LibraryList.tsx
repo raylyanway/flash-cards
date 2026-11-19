@@ -10,7 +10,6 @@ import { Autocomplete, TextField } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -332,12 +331,12 @@ export function LibraryList() {
         sx={{
           alignItems: { sm: "center" },
           justifyContent: "space-between",
-          p: 1,
+          pb: 2,
         }}
       >
         <Autocomplete
           size="small"
-          sx={{ minWidth: 220, width: { xs: "100%", sm: 220 } }}
+          sx={{ minWidth: 0, width: { xs: "100%", sm: 220 } }}
           options={groupFilterOptions}
           value={selectedGroupOption}
           getOptionLabel={(option) => option.label}
@@ -664,9 +663,20 @@ export function LibraryList() {
         </Typography>
       ) : (
         <List aria-label="Content library" disablePadding>
-          <ListItem sx={{ justifyContent: "space-between", px: 2, py: 0.5 }}>
+          <ListItem
+            sx={{
+              justifyContent: "space-between",
+              px: { xs: 0.5, sm: 1 },
+              py: 1,
+              borderTop: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
             <Typography variant="body2" color="text.secondary">
-              {selectedFilteredCount} / {filteredRows.length} selected
+              {filteredRows.length} card{filteredRows.length === 1 ? "" : "s"}
+              {selectedFilteredCount > 0 &&
+                ` · ${selectedFilteredCount} selected`}
             </Typography>
             <Button
               size="small"
@@ -678,6 +688,7 @@ export function LibraryList() {
           {filteredRows.map((row) => {
             const answers = formatValue(row.content.answers);
             const extraDetails = formatExtraDetails(row);
+            const isSelected = selectedRowKeys.has(getRowKey(row));
 
             return (
               <React.Fragment key={`${row.content.group}:${row.content.text}`}>
@@ -685,36 +696,33 @@ export function LibraryList() {
                   component="button"
                   type="button"
                   role="checkbox"
-                  aria-checked={selectedRowKeys.has(getRowKey(row))}
+                  aria-checked={isSelected}
                   aria-label={`Select ${row.content.text}`}
-                  selected={selectedRowKeys.has(getRowKey(row))}
-                  onClick={() =>
-                    toggleRowSelection(
-                      row,
-                      !selectedRowKeys.has(getRowKey(row)),
-                    )
-                  }
+                  selected={isSelected}
+                  onClick={() => toggleRowSelection(row, !isSelected)}
                   sx={(theme) => ({
                     alignItems: "flex-start",
-                    px: 2,
-                    py: 1.5,
+                    px: { xs: 1, sm: 1.5 },
+                    py: 1,
                     gap: 1.5,
                     width: "100%",
                     borderLeft: "3px solid",
-                    borderColor: selectedRowKeys.has(getRowKey(row))
-                      ? "primary.main"
-                      : "transparent",
+                    borderColor: isSelected ? "primary.main" : "transparent",
                     "&.Mui-selected": { bgcolor: "action.selected" },
                     "&.Mui-selected:hover": {
                       bgcolor: theme.palette.action.hover,
                     },
                   })}
                 >
-                  <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
                       component="div"
                       variant="subtitle1"
-                      sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
+                      sx={{
+                        fontWeight: 700,
+                        lineHeight: 1.3,
+                        overflowWrap: "anywhere",
+                      }}
                     >
                       {row.content.text}
                     </Typography>
@@ -732,26 +740,32 @@ export function LibraryList() {
                       direction="row"
                       spacing={0.75}
                       useFlexGap
-                      sx={{ flexWrap: "wrap", pt: 0.25 }}
+                      sx={{ flexWrap: "wrap", alignItems: "center" }}
                     >
-                      <Chip
-                        size="small"
-                        variant="outlined"
-                        label={row.content.group}
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
                         aria-label={`Group: ${row.content.group}`}
-                      />
+                        sx={{ overflowWrap: "anywhere" }}
+                      >
+                        {row.content.group}
+                      </Typography>
                       <StatusBadge
                         color={getStageBadgeColor(row.progress.stage)}
                         label={getStageName(row.progress.stage)}
                         ariaLabel={`Progress: ${getStageName(row.progress.stage)}`}
                       />
-                      <Chip
-                        size="small"
-                        variant="outlined"
-                        icon={<ScheduleRounded />}
-                        label={formatReviewDate(row.progress.nextReview)}
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ alignItems: "center", color: "text.secondary" }}
                         aria-label={`Next review: ${formatReviewDate(row.progress.nextReview)}`}
-                      />
+                      >
+                        <ScheduleRounded sx={{ fontSize: 15 }} />
+                        <Typography variant="caption">
+                          {formatReviewDate(row.progress.nextReview)}
+                        </Typography>
+                      </Stack>
                     </Stack>
                     {extraDetails.length > 0 && (
                       <Typography
@@ -764,25 +778,30 @@ export function LibraryList() {
                       </Typography>
                     )}
                   </Stack>
-                  <Chip
-                    size="small"
-                    color={row.isBuiltIn ? "primary" : "default"}
-                    variant={row.isBuiltIn ? "filled" : "outlined"}
-                    icon={
-                      row.isBuiltIn ? (
-                        <AutoStoriesRounded />
-                      ) : (
-                        <FileUploadRounded />
-                      )
-                    }
-                    label={row.isBuiltIn ? "Built-in" : "Imported"}
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
                     aria-label={
                       row.isBuiltIn
                         ? "Built-in collection"
                         : "Imported collection"
                     }
-                    sx={{ flexShrink: 0, mt: 0.25 }}
-                  />
+                    sx={{
+                      alignItems: "center",
+                      color: "text.secondary",
+                      flexShrink: 0,
+                      mt: 0.5,
+                    }}
+                  >
+                    {row.isBuiltIn ? (
+                      <AutoStoriesRounded sx={{ fontSize: 16 }} />
+                    ) : (
+                      <FileUploadRounded sx={{ fontSize: 16 }} />
+                    )}
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                      {row.isBuiltIn ? "Built-in" : "Imported"}
+                    </Typography>
+                  </Stack>
                 </ListItemButton>
                 <Divider component="li" />
               </React.Fragment>
