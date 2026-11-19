@@ -3,6 +3,7 @@ import {
   ChevronRightRounded,
   CloseRounded,
   DeleteOutlineRounded,
+  EditRounded,
   FileDownloadRounded,
   FileUploadRounded,
   FolderOutlined,
@@ -34,6 +35,7 @@ import { getStageBadgeColor, StatusBadge } from "../../components/StatusBadge";
 import {
   DEFAULT_CONTENT,
   deleteLibraryRows,
+  editLibraryCard,
   getGroupOverviewProgress,
   getLibraryRows,
   importLibraryRows,
@@ -105,6 +107,10 @@ function formatValue(value: unknown) {
   return String(value);
 }
 
+function formatAnswersForEdit(answers: string | string[] | undefined) {
+  return Array.isArray(answers) ? answers.join(" | ") : (answers ?? "");
+}
+
 function formatExtraDetails(row: LibraryRow) {
   return Object.entries(row.content)
     .filter(([field]) => !["group", "text", "answers"].includes(field))
@@ -130,6 +136,10 @@ export function LibraryList() {
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = React.useState(false);
+  const [editingRow, setEditingRow] = React.useState<LibraryRow | null>(null);
+  const [editText, setEditText] = React.useState("");
+  const [editAnswers, setEditAnswers] = React.useState("");
+  const [editError, setEditError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
@@ -368,6 +378,65 @@ export function LibraryList() {
         progressError instanceof Error
           ? `Unable to ${isMastering ? "mark cards as mastered" : "reset selected progress"}: ${progressError.message}`
           : `Unable to ${isMastering ? "mark cards as mastered" : "reset selected progress"}.`,
+      );
+    } finally {
+      setIsUpdatingSelection(false);
+    }
+  };
+
+  const openEditDialog = () => {
+    if (selectedRows.length !== 1 || selectedRows[0].isBuiltIn) return;
+    const row = selectedRows[0];
+    setEditingRow(row);
+    setEditText(row.content.text);
+    setEditAnswers(formatAnswersForEdit(row.content.answers));
+    setEditError(null);
+  };
+
+  const saveEditedCard = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingRow || editingRow.isBuiltIn || isUpdatingSelection) return;
+    const text = editText.trim();
+    const answers =
+      editAnswers === formatAnswersForEdit(editingRow.content.answers)
+        ? Array.isArray(editingRow.content.answers)
+          ? editingRow.content.answers
+          : [editingRow.content.answers ?? ""]
+        : editAnswers.split("|").map((answer) => answer.trim());
+    if (!text || answers.some((answer) => !answer)) {
+      setEditError("Enter text and at least one non-empty answer");
+      return;
+    }
+
+    setEditError(null);
+    setIsUpdatingSelection(true);
+    try {
+      const group = editingRow.content.group;
+      const nextGroupProgress = Object.fromEntries(
+        rows
+          .filter((row) => row.content.group === group)
+          .map((row) => [
+            row.content.text,
+            progress[group]?.[row.content.text] ?? row.progress,
+          ]),
+      );
+      const cardProgress = nextGroupProgress[editingRow.content.text];
+      delete nextGroupProgress[editingRow.content.text];
+      nextGroupProgress[text] = cardProgress;
+
+      await editLibraryCard(group, editingRow.content.text, text, answers);
+      await setProgress({ [group]: nextGroupProgress });
+      if (group === currentGroup) await loadGroupData(group);
+      setRows(
+        await getLibraryRows({ ...progress, [group]: nextGroupProgress }),
+      );
+      setSelectedRowKeys(new Set());
+      setEditingRow(null);
+      setError(null);
+      setMessage("Card updated");
+    } catch (saveError) {
+      setEditError(
+        saveError instanceof Error ? saveError.message : "Unable to save card",
       );
     } finally {
       setIsUpdatingSelection(false);
@@ -618,6 +687,23 @@ export function LibraryList() {
               >
                 <TaskAltRounded fontSize="small" />
               </IconButton>
+              {!isBuiltInGroup && selectedRows.length === 1 && (
+                <IconButton
+                  aria-label="Edit selected card"
+                  size="small"
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                  disabled={isImporting || isUpdatingSelection}
+                  onClick={openEditDialog}
+                >
+                  <EditRounded fontSize="small" />
+                </IconButton>
+              )}
               {!isBuiltInGroup && (
                 <IconButton
                   aria-label="Remove selected cards"
@@ -680,6 +766,67 @@ export function LibraryList() {
           )}
         </Stack>
       </Stack>
+
+      <Dialog
+        open={Boolean(editingRow)}
+        onClose={() => {
+          if (!isUpdatingSelection) setEditingRow(null);
+        }}
+        aria-labelledby="edit-card-title"
+        maxWidth="sm"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <Box component="form" onSubmit={(event) => void saveEditedCard(event)}>
+          <DialogTitle id="edit-card-title">Edit card</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              {editError && (
+                <Alert severity="error">{editError.replace(/\.$/, "")}</Alert>
+              )}
+              <TextField
+                autoFocus
+                required
+                fullWidth
+                multiline
+                minRows={2}
+                maxRows={6}
+                label="Text"
+                value={editText}
+                disabled={isUpdatingSelection}
+                onChange={(event) => setEditText(event.target.value)}
+              />
+              <TextField
+                required
+                fullWidth
+                multiline
+                minRows={2}
+                maxRows={6}
+                label="Answers"
+                helperText="Separate multiple answers with |"
+                value={editAnswers}
+                disabled={isUpdatingSelection}
+                onChange={(event) => setEditAnswers(event.target.value)}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+            <Button
+              disabled={isUpdatingSelection}
+              onClick={() => setEditingRow(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isUpdatingSelection}
+            >
+              Save
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
 
       <Dialog
         open={isResetDialogOpen}

@@ -79,6 +79,49 @@ export async function saveProgressForGroup(
   });
 }
 
+export async function editLibraryCard(
+  group: string,
+  originalText: string,
+  newText: string,
+  answers: string[],
+) {
+  assertNoBuiltInGroups([group], "edited");
+  const text = newText.trim();
+  const normalizedAnswers = answers.map((answer) => answer.trim());
+  if (
+    !text ||
+    normalizedAnswers.length === 0 ||
+    normalizedAnswers.some((answer) => !answer)
+  ) {
+    throw new Error("Text and at least one non-empty answer are required.");
+  }
+
+  await db.transaction("rw", db.library, async () => {
+    const record = await db.library.get([group, originalText]);
+    if (!record) throw new Error("Card not found.");
+    if (text !== originalText && (await db.library.get([group, text]))) {
+      throw new Error("A card with this text already exists in this group.");
+    }
+    const updated = {
+      ...record,
+      text,
+      answers:
+        normalizedAnswers.length === 1
+          ? normalizedAnswers[0]
+          : normalizedAnswers,
+    };
+    if (text === originalText) {
+      await db.library.put(updated);
+    } else {
+      await db.library.add(updated);
+      await db.library
+        .where("[group+text]")
+        .equals([group, originalText])
+        .delete();
+    }
+  });
+}
+
 export async function importLibraryRows(rows: LibraryImportRow[]) {
   assertNoBuiltInGroups(
     rows.map((row) => row.group),
