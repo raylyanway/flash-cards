@@ -32,6 +32,26 @@ function serializeLibraryCell(value: unknown) {
   return value;
 }
 
+function serializeLibraryAnswers(value: unknown) {
+  if (typeof value === "string" && value.includes("|")) {
+    return JSON.stringify([value]);
+  }
+  if (Array.isArray(value)) {
+    const joined = value.join("|");
+    if (
+      value.some(
+        (answer) => typeof answer !== "string" || answer.includes("|"),
+      ) ||
+      joined.trimStart().startsWith("[") ||
+      joined.trimStart().startsWith("{")
+    ) {
+      return JSON.stringify(value);
+    }
+    return joined;
+  }
+  return serializeLibraryCell(value);
+}
+
 export function createCsvFromCards(cards: Card[]) {
   const fieldSet = new Set<string>();
   for (const card of cards) {
@@ -113,7 +133,12 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
         progressNextReview: progress.nextReview,
       };
       return Object.fromEntries(
-        headers.map((key) => [key, serializeLibraryCell(row[key]) ?? ""]),
+        headers.map((key) => [
+          key,
+          (key === "answers"
+            ? serializeLibraryAnswers(row[key])
+            : serializeLibraryCell(row[key])) ?? "",
+        ]),
       );
     }),
     { columns: headers },
@@ -164,7 +189,10 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
     if (!group.trim() || !text.trim()) {
       throw new Error(`CSV row ${index + 2} must include a group and text.`);
     }
-    const answers = row.answers;
+    const answers =
+      typeof row.answers === "string" && row.answers.includes("|")
+        ? row.answers.split("|").map((answer) => answer.trim())
+        : row.answers;
     if (
       !(
         (typeof answers === "string" && answers.trim()) ||
@@ -179,6 +207,7 @@ export function parseLibraryCsv(csvText: string): LibraryImportRow[] {
         `CSV row ${index + 2} must include at least one non-empty answer.`,
       );
     }
+    row.answers = answers;
 
     const card: Card = { group, text };
     for (const [key, value] of Object.entries(row)) {

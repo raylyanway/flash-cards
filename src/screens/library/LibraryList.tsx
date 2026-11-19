@@ -584,7 +584,7 @@ export function LibraryList() {
                 }}
               >
                 {
-                  'group,text,answers\nmy-cards,hello,hi\nmy-cards,goodbye,"[""bye"",""see you""]"'
+                  "group,text,answers\nmy-cards,hello,hi\nmy-cards,goodbye,bye|see you"
                 }
               </Typography>
             </Box>
