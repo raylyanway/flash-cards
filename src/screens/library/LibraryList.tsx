@@ -238,7 +238,7 @@ export function LibraryList() {
       const rowsToExport =
         selectedRows.length > 0 ? selectedRows : filteredRows;
       if (!rowsToExport.length) {
-        setError("There is no library data to export.");
+        setError("No cards to export.");
         return;
       }
       const exportScope = selectedRows.length > 0 ? "selected" : selectedGroup;
@@ -248,7 +248,7 @@ export function LibraryList() {
       );
     } catch (exportError) {
       console.error("Failed to export library rows:", exportError);
-      setError("Unable to export library rows. See console for details.");
+      setError("Unable to export cards.");
     }
   };
 
@@ -369,8 +369,8 @@ export function LibraryList() {
       console.error("Failed to remove selected library rows:", deleteError);
       setError(
         deleteError instanceof Error
-          ? `Unable to remove selected rows: ${deleteError.message}`
-          : "Unable to remove selected rows.",
+          ? `Unable to remove selected cards: ${deleteError.message}`
+          : "Unable to remove selected cards.",
       );
     } finally {
       setIsUpdatingSelection(false);
@@ -408,13 +408,15 @@ export function LibraryList() {
       });
       setRows(nextRows);
       setSelectedRowKeys(new Set());
-      setMessage(`Imported ${importedRows.length} library rows.`);
+      setMessage(
+        `${importedRows.length} card${importedRows.length === 1 ? "" : "s"} imported.`,
+      );
     } catch (importError) {
       console.error("Failed to import library:", importError);
       setError(
         importError instanceof Error
-          ? `Unable to import the library: ${importError.message}`
-          : "Unable to import the library. See console for details.",
+          ? `Unable to import cards: ${importError.message}`
+          : "Unable to import cards.",
       );
     } finally {
       setIsImporting(false);
@@ -827,7 +829,7 @@ export function LibraryList() {
 
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 1 }}>
-          {error}
+          {error.replace(/\.$/, "")}
         </Alert>
       )}
       {message && (
@@ -836,7 +838,7 @@ export function LibraryList() {
           onClose={() => setMessage(null)}
           sx={{ mb: 1 }}
         >
-          {message}
+          {message.replace(/\.$/, "")}
         </Alert>
       )}
 
