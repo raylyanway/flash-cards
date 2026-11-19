@@ -9,6 +9,7 @@ import {
   RestartAltRounded,
   SearchRounded,
   SortRounded,
+  TaskAltRounded,
 } from "@mui/icons-material";
 import { TextField, useMediaQuery } from "@mui/material";
 import Alert from "@mui/material/Alert";
@@ -40,7 +41,7 @@ import {
 } from "../../db";
 import { useAppStore } from "../../store/useAppStore";
 import type { LibraryRow, ProgressMap } from "../../types";
-import { getStageName } from "../../utils/cardProgress";
+import { getStageName, MASTERED_STAGE } from "../../utils/cardProgress";
 import {
   createCsvFromLibrary,
   downloadCsv,
@@ -315,8 +316,9 @@ export function LibraryList() {
     }
   };
 
-  const resetSelectedProgress = async () => {
+  const updateSelectedProgress = async (stage: number) => {
     if (selectedRows.length === 0 || isUpdatingSelection) return;
+    const isMastering = stage === MASTERED_STAGE;
     setIsResetDialogOpen(false);
     setError(null);
     setMessage(null);
@@ -338,7 +340,7 @@ export function LibraryList() {
           );
         }
         nextProgress[group][row.content.text] = {
-          stage: 0,
+          stage,
           review: 0,
         };
       }
@@ -353,14 +355,19 @@ export function LibraryList() {
       );
       setSelectedRowKeys(new Set());
       setMessage(
-        `Reset progress for ${selectedRows.length} selected card${selectedRows.length === 1 ? "" : "s"}.`,
+        isMastering
+          ? `${selectedRows.length} card${selectedRows.length === 1 ? "" : "s"} marked as mastered.`
+          : `Reset progress for ${selectedRows.length} selected card${selectedRows.length === 1 ? "" : "s"}.`,
       );
-    } catch (resetError) {
-      console.error("Failed to reset selected library progress:", resetError);
+    } catch (progressError) {
+      console.error(
+        "Failed to update selected library progress:",
+        progressError,
+      );
       setError(
-        resetError instanceof Error
-          ? `Unable to reset selected progress: ${resetError.message}`
-          : "Unable to reset selected progress.",
+        progressError instanceof Error
+          ? `Unable to ${isMastering ? "mark cards as mastered" : "reset selected progress"}: ${progressError.message}`
+          : `Unable to ${isMastering ? "mark cards as mastered" : "reset selected progress"}.`,
       );
     } finally {
       setIsUpdatingSelection(false);
@@ -596,6 +603,21 @@ export function LibraryList() {
               >
                 <RestartAltRounded fontSize="small" />
               </IconButton>
+              <IconButton
+                aria-label="Mark selected cards as mastered"
+                size="small"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                }}
+                disabled={isImporting || isUpdatingSelection}
+                onClick={() => void updateSelectedProgress(MASTERED_STAGE)}
+              >
+                <TaskAltRounded fontSize="small" />
+              </IconButton>
               {!isBuiltInGroup && (
                 <IconButton
                   aria-label="Remove selected cards"
@@ -701,7 +723,7 @@ export function LibraryList() {
           </Button>
           <Button
             variant="contained"
-            onClick={() => void resetSelectedProgress()}
+            onClick={() => void updateSelectedProgress(0)}
           >
             Reset progress
           </Button>
