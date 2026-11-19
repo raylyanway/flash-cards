@@ -8,6 +8,7 @@ import {
   FolderOutlined,
   RestartAltRounded,
   SearchRounded,
+  SortRounded,
 } from "@mui/icons-material";
 import { TextField, useMediaQuery } from "@mui/material";
 import Alert from "@mui/material/Alert";
@@ -25,7 +26,6 @@ import InputAdornment from "@mui/material/InputAdornment";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
-import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
@@ -48,6 +48,13 @@ import {
 } from "../../utils/csv";
 
 type SortOrder = "default" | "text-asc" | "text-desc" | "stage";
+
+const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: "default", label: "Default" },
+  { value: "text-asc", label: "Text A–Z" },
+  { value: "text-desc", label: "Text Z–A" },
+  { value: "stage", label: "By stage" },
+];
 
 function LibraryAlert({
   message,
@@ -130,6 +137,11 @@ export function LibraryList() {
   const [selectedGroup, setSelectedGroup] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("default");
+  const sortIndex = SORT_OPTIONS.findIndex(
+    (option) => option.value === sortOrder,
+  );
+  const currentSort = SORT_OPTIONS[sortIndex];
+  const nextSort = SORT_OPTIONS[(sortIndex + 1) % SORT_OPTIONS.length];
   const [selectedRowKeys, setSelectedRowKeys] = React.useState<Set<string>>(
     new Set(),
   );
@@ -556,21 +568,6 @@ export function LibraryList() {
             }}
           />
         )}
-        {selectedGroup !== null && (
-          <TextField
-            select
-            size="small"
-            label="Sort by"
-            value={sortOrder}
-            onChange={(event) => setSortOrder(event.target.value as SortOrder)}
-            sx={{ width: { xs: "100%", sm: 160 }, flexShrink: 0 }}
-          >
-            <MenuItem value="default">Default</MenuItem>
-            <MenuItem value="text-asc">Text A–Z</MenuItem>
-            <MenuItem value="text-desc">Text Z–A</MenuItem>
-            <MenuItem value="stage">By stage</MenuItem>
-          </TextField>
-        )}
         <Stack
           direction="row"
           spacing={1}
@@ -599,21 +596,23 @@ export function LibraryList() {
               >
                 <RestartAltRounded fontSize="small" />
               </IconButton>
-              <IconButton
-                aria-label="Remove selected cards"
-                size="small"
-                sx={{
-                  width: 40,
-                  height: 40,
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                }}
-                disabled={isImporting || isUpdatingSelection}
-                onClick={() => setIsDeleteDialogOpen(true)}
-              >
-                <DeleteOutlineRounded fontSize="small" />
-              </IconButton>
+              {!isBuiltInGroup && (
+                <IconButton
+                  aria-label="Remove selected cards"
+                  size="small"
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                  disabled={isImporting || isUpdatingSelection}
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                >
+                  <DeleteOutlineRounded fontSize="small" />
+                </IconButton>
+              )}
             </>
           )}
           {selectedRows.length === 0 && !isBuiltInGroup && (
@@ -970,6 +969,8 @@ export function LibraryList() {
               justifyContent: "space-between",
               px: { xs: 0.5, sm: 1 },
               py: 1,
+              gap: 1,
+              flexWrap: "wrap",
               borderTop: 1,
               borderBottom: 1,
               borderColor: "divider",
@@ -980,12 +981,34 @@ export function LibraryList() {
               {selectedFilteredCount > 0 &&
                 ` · ${selectedFilteredCount} selected`}
             </Typography>
-            <Button
-              size="small"
-              onClick={() => toggleFilteredSelection(!allFilteredSelected)}
+            <Stack
+              direction="row"
+              spacing={0.5}
+              useFlexGap
+              sx={{
+                ml: "auto",
+                maxWidth: "100%",
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
+              }}
             >
-              {allFilteredSelected ? "Deselect all" : "Select all"}
-            </Button>
+              <Button
+                size="small"
+                startIcon={<SortRounded />}
+                aria-label={`Sort: ${currentSort.label}. Next: ${nextSort.label}`}
+                onClick={() => setSortOrder(nextSort.value)}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                Sort: {currentSort.label}
+              </Button>
+              <Button
+                size="small"
+                onClick={() => toggleFilteredSelection(!allFilteredSelected)}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                {allFilteredSelected ? "Deselect all" : "Select all"}
+              </Button>
+            </Stack>
           </ListItem>
           {filteredRows.map((row) => {
             const answers = formatValue(row.content.answers);
