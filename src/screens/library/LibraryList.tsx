@@ -9,11 +9,12 @@ import {
   RestartAltRounded,
   SearchRounded,
 } from "@mui/icons-material";
-import { TextField } from "@mui/material";
+import { TextField, useMediaQuery } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import Collapse from "@mui/material/Collapse";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -47,6 +48,43 @@ import {
 } from "../../utils/csv";
 
 type SortOrder = "default" | "text-asc" | "text-desc" | "stage";
+
+function LibraryAlert({
+  message,
+  severity,
+  onClose,
+}: {
+  message: string | null;
+  severity: "error" | "success";
+  onClose: () => void;
+}) {
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const [lastMessage, setLastMessage] = React.useState(message);
+
+  React.useEffect(() => {
+    if (message) setLastMessage(message);
+  }, [message]);
+
+  return (
+    <Collapse
+      in={Boolean(message)}
+      timeout={reduceMotion ? 0 : 300}
+      unmountOnExit
+    >
+      <Alert
+        severity={severity}
+        onClose={onClose}
+        sx={{
+          mb: 1,
+          opacity: message ? 1 : 0,
+          transition: reduceMotion ? "none" : "opacity 300ms ease",
+        }}
+      >
+        {(message ?? lastMessage ?? "").replace(/\.$/, "")}
+      </Alert>
+    </Collapse>
+  );
+}
 
 function getRowKey(row: LibraryRow) {
   return JSON.stringify([row.content.group, row.content.text]);
@@ -151,6 +189,7 @@ export function LibraryList() {
     setSearch("");
     setSelectedRowKeys(new Set());
     setError(null);
+    setMessage(null);
     setIsLoading(true);
     try {
       if (DEFAULT_CONTENT.some((content) => content.key === group)) {
@@ -189,6 +228,18 @@ export function LibraryList() {
       return next;
     });
   };
+
+  React.useEffect(() => {
+    if (!error) return;
+    const timer = window.setTimeout(() => setError(null), 5_000);
+    return () => window.clearTimeout(timer);
+  }, [error]);
+
+  React.useEffect(() => {
+    if (!message) return;
+    const timer = window.setTimeout(() => setMessage(null), 5_000);
+    return () => window.clearTimeout(timer);
+  }, [message]);
 
   React.useEffect(() => {
     let active = true;
@@ -451,6 +502,7 @@ export function LibraryList() {
                 setSearch("");
                 setSelectedRowKeys(new Set());
                 setError(null);
+                setMessage(null);
               }}
             >
               <ArrowBackRounded />
@@ -827,20 +879,16 @@ export function LibraryList() {
         </DialogActions>
       </Dialog>
 
-      {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 1 }}>
-          {error.replace(/\.$/, "")}
-        </Alert>
-      )}
-      {message && (
-        <Alert
-          severity="success"
-          onClose={() => setMessage(null)}
-          sx={{ mb: 1 }}
-        >
-          {message.replace(/\.$/, "")}
-        </Alert>
-      )}
+      <LibraryAlert
+        message={error}
+        severity="error"
+        onClose={() => setError(null)}
+      />
+      <LibraryAlert
+        message={message}
+        severity="success"
+        onClose={() => setMessage(null)}
+      />
 
       {isLoading || isImporting || isUpdatingSelection ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
