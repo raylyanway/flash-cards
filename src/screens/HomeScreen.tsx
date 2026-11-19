@@ -1,264 +1,244 @@
 import { HomeRounded, PlayArrowRounded } from "@mui/icons-material";
 import {
   Alert,
-  Autocomplete,
   Box,
   Button,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
+  CircularProgress,
   LinearProgress,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MetricCard } from "../components/MetricCard";
 import { PageHeader } from "../components/PageHeader";
+import { getGroupOverviewProgress } from "../db";
 import { useAppStore } from "../store/useAppStore";
-import {
-  getCompletePercent,
-  getNextReviewLabel,
-  MASTERED_STAGE,
-} from "../utils/cardProgress";
+import type { ProgressEntry } from "../types";
+import { MASTERED_STAGE } from "../utils/cardProgress";
+
+type GroupOverview =
+  | { progress: ProgressEntry[]; error: false }
+  | { error: true };
 
 export function HomeScreen() {
-  const cards = useAppStore((state) => state.cards);
   const currentGroup = useAppStore((state) => state.currentGroup);
   const contentOptions = useAppStore((state) => state.contentOptions);
   const loadGroupData = useAppStore((state) => state.loadGroupData);
   const now = useAppStore((state) => state.now);
-  const progress = useAppStore((state) => state.progress);
   const navigate = useNavigate();
-  const [isLoadingGroup, setIsLoadingGroup] = useState(false);
+  const [overviews, setOverviews] = useState<Record<string, GroupOverview>>({});
+  const [loadingGroup, setLoadingGroup] = useState<string | null>(null);
   const [groupLoadError, setGroupLoadError] = useState<string | null>(null);
 
-  const currentGroupProgress = progress[currentGroup];
+  useEffect(() => {
+    let active = true;
+    setOverviews({});
+    for (const option of contentOptions) {
+      void getGroupOverviewProgress(option.key)
+        .then((progress) => {
+          if (active) {
+            setOverviews((current) => ({
+              ...current,
+              [option.key]: { progress, error: false },
+            }));
+          }
+        })
+        .catch(() => {
+          if (active) {
+            setOverviews((current) => ({
+              ...current,
+              [option.key]: { error: true },
+            }));
+          }
+        });
+    }
+    return () => {
+      active = false;
+    };
+  }, [contentOptions]);
 
-  const options = useMemo(
-    () => contentOptions.map((option) => option.key),
-    [contentOptions],
-  );
-
-  const completePercent = useMemo(
-    () => getCompletePercent(cards, currentGroupProgress),
-    [cards, currentGroupProgress],
-  );
-
-  const nextReviewLabel = useMemo(
-    () => getNextReviewLabel(currentGroupProgress, now),
-    [now, currentGroupProgress],
-  );
-
-  const totalCards = cards.length;
-  const learnedCount = useMemo(
-    () =>
-      Object.values(currentGroupProgress).filter(
-        (p) => p.stage === MASTERED_STAGE,
-      ).length,
-    [currentGroupProgress],
-  );
-
-  const dueCount = useMemo(() => {
-    const nowTs = Date.now();
-    return Object.values(currentGroupProgress).filter(
-      (p) => p.stage < MASTERED_STAGE && p.nextReview <= nowTs,
-    ).length;
-  }, [currentGroupProgress, now]);
+  const startReview = async (group: string) => {
+    if (loadingGroup) return;
+    setLoadingGroup(group);
+    setGroupLoadError(null);
+    try {
+      if (group !== currentGroup) await loadGroupData(group);
+      navigate("/learn");
+    } catch (error) {
+      setGroupLoadError(
+        error instanceof Error ? error.message : "Unable to load this group.",
+      );
+    } finally {
+      setLoadingGroup(null);
+    }
+  };
 
   return (
     <>
       <PageHeader
         icon={<HomeRounded />}
         title="Study overview"
-        description="Review what’s due, track your progress, and jump back in with a clean daily rhythm."
+        description="Choose a group and pick up where you left off."
       />
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12 }}>
-          <Card>
-            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-              {groupLoadError && (
-                <Alert
-                  severity="error"
-                  onClose={() => setGroupLoadError(null)}
-                  sx={{ mb: 2 }}
-                >
-                  {groupLoadError}
-                </Alert>
-              )}
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                <Autocomplete
-                  sx={{ flexGrow: 1 }}
-                  options={options}
-                  value={currentGroup}
-                  disabled={isLoadingGroup}
-                  onChange={(event, newValue) => {
-                    if (!newValue || newValue === currentGroup) return;
-                    setIsLoadingGroup(true);
-                    setGroupLoadError(null);
-                    void loadGroupData(newValue)
-                      .catch((error: unknown) => {
-                        setGroupLoadError(
-                          error instanceof Error
-                            ? error.message
-                            : String(error),
-                        );
-                      })
-                      .finally(() => setIsLoadingGroup(false));
-                  }}
-                  size="small"
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="current group"
-                      variant="standard"
-                    />
-                  )}
-                />
-                <Button
-                  variant="contained"
-                  startIcon={<PlayArrowRounded />}
-                  onClick={() => navigate("/learn")}
-                  disabled={isLoadingGroup}
-                  sx={{ minWidth: 180 }}
-                >
-                  Start review
-                </Button>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 7 }}>
-          <Card>
-            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
-                <Box sx={{ width: { xs: 170, sm: 190 }, mx: "auto" }}>
-                  <Box
-                    sx={{
-                      position: "relative",
-                      width: 170,
-                      height: 170,
-                      mx: "auto",
-                    }}
-                  >
-                    <Box
-                      sx={(theme) => ({
-                        position: "absolute",
-                        inset: 0,
-                        borderRadius: "50%",
-                        background: `conic-gradient(${theme.palette.primary.main} ${completePercent * 3.6}deg, rgba(148,163,184,0.16) 0deg)`,
-                      })}
-                    />
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        inset: 16,
-                        borderRadius: "50%",
-                        bgcolor: "background.paper",
-                        display: "grid",
-                        placeItems: "center",
-                        border: "1px solid",
-                        borderColor: "divider",
-                      }}
-                    >
-                      <Box>
-                        <Typography
-                          variant="h4"
-                          sx={{ fontWeight: 800, lineHeight: 1 }}
-                        >
-                          {completePercent}%
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Mastered
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
+      {groupLoadError && (
+        <Alert
+          severity="error"
+          onClose={() => setGroupLoadError(null)}
+          sx={{ mb: 2 }}
+        >
+          {groupLoadError}
+        </Alert>
+      )}
+      <Box component="section" aria-labelledby="groups-title">
+        <Stack
+          direction="row"
+          sx={{
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            pb: 1.5,
+            gap: 2,
+          }}
+        >
+          <Typography
+            id="groups-title"
+            component="h2"
+            variant="h6"
+            sx={{ fontWeight: 700 }}
+          >
+            Your groups
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {contentOptions.length} group
+            {contentOptions.length === 1 ? "" : "s"}
+          </Typography>
+        </Stack>
+        <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
+          {contentOptions.map((option) => {
+            const overview = overviews[option.key];
+            const entries =
+              overview && "progress" in overview ? overview.progress : [];
+            const mastered = entries.filter(
+              (entry) => entry.stage >= MASTERED_STAGE,
+            ).length;
+            const ready = entries.filter(
+              (entry) =>
+                entry.stage < MASTERED_STAGE && entry.nextReview <= now,
+            ).length;
+            const percent = entries.length
+              ? Math.round((mastered / entries.length) * 100)
+              : 0;
+            const status = !overview
+              ? "Loading..."
+              : overview.error
+                ? "Unavailable"
+                : `${ready} ready`;
 
-                <Stack spacing={2} sx={{ width: "100%" }}>
-                  <Box>
-                    <Typography variant="overline" color="text.secondary">
-                      Progress
-                    </Typography>
-                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                      {learnedCount} of {totalCards} cards completed
-                    </Typography>
-                  </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={completePercent}
-                    sx={{
-                      height: 10,
-                      borderRadius: 99,
-                      bgcolor: "rgba(148,163,184,0.18)",
-                    }}
-                  />
-
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 4 }}>
-                      <MetricCard
-                        size="sm"
-                        accent="primary"
-                        value={totalCards}
-                        label="Cards"
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 4 }}>
-                      <MetricCard
-                        size="sm"
-                        accent="success"
-                        value={learnedCount}
-                        label="Learned"
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 4 }}>
-                      <MetricCard
-                        size="sm"
-                        accent="warning"
-                        value={dueCount}
-                        label="Due now"
-                      />
-                    </Grid>
-                  </Grid>
-                </Stack>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent sx={{ p: { xs: 2, md: 3 }, height: "100%" }}>
-              <Stack spacing={2} sx={{ height: "100%" }}>
-                <Box>
+            return (
+              <Box
+                component="li"
+                key={option.key}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "minmax(0, 1fr) auto",
+                    sm: "minmax(0, 1fr) minmax(150px, 0.8fr) minmax(88px, auto) auto",
+                  },
+                  alignItems: "center",
+                  columnGap: { xs: 1.5, sm: 3 },
+                  rowGap: 1.5,
+                  py: { xs: 2, sm: 2.5 },
+                  borderTop: 1,
+                  borderColor: "divider",
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
                   <Typography
-                    variant="h3"
-                    sx={{ fontWeight: 800, letterSpacing: -0.05 }}
+                    component="h3"
+                    variant="subtitle1"
+                    sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
                   >
-                    {nextReviewLabel}
+                    {option.label}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ display: { xs: "block", sm: "none" } }}
+                  >
+                    {status}
                   </Typography>
                 </Box>
-                <Chip
-                  label={
-                    dueCount > 0
-                      ? `${dueCount} cards are ready`
-                      : "You’re all caught up"
-                  }
-                  color={dueCount > 0 ? "warning" : "success"}
-                  sx={{ alignSelf: "flex-start", fontWeight: 700 }}
-                />
-                <Typography variant="body1" color="text.secondary">
-                  {dueCount > 0
-                    ? "A few cards are ready for another pass. Keep the momentum going."
-                    : "You are all caught up for now. A fresh review can still strengthen recall."}
+                <Stack
+                  spacing={0.75}
+                  sx={{
+                    minWidth: 0,
+                    gridColumn: { xs: "1 / -1", sm: "auto" },
+                    gridRow: { xs: 2, sm: "auto" },
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    sx={{ justifyContent: "space-between", gap: 1 }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      {overview && !overview.error
+                        ? `${mastered} of ${entries.length} mastered`
+                        : "Progress"}
+                    </Typography>
+                    {overview && !overview.error && (
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                        {percent}%
+                      </Typography>
+                    )}
+                  </Stack>
+                  {!overview?.error && (
+                    <LinearProgress
+                      variant={overview ? "determinate" : "indeterminate"}
+                      value={percent}
+                      aria-label={`${option.label} mastered progress`}
+                      sx={{ height: 6, borderRadius: 1 }}
+                    />
+                  )}
+                </Stack>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    display: { xs: "none", sm: "block" },
+                    color:
+                      overview && !overview.error && ready > 0
+                        ? "warning.main"
+                        : "text.secondary",
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {status}
                 </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                <Button
+                  variant={ready > 0 ? "contained" : "outlined"}
+                  size="small"
+                  startIcon={
+                    loadingGroup === option.key ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : (
+                      <PlayArrowRounded />
+                    )
+                  }
+                  aria-label={`Review ${option.label}`}
+                  disabled={Boolean(loadingGroup)}
+                  onClick={() => void startReview(option.key)}
+                  sx={{
+                    minWidth: 100,
+                    gridColumn: { xs: 2, sm: "auto" },
+                    gridRow: { xs: 1, sm: "auto" },
+                  }}
+                >
+                  Review
+                </Button>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
     </>
   );
 }

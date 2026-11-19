@@ -6,6 +6,7 @@ import type {
   LibraryImportRow,
   LibraryRecord,
   LibraryRow,
+  ProgressEntry,
   ProgressMap,
   SettingRecord,
 } from "./types";
@@ -176,6 +177,22 @@ async function resolveContentUrl(group: string) {
     }
   }
   throw new Error(`Failed to fetch content data. Tried: ${tried.join(", ")}`);
+}
+
+export async function getGroupOverviewProgress(
+  group: string,
+): Promise<ProgressEntry[]> {
+  const records = await db.library.where("group").equals(group).toArray();
+  if (records.length > 0) {
+    return records.map((record) => record.learningProgress);
+  }
+  if (!DEFAULT_CONTENT.some((content) => content.key === group)) return [];
+
+  const { response, url } = await resolveContentUrl(group);
+  const text = url.endsWith(".gz")
+    ? await decompressOrDecodeBuffer(await response.arrayBuffer())
+    : await response.text();
+  return parseCsv(text).map(() => ({ stage: 0, nextReview: 0 }));
 }
 
 async function fetchAndSeed(currentGroup: string) {
