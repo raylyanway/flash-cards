@@ -227,7 +227,7 @@ export function LearnScreen() {
             : "minmax(0, 1fr) auto",
           gridTemplateRows:
             currentCard && learning.answerRevealed
-              ? "auto minmax(0, 1fr) minmax(0, 1fr)"
+              ? "auto minmax(0, 2fr) minmax(0, 1fr)"
               : "auto minmax(0, 1fr) 0px",
           gap: { xs: 1.5, sm: 2 },
         }}
