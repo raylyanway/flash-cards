@@ -29,7 +29,7 @@ import { getStageBadgeColor, StatusBadge } from "../../components/StatusBadge";
 import { deleteLibraryRows, getLibraryRows, importLibraryRows } from "../../db";
 import { useAppStore } from "../../store/useAppStore";
 import type { LibraryRow, ProgressMap } from "../../types";
-import { getStageName, MASTERED_STAGE } from "../../utils/cardProgress";
+import { getStageName } from "../../utils/cardProgress";
 import {
   createCsvFromLibrary,
   downloadCsv,
@@ -559,24 +559,6 @@ export function LibraryList() {
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 0.5 }}>
-            <Typography variant="body2" color="text.secondary">
-              Choose a CSV file with a group, text, and answer for each card.
-            </Typography>
-            <Stack spacing={1}>
-              <Typography variant="body2">
-                <Box component="span" sx={{ fontWeight: 700 }}>
-                  Required:
-                </Box>{" "}
-                group, text, answers
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                <Box component="span" sx={{ fontWeight: 700 }}>
-                  Optional:
-                </Box>{" "}
-                progressStage (0–{MASTERED_STAGE}), progressNextReview (ms), and
-                custom fields
-              </Typography>
-            </Stack>
             <Box
               sx={{
                 bgcolor: "action.hover",
@@ -603,9 +585,7 @@ export function LibraryList() {
               </Typography>
             </Box>
             <Typography variant="caption" color="text.secondary">
-              Multiple answers use a quoted JSON array. Matching cards and
-              supplied progress are updated; built-in collections cannot be
-              imported or replaced.
+              Built-in collections cannot be imported or replaced.
             </Typography>
           </Stack>
         </DialogContent>
