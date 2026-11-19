@@ -21,11 +21,17 @@ import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
+import ListSubheader from "@mui/material/ListSubheader";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { getStageBadgeColor, StatusBadge } from "../../components/StatusBadge";
-import { deleteLibraryRows, getLibraryRows, importLibraryRows } from "../../db";
+import {
+  DEFAULT_CONTENT,
+  deleteLibraryRows,
+  getLibraryRows,
+  importLibraryRows,
+} from "../../db";
 import { useAppStore } from "../../store/useAppStore";
 import type { LibraryRow, ProgressMap } from "../../types";
 import { getStageName } from "../../utils/cardProgress";
@@ -93,10 +99,14 @@ export function LibraryList() {
         : rows.filter((row) => row.content.group === selectedGroup),
     [rows, selectedGroup],
   );
-  const groupFilterOptions = React.useMemo(
-    () => [{ key: "all", label: "All groups" }, ...contentOptions],
-    [contentOptions],
-  );
+  const groupFilterOptions = React.useMemo(() => {
+    const builtInKeys = new Set(DEFAULT_CONTENT.map((option) => option.key));
+    return [
+      { key: "all", label: "All groups" },
+      ...contentOptions.filter((option) => builtInKeys.has(option.key)),
+      ...contentOptions.filter((option) => !builtInKeys.has(option.key)),
+    ];
+  }, [contentOptions]);
   const selectedGroupOption =
     groupFilterOptions.find((option) => option.key === selectedGroup) ??
     groupFilterOptions[0];
@@ -341,6 +351,25 @@ export function LibraryList() {
           options={groupFilterOptions}
           value={selectedGroupOption}
           getOptionLabel={(option) => option.label}
+          groupBy={(option) =>
+            option.key === "all"
+              ? ""
+              : DEFAULT_CONTENT.some((content) => content.key === option.key)
+                ? "Built-in"
+                : "Imported"
+          }
+          renderGroup={(group) =>
+            group.group ? (
+              <li key={group.key}>
+                <ListSubheader component="div">{group.group}</ListSubheader>
+                <Box component="ul" sx={{ p: 0 }}>
+                  {group.children}
+                </Box>
+              </li>
+            ) : (
+              <React.Fragment key={group.key}>{group.children}</React.Fragment>
+            )
+          }
           isOptionEqualToValue={(option, value) => option.key === value.key}
           onChange={(_, option) => {
             setSelectedGroup(option?.key ?? "all");
