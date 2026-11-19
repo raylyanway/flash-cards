@@ -121,8 +121,7 @@ export function HomeScreen() {
               (entry) => entry.stage >= MASTERED_STAGE,
             ).length;
             const ready = entries.filter(
-              (entry) =>
-                entry.stage < MASTERED_STAGE && entry.nextReview <= now,
+              (entry) => entry.stage < MASTERED_STAGE && entry.review <= now,
             ).length;
             const percent = entries.length
               ? Math.round((mastered / entries.length) * 100)

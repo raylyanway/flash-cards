@@ -51,7 +51,7 @@ export function useLearningSession({
       return Boolean(
         cardProgress &&
         cardProgress.stage < MASTERED_STAGE &&
-        cardProgress.nextReview <= Date.now(),
+        cardProgress.review <= Date.now(),
       );
     });
     dueCards.sort(

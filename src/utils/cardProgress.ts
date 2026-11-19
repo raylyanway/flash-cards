@@ -39,7 +39,7 @@ export function gradeProgress(
   return {
     ...entry,
     stage,
-    nextReview: stage === MASTERED_STAGE ? 0 : now + delay,
+    review: stage === MASTERED_STAGE ? 0 : now + delay,
   };
 }
 
@@ -50,7 +50,7 @@ export function initializeMissingProgress(
   const next = { ...progress };
   for (const card of cards) {
     if (!next[card.text]) {
-      next[card.text] = { stage: 0, nextReview: 0 };
+      next[card.text] = { stage: 0, review: 0 };
     }
   }
   return next;
@@ -87,8 +87,8 @@ export function getNextDueTimestamp(cards: Card[], progress: GroupProgress) {
   for (const card of cards) {
     const cardProgress = progress[card.text];
     if (!cardProgress || cardProgress.stage >= MASTERED_STAGE) continue;
-    if (nextTime === null || cardProgress.nextReview < nextTime) {
-      nextTime = cardProgress.nextReview;
+    if (nextTime === null || cardProgress.review < nextTime) {
+      nextTime = cardProgress.review;
     }
   }
   return nextTime;
@@ -119,9 +119,9 @@ export function formatReviewWait(milliseconds: number) {
 export function getNextReviewLabel(progress: GroupProgress, now: number) {
   let nearest: number | null = null;
   for (const item of Object.values(progress)) {
-    if (item.stage < MASTERED_STAGE && item.nextReview > now) {
-      if (nearest === null || item.nextReview < nearest) {
-        nearest = item.nextReview;
+    if (item.stage < MASTERED_STAGE && item.review > now) {
+      if (nearest === null || item.review < nearest) {
+        nearest = item.review;
       }
     }
   }

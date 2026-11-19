@@ -339,7 +339,7 @@ export function LibraryList() {
         }
         nextProgress[group][row.content.text] = {
           stage: 0,
-          nextReview: 0,
+          review: 0,
         };
       }
 

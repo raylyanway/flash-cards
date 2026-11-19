@@ -107,7 +107,7 @@ export async function importLibraryRows(rows: LibraryImportRow[]) {
 
       const existing = progressByGroup[row.group][row.card.text] ?? {
         stage: 0,
-        nextReview: 0,
+        review: 0,
       };
       progressByGroup[row.group][row.card.text] = {
         ...existing,
@@ -201,7 +201,7 @@ export async function getGroupOverviewProgress(
   const text = url.endsWith(".gz")
     ? await decompressOrDecodeBuffer(await response.arrayBuffer())
     : await response.text();
-  return parseCsv(text).map(() => ({ stage: 0, nextReview: 0 }));
+  return parseCsv(text).map(() => ({ stage: 0, review: 0 }));
 }
 
 async function fetchAndSeed(currentGroup: string) {
@@ -215,7 +215,7 @@ async function fetchAndSeed(currentGroup: string) {
     data.map((item) => ({
       ...item,
       group: currentGroup,
-      learningProgress: { stage: 0, nextReview: 0 },
+      learningProgress: { stage: 0, review: 0 },
     })),
   );
 }
@@ -340,7 +340,7 @@ export async function importContent(group: string, cards: Card[]) {
         group,
         learningProgress: existingProgress.get(item.text) ?? {
           stage: 0,
-          nextReview: 0,
+          review: 0,
         },
       })),
     );

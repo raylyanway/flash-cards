@@ -83,17 +83,17 @@ export function createCsvFromProgress(
   progressData: ProgressMap,
   cards: Card[],
 ) {
-  const headers = ["text", "stage", "nextReview"];
+  const headers = ["text", "stage", "review"];
   return papaparse.unparse(
     cards.map((card) => {
       const progressEntry = progressData[card.group ?? ""]?.[card.text] || {
         stage: 0,
-        nextReview: 0,
+        review: 0,
       };
       return {
         text: card.text,
         stage: progressEntry.stage,
-        nextReview: progressEntry.nextReview,
+        review: progressEntry.review,
       };
     }),
     { columns: headers },
@@ -108,19 +108,10 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
     });
   }
 
-  const preferredOrder = [
-    "group",
-    "text",
-    "answers",
-    "progressStage",
-    "progressNextReview",
-  ];
+  const preferredOrder = ["group", "text", "answers", "stage", "review"];
   const headers = [
     ...preferredOrder.filter(
-      (key) =>
-        key === "progressStage" ||
-        key === "progressNextReview" ||
-        contentFields.has(key),
+      (key) => key === "stage" || key === "review" || contentFields.has(key),
     ),
     ...[...contentFields].filter((key) => !preferredOrder.includes(key)),
   ];
@@ -129,8 +120,8 @@ export function createCsvFromLibrary(rows: LibraryRow[]) {
     rows.map(({ content, progress }) => {
       const row: Record<string, unknown> = {
         ...content,
-        progressStage: progress.stage,
-        progressNextReview: progress.nextReview,
+        stage: progress.stage,
+        review: progress.review,
       };
       return Object.fromEntries(
         headers.map((key) => [
@@ -254,8 +245,8 @@ export function parseLibraryCsv(
           "group",
           "text",
           "isBuiltIn",
-          "progressStage",
-          "progressNextReview",
+          "stage",
+          "review",
           "progressCorrectCount",
         ].includes(key)
       ) {
@@ -266,8 +257,8 @@ export function parseLibraryCsv(
 
     const progress: LibraryImportRow["progress"] = {};
     const progressFields = [
-      ["stage", "progressStage"],
-      ["nextReview", "progressNextReview"],
+      ["stage", "stage"],
+      ["review", "review"],
     ] as const;
     for (const [field, csvField] of progressFields) {
       const value = row[csvField];
