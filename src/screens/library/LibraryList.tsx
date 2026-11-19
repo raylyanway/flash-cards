@@ -905,7 +905,7 @@ export function LibraryList() {
             if (groups.length === 0) return null;
             return (
               <React.Fragment key={builtIn ? "built-in" : "imported"}>
-                <ListItem sx={{ px: 1.5, pt: 2, pb: 1 }}>
+                <ListItem sx={{ px: 1.5, pt: 1.5, pb: 0.5 }}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
@@ -927,17 +927,36 @@ export function LibraryList() {
                         component="button"
                         type="button"
                         onClick={() => void openGroup(option.key)}
-                        sx={{ width: "100%", px: 1.5, py: 1.5, gap: 1.5 }}
+                        sx={{
+                          width: "100%",
+                          minHeight: 48,
+                          px: 1.5,
+                          py: 1,
+                          gap: 1.5,
+                        }}
                       >
-                        <FolderOutlined color="primary" />
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <FolderOutlined color="primary" fontSize="small" />
+                        <Box
+                          sx={{
+                            flex: 1,
+                            minWidth: 0,
+                            display: "grid",
+                            gridTemplateColumns: "minmax(0, 1fr) auto",
+                            alignItems: "center",
+                            gap: 1,
+                          }}
+                        >
                           <Typography
                             sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
                           >
                             {option.label}
                           </Typography>
                           {count !== undefined && (
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ whiteSpace: "nowrap" }}
+                            >
                               {count} card{count === 1 ? "" : "s"}
                             </Typography>
                           )}
