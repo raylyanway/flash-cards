@@ -295,14 +295,6 @@ export function LibraryList() {
         throw new Error("Please upload a .csv file only.");
       }
       const importedRows = parseLibraryCsv(await file.text());
-      if (
-        !window.confirm(
-          `Import ${importedRows.length} library rows? Matching imported cards and supplied progress values will be updated. Built-in collections cannot be imported; other existing rows will be kept.`,
-        )
-      ) {
-        return;
-      }
-
       setIsImporting(true);
       const importedProgress = await importLibraryRows(importedRows);
       await setProgress(importedProgress);
