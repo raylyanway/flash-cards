@@ -1,11 +1,13 @@
 import {
   AutoStoriesRounded,
+  CloseRounded,
   DeleteOutlineRounded,
   FileDownloadRounded,
   FileUploadRounded,
   FolderOutlined,
   RestartAltRounded,
   ScheduleRounded,
+  SearchRounded,
 } from "@mui/icons-material";
 import { Autocomplete, TextField } from "@mui/material";
 import Alert from "@mui/material/Alert";
@@ -18,6 +20,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -88,17 +91,26 @@ export function LibraryList() {
   const [isImporting, setIsImporting] = React.useState(false);
   const [isUpdatingSelection, setIsUpdatingSelection] = React.useState(false);
   const [selectedGroup, setSelectedGroup] = React.useState("all");
+  const [search, setSearch] = React.useState("");
   const [selectedRowKeys, setSelectedRowKeys] = React.useState<Set<string>>(
     new Set(),
   );
 
-  const filteredRows = React.useMemo(
-    () =>
-      selectedGroup === "all"
-        ? rows
-        : rows.filter((row) => row.content.group === selectedGroup),
-    [rows, selectedGroup],
-  );
+  const filteredRows = React.useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    return rows.filter((row) => {
+      if (selectedGroup !== "all" && row.content.group !== selectedGroup) {
+        return false;
+      }
+      if (!query) return true;
+      const answers = Array.isArray(row.content.answers)
+        ? row.content.answers
+        : [row.content.answers ?? ""];
+      return [row.content.text, ...answers].some((value) =>
+        value.toLocaleLowerCase().includes(query),
+      );
+    });
+  }, [rows, search, selectedGroup]);
   const groupFilterOptions = React.useMemo(() => {
     const builtInKeys = new Set(DEFAULT_CONTENT.map((option) => option.key));
     return [
@@ -378,6 +390,44 @@ export function LibraryList() {
           renderInput={(params) => (
             <TextField {...params} label="Filter by group" />
           )}
+        />
+        <TextField
+          size="small"
+          label="Search cards"
+          placeholder="Text or answer"
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setSelectedRowKeys(new Set());
+          }}
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            flex: { sm: 1 },
+            minWidth: 0,
+          }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchRounded fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: search && (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="Clear search"
+                    size="small"
+                    onClick={() => {
+                      setSearch("");
+                      setSelectedRowKeys(new Set());
+                    }}
+                  >
+                    <CloseRounded fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
         />
         <Stack
           direction="row"
@@ -689,7 +739,9 @@ export function LibraryList() {
         </Typography>
       ) : filteredRows.length === 0 ? (
         <Typography sx={{ p: 2 }}>
-          No library rows found for this group.
+          {search.trim()
+            ? "No cards match your search."
+            : "No library rows found for this group."}
         </Typography>
       ) : (
         <List aria-label="Content library" disablePadding>
